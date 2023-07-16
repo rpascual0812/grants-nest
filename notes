@@ -1,0 +1,46 @@
+#create tables based on entities
+npm run typeorm schema:sync
+
+#create new migration
+npx typeorm migration:create db/migrations/NewMigration
+
+#run migration
+npm run typeorm migration:run
+
+#rollback migration
+npm run typeorm migration:revert
+
+#generate cron
+nest generate service cron/check
+
+#create new resource
+nest g resource users
+# transport layer: REST API
+# CRUD entry points? Yes
+
+#PG import/export
+psql -U postgres -d community_market221022 -f db/community_market-221022.sql
+pg_dump -U postgres -W -F p -h localhost -f community_market-221018.sql community_market
+
+# Built-in HTTP exceptions
+
+BadRequestException
+UnauthorizedException
+NotFoundException
+ForbiddenException
+NotAcceptableException
+RequestTimeoutException
+ConflictException
+GoneException
+HttpVersionNotSupportedException
+PayloadTooLargeException
+UnsupportedMediaTypeException
+UnprocessableEntityException
+InternalServerErrorException
+NotImplementedException
+ImATeapotException
+MethodNotAllowedException
+BadGatewayException
+ServiceUnavailableException
+GatewayTimeoutException
+PreconditionFailedException
