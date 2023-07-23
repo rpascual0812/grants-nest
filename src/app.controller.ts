@@ -16,12 +16,18 @@ export class AppController {
     @Post('login')
     async login(@Response() res: any, @Request() req) {
         let account = req.user;
+        account.remember = req.body.remember;
 
-        const user = await this.authService.login(account);
+        // remove existing session by logging out the user before logging in
+        const session = await this.authService.logout(account);
+        if (session) {
+            const user = await this.authService.login(account);
 
-        if (user) {
-            return res.status(HttpStatus.OK).json({ status: 'success', user });
+            if (user) {
+                return res.status(HttpStatus.OK).json({ status: 'success', user });
+            }
         }
+
         return res.status(HttpStatus.FORBIDDEN).json({ status: 'failed' });
     }
 
