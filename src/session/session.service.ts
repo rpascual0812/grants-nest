@@ -12,9 +12,7 @@ export class SessionService {
     ) { }
 
     @UsePipes(ValidationPipe)
-    async create(account: any): Promise<any> {
-        this.removeByAccount(account.pk);
-
+    async create(account: any) {
         return await dataSource
             .createQueryBuilder()
             .insert()
