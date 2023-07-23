@@ -15,14 +15,16 @@ export class SessionService {
     async create(account: any): Promise<any> {
         this.removeByAccount(account.pk);
 
-        const obj: any = {
-            token: account.access_token,
-            expiration: account.expiration,
-            account: account.pk,
-        }
-
-        const newSession = this.sessionRepository.create(obj);
-        return this.sessionRepository.save(newSession);
+        return await dataSource
+            .createQueryBuilder()
+            .insert()
+            .into(Session)
+            .values([{
+                token: account.access_token,
+                expiration: account.expiration,
+                account: account.pk,
+            }])
+            .execute();
     }
 
     async removeByAccount(pk: number): Promise<any> {
