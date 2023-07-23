@@ -30,8 +30,11 @@ export class AuthService {
     async login(account: any) {
         const payload = { name: account.username, sub: account.pk };
 
-        account.access_token = this.jwtService.sign(payload);
-        account.expiration = DateTime.now().plus({ seconds: Number.parseInt(process.env.EXPIRES) }).toFormat('y-LL-dd HH:mm:ss');
+        const expiration = account.remember ? Number.parseInt(process.env.EXPIRES) : 28800; // 14 days or 8 hrs
+
+        account.access_token = this.jwtService.sign(payload, { expiresIn: expiration + 's' });
+
+        account.expiration = DateTime.now().plus({ seconds: expiration }).toFormat('y-LL-dd HH:mm:ss');
 
         this.sessionService.create(account);
 
