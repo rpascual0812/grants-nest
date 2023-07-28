@@ -51,5 +51,61 @@ export class AuthService {
         return await this.sessionService.removeByAccount(user.pk);
     }
 
+    async forgotPassword(data: any) {
+        const user = await this.userService.findByEmail(data.email);
+        // console.log(user);
+        if (user) {
+            let uuid = uuidv4();
+
+            if (data.device == 'mobile') {
+                let randomNumbers = [];
+                for (let i = 0; i < 4; i++) {
+                    const num = Math.floor(Math.random() * 10);
+                    randomNumbers.push(num);
+                }
+
+                uuid = randomNumbers.join('');
+            }
+            // console.log('uuid', uuid);
+            const fields = data.device == 'mobile' ? { password_reset: { token: uuid, expiration: DateTime.now().plus({ hours: 1 }) } } : { password_reset: { token: uuid, expiration: DateTime.now().plus({ hours: 1 }) } };
+            const updated = await this.accountService.update(user.account_pk, fields);
+
+            if (updated) {
+                this.emailService.account_pk = user.account_pk;
+                this.emailService.user_pk = user.pk;
+                this.emailService.from = process.env.SEND_FROM;
+                this.emailService.from_name = process.env.SENDER;
+                this.emailService.to = data.email;
+                this.emailService.to_name = user.first_name + ' ' + user.last_name;
+                this.emailService.subject = 'Password Reset';
+                this.emailService.body = data.device == 'mobile' ? uuid : '<a href="' + data.url + '/reset-password/' + uuid + '">Please follow this link to reset your password</a>'; // MODIFY: must be a template from the database
+
+                const newEmail = await this.emailService.create();
+                if (newEmail) {
+                    return {
+                        status: true, data: fields
+                    };
+                }
+                return {
+                    status: true, data: fields
+                };
+            }
+            return false;
+        }
+        return false;
+    }
+
+    async resetPassword(data: any): Promise<any> {
+        const password = await this.accountService.getHash(data.password);
+        const account = await this.getResetToken(data.token);
+        console.log(1, account);
+        const fields = { password };
+        return await this.accountService.update(account.pk, fields);
+    }
+
+    async getResetToken(token: string): Promise<any> {
+        return await this.accountService.findToken(token);
+    }
+
 
 }

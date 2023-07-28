@@ -65,7 +65,9 @@ export class AccountService {
     }
 
     async findToken(token: string) {
-        return await dataSource.getRepository(Account)
+        return await dataSource
+            .manager
+            .getRepository(Account)
             .createQueryBuilder('accounts')
             .where(`accounts.password_reset::JSONB @> '{"token": "${token}" }'`)
             .getOne();
@@ -76,7 +78,10 @@ export class AccountService {
     }
 
     async update(pk: number, fields: object): Promise<any> {
-        return await dataSource.getRepository(Account)
+        console.log(pk, fields);
+        return await dataSource
+            .manager
+            .getRepository(Account)
             .createQueryBuilder()
             .update(Account)
             .set(fields)
