@@ -40,4 +40,22 @@ export class AppController {
         }
         return res.status(HttpStatus.FORBIDDEN).json({ status: 'failed' });
     }
+
+    @Post('forgot-password')
+    async forgot(@Response() res: any, @Request() req, @Body() body): Promise<any> {
+        const newForgot = await this.authService.forgotPassword(body);
+        if (newForgot) {
+            return res.status(HttpStatus.OK).json(newForgot);
+        }
+        return res.status(HttpStatus.FORBIDDEN).json({ status: 'failed' });
+    }
+
+    @Post('reset-password')
+    async reset(@Response() res: any, @Request() req, @Body() body): Promise<any> {
+        const newReset = await this.authService.resetPassword(body);
+        if (newReset) {
+            return res.status(HttpStatus.OK).json({ status: 'success' });
+        }
+        return res.status(HttpStatus.FORBIDDEN).json({ status: 'failed' });
+    }
 }
