@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class DefaultUser1690552484753 implements MigrationInterface {
+export class User1690600415531 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -13,7 +13,7 @@ export class DefaultUser1690552484753 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            TRUNCATE TABLE users RESTART IDENTITY;
+            TRUNCATE TABLE users RESTART IDENTITY cascade;
         `);
     }
 

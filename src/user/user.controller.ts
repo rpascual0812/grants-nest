@@ -59,7 +59,6 @@ export class UserController {
     @UseGuards(JwtAuthGuard)
     @Get()
     async findAll(@Request() req: any) {
-        console.log(req.user, req.query);
         const users = await this.userService.findAll(req.user, req.query);
         if (users.data) {
             return users;

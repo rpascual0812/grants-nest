@@ -7,6 +7,7 @@ import { User } from './entities/user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import dataSource from 'db/data-source';
 import { Account } from 'src/account/entities/account.entity';
+import { Role } from 'src/role/entities/role.entity';
 // import { Document } from 'src/documents/entities/document.entity';
 // import { UserDocument } from './entities/user-document.entity';
 // import { UserAddress } from './entities/user-address.entity';
@@ -85,8 +86,15 @@ export class UserService {
                 .addSelect(["accounts.pk", "accounts.username", "accounts.active", "accounts.verified"])
                 .leftJoinAndSelect("users.gender", "genders")
                 .addSelect(['genders.pk', 'genders.name'])
-                .leftJoinAndSelect("users.country", "countries")
-                .leftJoinAndSelect("users.role", "roles")
+                .leftJoinAndSelect("users.user_role", "user_roles")
+                .leftJoinAndMapOne(
+                    'user_roles.role',
+                    Role,
+                    'roles',
+                    'user_roles.role_pk=roles.pk'
+                )
+                // .leftJoinAndSelect("users.country", "countries")
+                // .leftJoinAndSelect("users.role", "roles")
                 // .addSelect(['user_documents'])
                 // .leftJoinAndMapOne(
                 //     'users.user_document',
@@ -94,12 +102,12 @@ export class UserService {
                 //     'user_documents',
                 //     'users.pk=user_documents.user_pk and user_documents.type = \'profile_photo\''
                 // )
-                .leftJoinAndMapOne(
-                    'user_documents.document',
-                    Document,
-                    'documents',
-                    'user_documents.document_pk=documents.pk',
-                )
+                // .leftJoinAndMapOne(
+                //     'user_documents.document',
+                //     Document,
+                //     'documents',
+                //     'user_documents.document_pk=documents.pk',
+                // )
 
                 // .leftJoinAndMapOne(
                 //     'users.user_address',
@@ -135,7 +143,7 @@ export class UserService {
                         "users.archived = :archived" :
                         '1=1', { archived: `${filters.archived}` }
                 )
-                .andWhere("role_pk != 1")
+                // .andWhere("role_pk != 1")
                 .skip(filters.skip)
                 .take(filters.take)
                 .orderBy(orderByColumn, orderByDirection)
