@@ -100,4 +100,17 @@ export class AccountService {
     async compareHash(password: string | undefined, hash: string | undefined): Promise<boolean> {
         return await bcrypt.compare(password, hash);
     }
+
+    async clearPassword(pk: number) {
+        return await dataSource
+            .manager
+            .getRepository(Account)
+            .createQueryBuilder()
+            .update(Account)
+            .set({
+                password: 'CLEARED FOR RESET'
+            })
+            .where("pk = :pk", { pk })
+            .execute();
+    }
 }

@@ -102,4 +102,11 @@ export class UserController {
     async delete(@Request() req: any) {
         return await this.userService.delete(req.user);
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/reset-password')
+    async resetUserPassword(@Request() req: any, @Param('pk') pk: string, @Body() body: any) {
+        console.log(req.user, pk);
+        return await this.userService.resetUserPassword(req.user, pk, body);
+    }
 }
