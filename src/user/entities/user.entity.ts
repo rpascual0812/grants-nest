@@ -1,5 +1,8 @@
 import { Entity, Column, PrimaryGeneratedColumn, Unique, JoinColumn, ManyToOne, OneToOne, BaseEntity, OneToMany, ManyToMany } from 'typeorm';
 import { Account } from 'src/account/entities/account.entity';
+import { Gender } from 'src/gender/entities/gender.entity';
+import { Role } from 'src/role/entities/role.entity';
+import { UserRole } from './user-role.entity';
 
 @Entity({ name: 'users' })
 @Unique(['uuid'])
@@ -43,4 +46,12 @@ export class User extends BaseEntity {
     @OneToOne(type => Account, account => account.user, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'account_pk' })
     account: Account;
+
+    @ManyToOne('Gender', (gender: Gender) => gender.user, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'gender_pk' })
+    gender: Gender;
+
+    @OneToMany(type => UserRole, user_role => user_role.user, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'user_role_pk' })
+    user_role: UserRole;
 }
