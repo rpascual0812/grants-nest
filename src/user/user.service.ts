@@ -8,6 +8,11 @@ import { v4 as uuidv4 } from 'uuid';
 import dataSource from 'db/data-source';
 import { Account } from 'src/account/entities/account.entity';
 import { Role } from 'src/role/entities/role.entity';
+import { DateTime, DurationObjectUnits } from 'luxon';
+import { AccountService } from 'src/account/account.service';
+import { EmailService } from 'src/email/email.service';
+import { SessionService } from 'src/session/session.service';
+
 // import { Document } from 'src/documents/entities/document.entity';
 // import { UserDocument } from './entities/user-document.entity';
 // import { UserAddress } from './entities/user-address.entity';
@@ -33,6 +38,9 @@ export class UserService {
     constructor(
         @InjectRepository(User)
         private userRepository: Repository<User>,
+        private accountService: AccountService,
+        private emailService: EmailService,
+        private sessionService: SessionService
         // @InjectRepository(UserDocument)
         // private userDocumentRepository: Repository<UserDocument>,
     ) { }
@@ -170,7 +178,6 @@ export class UserService {
             .getRepository(User)
             .createQueryBuilder('users')
             .select('users')
-            .leftJoinAndSelect("users.seller", "sellers")
             .leftJoinAndSelect("users.gender", "genders")
             // user documents
             // .leftJoinAndMapMany(
@@ -375,5 +382,41 @@ export class UserService {
 
     }
 
+    async resetUserPassword(user: any, pk: any, body: any) {
+        const selectedUser = await this.findOne({ pk });
 
+        if (selectedUser) {
+            let uuid = uuidv4();
+
+            await this.accountService.clearPassword(selectedUser.account_pk);
+            await this.sessionService.removeByAccount(selectedUser.account_pk);
+
+            // console.log('uuid', uuid);
+            const fields = { password_reset: { token: uuid, expiration: DateTime.now().plus({ hours: 1 }) } };
+            const updated = await this.accountService.update(user.account_pk, fields);
+
+            if (updated) {
+                this.emailService.account_pk = user.account_pk;
+                this.emailService.user_pk = user.pk;
+                this.emailService.from = process.env.SEND_FROM;
+                this.emailService.from_name = process.env.SENDER;
+                this.emailService.to = selectedUser.email_address;
+                this.emailService.to_name = user.first_name + ' ' + user.last_name;
+                this.emailService.subject = 'Password Reset';
+                this.emailService.body = '<a href="' + body.url + '/reset-password/' + uuid + '">Please follow this link to reset your password</a>'; // MODIFY: must be a template from the database
+
+                const newEmail = await this.emailService.create();
+                if (newEmail) {
+                    return {
+                        status: true, data: fields
+                    };
+                }
+                return {
+                    status: true, data: fields
+                };
+            }
+            return false;
+        }
+        return false;
+    }
 }
