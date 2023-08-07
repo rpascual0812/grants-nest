@@ -1,26 +1,35 @@
 import { Injectable } from '@nestjs/common';
-import { CreateGenderDto } from './dto/create-gender.dto';
-import { UpdateGenderDto } from './dto/update-gender.dto';
+import dataSource from 'db/data-source';
+import { Gender } from './entities/gender.entity';
 
 @Injectable()
 export class GenderService {
-  create(createGenderDto: CreateGenderDto) {
-    return 'This action adds a new gender';
-  }
-
-  findAll() {
-    return `This action returns all gender`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} gender`;
-  }
-
-  update(id: number, updateGenderDto: UpdateGenderDto) {
-    return `This action updates a #${id} gender`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} gender`;
-  }
+    async findAll(filters: any) {
+        // console.log(filters);
+        try {
+            const genders = await dataSource
+                .manager
+                .getRepository(Gender)
+                .createQueryBuilder('genders')
+                .select('genders')
+                .where('genders.archived=false')
+                .orderBy('genders.name')
+                .skip(filters.skip)
+                .take(filters.take)
+                .getManyAndCount()
+                ;
+            // console.log(genders);
+            return {
+                status: true,
+                data: genders[0],
+                total: genders[1]
+            }
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false
+            }
+        }
+    }
 }

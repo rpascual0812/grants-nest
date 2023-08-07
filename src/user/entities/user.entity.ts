@@ -3,6 +3,7 @@ import { Account } from 'src/account/entities/account.entity';
 import { Gender } from 'src/gender/entities/gender.entity';
 import { Role } from 'src/role/entities/role.entity';
 import { UserRole } from './user-role.entity';
+import { UserDocument } from './user-document.entity';
 
 @Entity({ name: 'users' })
 @Unique(['uuid'])
@@ -54,4 +55,8 @@ export class User extends BaseEntity {
     @OneToMany(type => UserRole, user_role => user_role.user, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'user_role_pk' })
     user_role: UserRole;
+
+    @OneToMany('UserDocument', (user_document: UserDocument) => user_document.user, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'user_document_pk' })
+    user_document: UserDocument;
 }

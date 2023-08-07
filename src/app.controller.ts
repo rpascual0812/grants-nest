@@ -58,4 +58,9 @@ export class AppController {
         }
         return res.status(HttpStatus.FORBIDDEN).json({ status: 'failed' });
     }
+
+    @Get('assets/images/uploads/:customDir/:imageName')
+    invoke(@Request() req, @Response() res) {
+        return res.sendFile(req.path, { root: './' });
+    }
 }
