@@ -12,6 +12,9 @@ import { DateTime, DurationObjectUnits } from 'luxon';
 import { AccountService } from 'src/account/account.service';
 import { EmailService } from 'src/email/email.service';
 import { SessionService } from 'src/session/session.service';
+import { UserDocument } from './entities/user-document.entity';
+import { Document } from 'src/document/entities/document.entity';
+import { UserRole } from './entities/user-role.entity';
 
 // import { Document } from 'src/documents/entities/document.entity';
 // import { UserDocument } from './entities/user-document.entity';
@@ -41,29 +44,7 @@ export class UserService {
         private accountService: AccountService,
         private emailService: EmailService,
         private sessionService: SessionService
-        // @InjectRepository(UserDocument)
-        // private userDocumentRepository: Repository<UserDocument>,
     ) { }
-
-    // create(createUserDto: CreateUserDto) {
-    //     return 'This action adds a new user';
-    // }
-    create(user, account_pk) {
-        const obj: any = {
-            uuid: uuidv4(),
-            last_name: user.last_name,
-            first_name: user.first_name,
-            middle_name: user.middle_name,
-            birthdate: user.birthday,
-            mobile_number: user.mobile,
-            email_address: user.email,
-            account_pk: account_pk,
-            country_pk: 173
-        }
-        // console.log(obj);
-        const newUser = this.userRepository.create(obj);
-        return this.userRepository.save(newUser);
-    }
 
     async findAll(data: any, filters: any) {
         try {
@@ -101,46 +82,18 @@ export class UserService {
                     'roles',
                     'user_roles.role_pk=roles.pk'
                 )
-                // .leftJoinAndSelect("users.country", "countries")
-                // .leftJoinAndSelect("users.role", "roles")
-                // .addSelect(['user_documents'])
-                // .leftJoinAndMapOne(
-                //     'users.user_document',
-                //     UserDocument,
-                //     'user_documents',
-                //     'users.pk=user_documents.user_pk and user_documents.type = \'profile_photo\''
-                // )
-                // .leftJoinAndMapOne(
-                //     'user_documents.document',
-                //     Document,
-                //     'documents',
-                //     'user_documents.document_pk=documents.pk',
-                // )
-
-                // .leftJoinAndMapOne(
-                //     'users.user_address',
-                //     UserAddress,
-                //     'user_addresses',
-                //     'users.pk=user_addresses.user_pk'
-                // )
-                // .leftJoinAndMapOne(
-                //     'user_addresses.province',
-                //     Province,
-                //     'provinces',
-                //     'user_addresses.province_code=provinces.province_code',
-                // )
-                // .leftJoinAndMapOne(
-                //     'user_addresses.city',
-                //     City,
-                //     'cities',
-                //     'user_addresses.city_code=cities.city_code',
-                // )
-                // .leftJoinAndMapOne(
-                //     'user_addresses.area',
-                //     Area,
-                //     'areas',
-                //     'user_addresses.area_pk=areas.pk',
-                // )
+                .leftJoinAndMapOne(
+                    'users.user_document',
+                    UserDocument,
+                    'user_documents',
+                    'users.pk=user_documents.user_pk and user_documents.type = \'profile_photo\''
+                )
+                .leftJoinAndMapOne(
+                    'user_documents.document',
+                    Document,
+                    'documents',
+                    'user_documents.document_pk=documents.pk',
+                )
                 .andWhere(
                     filters.hasOwnProperty('keyword') && filters.keyword != '' ?
                         "(users.first_name ILIKE :keyword or users.last_name ILIKE :keyword or users.middle_name ILIKE :keyword)" :
@@ -178,20 +131,29 @@ export class UserService {
             .getRepository(User)
             .createQueryBuilder('users')
             .select('users')
+            .leftJoinAndSelect("users.account", "accounts")
+            .addSelect(["accounts.pk", "accounts.username", "accounts.active", "accounts.verified"])
             .leftJoinAndSelect("users.gender", "genders")
-            // user documents
-            // .leftJoinAndMapMany(
-            //     'users.user_document',
-            //     UserDocument,
-            //     'user_documents',
-            //     'users.pk=user_documents.user_pk'
-            // )
-            // .leftJoinAndMapOne(
-            //     'user_documents.document',
-            //     Document,
-            //     'documents',
-            //     'user_documents.document_pk=documents.pk',
-            // )
+            .addSelect(['genders.pk', 'genders.name'])
+            .leftJoinAndSelect("users.user_role", "user_roles")
+            .leftJoinAndMapOne(
+                'user_roles.role',
+                Role,
+                'roles',
+                'user_roles.role_pk=roles.pk'
+            )
+            .leftJoinAndMapOne(
+                'users.user_document',
+                UserDocument,
+                'user_documents',
+                'users.pk=user_documents.user_pk and user_documents.type = \'profile_photo\''
+            )
+            .leftJoinAndMapOne(
+                'user_documents.document',
+                Document,
+                'documents',
+                'user_documents.document_pk=documents.pk',
+            )
             .where("users.pk = :pk", { pk: data.pk })
             .getOne()
             ;
@@ -259,79 +221,90 @@ export class UserService {
             ;
     }
 
-    // async getUserAddresses(pks: any, filters: any) {
-    //     try {
-    //         return await dataSource.getRepository(UserAddress)
-    //             .createQueryBuilder('user_addresses')
-    //             .select('user_addresses')
-    //             .leftJoinAndSelect("user_addresses.province", "provinces")
-    //             .leftJoinAndSelect("user_addresses.city", "cities")
-    //             .leftJoinAndSelect("user_addresses.area", "areas")
-    //             .where("user_addresses.user_pk IN (:...user_pk)", { user_pk: pks })
-    //             // .skip(filters.skip)
-    //             // .take(filters.take)
-    //             .getManyAndCount()
-    //             ;
-    //     } catch (error) {
-    //         console.log(error);
-    //         // SAVE ERROR
-    //         return {
-    //             status: false
-    //         }
-    //     }
-    // }
-
-    async update(data: any) {
+    async save(data: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
             return await queryRunner.manager.transaction(
                 async (EntityManager) => {
-                    const user = await EntityManager.findOne(User, data.pk);
-                    user.first_name = data.first_name;
-                    user.last_name = data.last_name;
-                    user.gender_pk = data.gender;
-                    user.birthdate = data.birthdate;
-                    user.email_address = data.email_address;
-                    user.mobile_number = data.mobile;
-                    // user.about = data.about;
-                    // user.archived = data.archived;
-                    const updatedUser = await EntityManager.save(user);
+                    let userData = {};
 
-                    // const account = await EntityManager.findOne(Account, user.account_pk);
-                    // account.archived = data.archived;
-                    // await EntityManager.save(account);
+                    // update user
+                    if (data.pk) {
+                        // delete existing user roles
+                        await this.deleteRoles(data.pk);
 
-                    // await EntityManager.update(UserAddress, { user_pk: data.pk }, { province_code: data.province, city_code: data.city, area_pk: data.area, address: data.address_details });
+                        const user = await EntityManager.findOne(User, { where: { pk: data.pk } });
+                        user.first_name = data.first_name;
+                        user.last_name = data.last_name;
+                        user.gender_pk = data.gender;
+                        user.birthdate = data.birthdate;
+                        user.email_address = data.email_address;
+                        user.mobile_number = data.mobile;
+                        userData = await EntityManager.save(user);
 
-                    // if (data.display_photo) {
-                    //     let displayPhoto = await EntityManager.findOne(UserDocument, { user_pk: data.pk, type: 'profile_photo' });
-                    //     if (displayPhoto) {
-                    //         await EntityManager.update(UserDocument, { pk: displayPhoto.pk }, { document_pk: data.display_photo });
-                    //     }
-                    //     else {
-                    //         const document = new UserDocument();
-                    //         document.user_pk = data.pk;
-                    //         document.type = 'profile_photo';
-                    //         document.document_pk = data.display_photo;
-                    //         await EntityManager.save(document);
-                    //     }
-                    // }
+                        // update the profile photo
+                        if (data.image) {
+                            let profilePhoto = await EntityManager.findOne(UserDocument, { where: { user_pk: data.pk, type: 'profile_photo' } });
+                            if (profilePhoto) {
+                                await EntityManager.update(UserDocument, { pk: profilePhoto.pk }, { document_pk: data.image.pk });
+                            }
+                            else {
+                                const document = new UserDocument();
+                                document.user_pk = data.pk;
+                                document.type = 'profile_photo';
+                                document.document_pk = data.image.pk;
+                                await EntityManager.save(document);
+                            }
+                        }
 
-                    // if (data.id_photo) {
-                    //     let idPhoto = await EntityManager.findOne(UserDocument, { user_pk: data.pk, type: 'id_photo' });
-                    //     if (idPhoto) {
-                    //         await EntityManager.update(UserDocument, { pk: idPhoto.pk }, { document_pk: data.id_photo });
-                    //     }
-                    //     else {
-                    //         const document = new UserDocument();
-                    //         document.user_pk = data.pk;
-                    //         document.type = 'id_photo';
-                    //         document.document_pk = data.id_photo;
-                    //         await EntityManager.save(document);
-                    //     }
-                    // }
+                        // update the roles
+                        if (data.roles.length > 0) {
+                            let roles = [];
+                            data.roles.forEach(role => {
+                                roles.push({
+                                    user_pk: data.pk,
+                                    role_pk: role.pk
+                                });
+                            });
+
+                            // insert new roles
+                            await EntityManager.insert(UserRole, roles);
+                        }
+                    }
+                    else { // add new user
+                        const account = new Account();
+                        account.username = data.email_address;
+                        account.password = '';
+                        account.active = false;
+                        account.verified = false;
+                        const newAccount = await EntityManager.save(account);
+
+                        // create user
+                        const user = new User();
+                        user.account_pk = newAccount.pk;
+                        user.uuid = uuidv4();
+                        user.last_name = data.last_name;
+                        user.first_name = data.first_name;
+                        user.middle_name = data.middle_name;
+                        user.birthdate = data.birthdate;
+                        user.mobile_number = data.mobile;
+                        user.email_address = data.email_address;
+                        const newUser = await EntityManager.save(user);
+                        userData = newUser;
+
+                        // create user document
+                        if (data.image) {
+                            const user_document = new UserDocument();
+                            user_document.user_pk = newUser.pk;
+                            user_document.type = 'profile_photo';
+                            user_document.document_pk = data.image.pk;
+                            await EntityManager.save(user_document);
+                        }
+                    }
+
+                    const updatedUser = await this.findOne(userData);
 
                     return { status: true, data: updatedUser };
                 }
@@ -343,6 +316,21 @@ export class UserService {
             await queryRunner.release();
         }
 
+    }
+
+    async deleteRoles(user_pk: any) {
+        try {
+            return await dataSource
+                .manager
+                .createQueryBuilder()
+                .delete()
+                .from(UserRole)
+                .where("user_pk = :user_pk", { user_pk })
+                .execute();
+        } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        }
     }
 
     async delete(data: any) {
