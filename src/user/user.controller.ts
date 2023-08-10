@@ -12,20 +12,16 @@ import { AccountService } from 'src/account/account.service';
 export class UserController {
     constructor(private readonly userService: UserService, private readonly accountService: AccountService) { }
 
-    // @Post()
-    // create(@Body() createUserDto: CreateUserDto) {
-    //     return this.userService.create(createUserDto);
-    // }
     // @UseGuards(JwtAuthGuard)
-    @Post('update')
-    async update(@Request() req: any, @Body() body: any) {
-        return await this.userService.update(body);
-    }
+    // @Post('update')
+    // async update(@Request() req: any, @Body() body: any) {
+    //     return await this.userService.update(body);
+    // }
 
     @UseGuards(JwtAuthGuard)
     @Post()
     async save(@Request() req: any, @Body() body: any) {
-        return await this.userService.update(body);
+        return await this.userService.save(body);
     }
 
     @UseGuards(JwtAuthGuard)
