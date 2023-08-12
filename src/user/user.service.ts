@@ -318,6 +318,30 @@ export class UserService {
 
     }
 
+    async update(user, pk: any, data: any) {
+        console.log(user, pk, data);
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(
+                async (EntityManager) => {
+                    const user = await EntityManager.update(User, { pk }, data);
+
+                    // Add logs here
+
+                    return { status: true, data: user };
+                }
+            );
+        } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+
+    }
+
     async deleteRoles(user_pk: any) {
         try {
             return await dataSource
@@ -381,7 +405,7 @@ export class UserService {
 
             // console.log('uuid', uuid);
             const fields = { password_reset: { token: uuid, expiration: DateTime.now().plus({ hours: 1 }) } };
-            const updated = await this.accountService.update(user.account_pk, fields);
+            const updated = await this.accountService.update(user, user.account_pk, fields);
 
             if (updated) {
                 this.emailService.account_pk = user.account_pk;
