@@ -77,16 +77,26 @@ export class AccountService {
         return this.accountRepository.findOne({ where: { username } });
     }
 
-    async update(pk: number, fields: object): Promise<any> {
-        console.log(pk, fields);
-        return await dataSource
-            .manager
-            .getRepository(Account)
-            .createQueryBuilder()
-            .update(Account)
-            .set(fields)
-            .where("pk = :pk", { pk })
-            .execute();
+    async update(user, pk: any, data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(
+                async (EntityManager) => {
+                    const account = await EntityManager.update(Account, { pk }, data);
+
+                    // Add logs here
+
+                    return { status: true, data: account };
+                }
+            );
+        } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
     }
 
     remove(id: number) {

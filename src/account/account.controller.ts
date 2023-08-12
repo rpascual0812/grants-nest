@@ -43,9 +43,10 @@ export class AccountController {
 
     }
 
-    @Patch(':id')
-    update(@Param('id') id: string, @Body() updateAccountDto: UpdateAccountDto) {
-        return this.accountService.update(+id, updateAccountDto);
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk')
+    async update(@Param('pk') pk, @Request() req: any, @Body() body: any) {
+        return await this.accountService.update(req.user, pk, body);
     }
 
     @Delete(':id')

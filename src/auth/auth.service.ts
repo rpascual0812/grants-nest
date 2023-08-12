@@ -68,7 +68,7 @@ export class AuthService {
             }
             // console.log('uuid', uuid);
             const fields = data.device == 'mobile' ? { password_reset: { token: uuid, expiration: DateTime.now().plus({ hours: 1 }) } } : { password_reset: { token: uuid, expiration: DateTime.now().plus({ hours: 1 }) } };
-            const updated = await this.accountService.update(user.account_pk, fields);
+            const updated = await this.accountService.update({}, user.account_pk, fields);
 
             if (updated) {
                 this.emailService.account_pk = user.account_pk;
@@ -98,9 +98,9 @@ export class AuthService {
     async resetPassword(data: any): Promise<any> {
         const password = await this.accountService.getHash(data.password);
         const account = await this.getResetToken(data.token);
-        console.log(1, account);
+
         const fields = { password };
-        return await this.accountService.update(account.pk, fields);
+        return await this.accountService.update({}, account.pk, fields);
     }
 
     async getResetToken(token: string): Promise<any> {
