@@ -74,7 +74,7 @@ export class AccountService {
     }
 
     async findByUserName(username: string): Promise<Account | undefined> {
-        return this.accountRepository.findOne({ where: { username } });
+        return this.accountRepository.findOne({ where: { username: username, archived: false } });
     }
 
     async update(user, pk: any, data: any) {
