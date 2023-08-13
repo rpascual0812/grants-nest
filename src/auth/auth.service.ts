@@ -43,7 +43,7 @@ export class AuthService {
         //     return {};
         // }
 
-        const { pk, password, verified, active, date_created, archived, password_reset, ...others } = account;
+        const { pk, password, verified, date_created, archived, password_reset, ...others } = account;
         return others;
     }
 
