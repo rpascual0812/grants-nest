@@ -1,9 +1,9 @@
 import { Entity, Column, PrimaryGeneratedColumn, Unique, JoinColumn, ManyToOne, OneToOne, BaseEntity, OneToMany, ManyToMany } from 'typeorm';
 import { Account } from 'src/account/entities/account.entity';
 import { Gender } from 'src/gender/entities/gender.entity';
-import { Role } from 'src/role/entities/role.entity';
 import { UserRole } from './user-role.entity';
 import { UserDocument } from './user-document.entity';
+import { Log } from 'src/log/entities/log.entity';
 
 @Entity({ name: 'users' })
 @Unique(['uuid'])
@@ -59,4 +59,8 @@ export class User extends BaseEntity {
     @OneToMany('UserDocument', (user_document: UserDocument) => user_document.user, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'user_document_pk' })
     user_document: UserDocument;
+
+    @OneToMany('Log', (log: Log) => log.user)
+    @JoinColumn({ name: 'pk' })
+    log: Array<Log>;
 }

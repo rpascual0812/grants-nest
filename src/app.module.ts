@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { GenderModule } from './gender/gender.module';
 import { RoleModule } from './role/role.module';
 import { DocumentModule } from './document/document.module';
+import { LogModule } from './log/log.module';
 
 @Module({
     imports: [
@@ -18,7 +19,8 @@ import { DocumentModule } from './document/document.module';
         ValidationModule,
         GenderModule,
         RoleModule,
-        DocumentModule
+        DocumentModule,
+        LogModule
     ],
     controllers: [AppController],
     providers: [AppService],

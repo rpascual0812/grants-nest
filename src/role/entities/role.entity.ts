@@ -14,9 +14,6 @@ export class Role extends BaseEntity {
     @Column({ type: 'text', nullable: true })
     details: string;
 
-    @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-    date_created: Date;
-
     @Column({ default: false })
     archived: boolean;
 
