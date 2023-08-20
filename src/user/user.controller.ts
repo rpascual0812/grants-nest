@@ -101,8 +101,19 @@ export class UserController {
 
     @UseGuards(JwtAuthGuard)
     @Post(':pk/reset-password')
-    async resetUserPassword(@Request() req: any, @Param('pk') pk: string, @Body() body: any) {
+    async sendResetPassword(@Request() req: any, @Param('pk') pk: string, @Body() body: any) {
         console.log(req.user, pk);
-        return await this.userService.resetUserPassword(req.user, pk, body);
+        return await this.userService.sendResetPassword(req.user, pk, body);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('password/update')
+    async resetUserPassword(@Request() req: any, @Body() body: any) {
+        const encryptedPassword = await this.accountService.getHash(body.new_password);
+        const data = {
+            password: encryptedPassword
+        }
+
+        return await this.accountService.update(req.user, body.pk, data);
     }
 }
