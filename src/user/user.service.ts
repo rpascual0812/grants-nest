@@ -394,7 +394,7 @@ export class UserService {
 
     }
 
-    async resetUserPassword(user: any, pk: any, body: any) {
+    async sendResetPassword(user: any, pk: any, body: any) {
         const selectedUser = await this.findOne({ pk });
 
         if (selectedUser) {
