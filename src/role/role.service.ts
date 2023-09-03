@@ -14,6 +14,11 @@ export class RoleService {
                 .getRepository(Role)
                 .createQueryBuilder('roles')
                 .select('roles')
+                .andWhere(
+                    filters.hasOwnProperty('keyword') && filters.keyword != '' ?
+                        "roles.name ILIKE :keyword" :
+                        '1=1', { keyword: `%${filters.keyword}%` }
+                )
                 .andWhere("archived = false")
                 .getManyAndCount()
                 ;
