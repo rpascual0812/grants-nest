@@ -6,7 +6,6 @@ import { UserDocument } from './user-document.entity';
 import { Log } from 'src/log/entities/log.entity';
 
 @Entity({ name: 'users' })
-@Unique(['uuid'])
 export class User extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
@@ -14,8 +13,11 @@ export class User extends BaseEntity {
     @Column({ name: 'account_pk', nullable: false })
     account_pk: number;
 
-    @Column({ type: 'text', nullable: false })
+    @Column({ type: 'text', unique: true, nullable: false })
     uuid: string;
+
+    @Column({ type: 'text', unique: true, nullable: false })
+    unique_id: string;
 
     @Column({ type: 'text', nullable: false })
     last_name: string;

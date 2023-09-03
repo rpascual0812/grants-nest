@@ -1,26 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { CreateLogDto } from './dto/create-log.dto';
-import { UpdateLogDto } from './dto/update-log.dto';
+import dataSource from 'db/data-source';
+import { Log } from './entities/log.entity';
 
 @Injectable()
 export class LogService {
-  create(createLogDto: CreateLogDto) {
-    return 'This action adds a new log';
-  }
-
-  findAll() {
-    return `This action returns all log`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} log`;
-  }
-
-  update(id: number, updateLogDto: UpdateLogDto) {
-    return `This action updates a #${id} log`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} log`;
-  }
+    async findAll(filter: any) {
+        return await dataSource.getRepository(Log)
+            .createQueryBuilder('logs')
+            .leftJoinAndSelect("logs.user", "users")
+            .where("model = :entity", { entity: filter.entity })
+            .andWhere("model_pk = :pk", { pk: filter.pk })
+            .orderBy('logs.pk', 'DESC')
+            .skip(filter.skip)
+            .take(filter.take)
+            .getMany()
+            ;
+    }
 }
