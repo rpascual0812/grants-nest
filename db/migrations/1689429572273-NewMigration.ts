@@ -4,7 +4,7 @@ export class NewMigration1689429572273 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            insert into accounts (username, password, verified) values ('admin', '$2b$10$zQaTm9vfET4odd0nQsLei.Tgke45X.wf5YVLDncznno3FbaMEUKLi', true);
+            insert into accounts (username, password, verified) values ('admin', '$2b$10$XdV65n6N5LkEJHTdqErwGOWkO8sK0TMe5JE6fjo8BIpHMmMlPJsE.', true);
         `);
     }
 
