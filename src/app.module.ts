@@ -10,11 +10,13 @@ import { GenderModule } from './gender/gender.module';
 import { RoleModule } from './role/role.module';
 import { DocumentModule } from './document/document.module';
 import { LogModule } from './log/log.module';
-import { ApplicationsModule } from './applications/applications.module';
+import { ApplicationModule } from './application/application.module';
 import { CheckService } from './cron/check/check.service';
 import { MailerService } from './cron/mailer/mailer.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DestroyerService } from './cron/destroyer/destroyer.service';
+import { OrganizationModule } from './organization/organization.module';
+import { CountryModule } from './country/country.module';
 
 @Module({
     imports: [
@@ -27,7 +29,9 @@ import { DestroyerService } from './cron/destroyer/destroyer.service';
         RoleModule,
         DocumentModule,
         LogModule,
-        ApplicationsModule
+        ApplicationModule,
+        OrganizationModule,
+        CountryModule
     ],
     controllers: [AppController],
     providers: [AppService, CheckService, MailerService, DestroyerService],
