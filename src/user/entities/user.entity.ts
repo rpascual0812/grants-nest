@@ -4,6 +4,7 @@ import { Gender } from 'src/gender/entities/gender.entity';
 import { UserRole } from './user-role.entity';
 import { UserDocument } from './user-document.entity';
 import { Log } from 'src/log/entities/log.entity';
+import { Application } from 'src/application/entities/application.entity';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
@@ -65,4 +66,8 @@ export class User extends BaseEntity {
     @OneToMany('Log', (log: Log) => log.user)
     @JoinColumn({ name: 'pk' })
     log: Array<Log>;
+
+    @OneToMany('Application', (application: Application) => application.user)
+    @JoinColumn({ name: 'pk' })
+    application: Array<Application>;
 }
