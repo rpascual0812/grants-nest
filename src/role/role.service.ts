@@ -20,6 +20,8 @@ export class RoleService {
                         '1=1', { keyword: `%${filters.keyword}%` }
                 )
                 .andWhere("archived = false")
+                .skip(filters.skip)
+                .take(filters.take)
                 .getManyAndCount()
                 ;
 
