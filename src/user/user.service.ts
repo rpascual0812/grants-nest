@@ -167,18 +167,18 @@ export class UserService {
             .select('users')
             .leftJoinAndSelect("users.account", "accounts")
             .addSelect(["accounts.pk", "accounts.username", "accounts.active", "accounts.verified"])
-            // .leftJoinAndMapOne(
-            //     'users.user_document',
-            //     UserDocument,
-            //     'user_documents',
-            //     'users.pk=user_documents.user_pk and user_documents.type = \'profile_photo\''
-            // )
-            // .leftJoinAndMapOne(
-            //     'user_documents.document',
-            //     Document,
-            //     'documents',
-            //     'user_documents.document_pk=documents.pk',
-            // )
+            .leftJoinAndMapOne(
+                'users.user_document',
+                UserDocument,
+                'user_documents',
+                'users.pk=user_documents.user_pk and user_documents.type = \'profile_photo\''
+            )
+            .leftJoinAndMapOne(
+                'user_documents.document',
+                Document,
+                'documents',
+                'user_documents.document_pk=documents.pk',
+            )
             .where("accounts.pk = :pk", { pk: user.account.pk })
             .getOne()
             ;

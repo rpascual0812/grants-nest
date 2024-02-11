@@ -10,9 +10,15 @@ import { GenderModule } from './gender/gender.module';
 import { RoleModule } from './role/role.module';
 import { DocumentModule } from './document/document.module';
 import { LogModule } from './log/log.module';
+import { ApplicationsModule } from './applications/applications.module';
+import { CheckService } from './cron/check/check.service';
+import { MailerService } from './cron/mailer/mailer.service';
+import { ScheduleModule } from '@nestjs/schedule';
+import { DestroyerService } from './cron/destroyer/destroyer.service';
 
 @Module({
     imports: [
+        ScheduleModule.forRoot(),
         TypeOrmModule.forRoot(dataSourceOptions),
         AuthModule,
         EmailModule,
@@ -20,9 +26,10 @@ import { LogModule } from './log/log.module';
         GenderModule,
         RoleModule,
         DocumentModule,
-        LogModule
+        LogModule,
+        ApplicationsModule
     ],
     controllers: [AppController],
-    providers: [AppService],
+    providers: [AppService, CheckService, MailerService, DestroyerService],
 })
 export class AppModule { }
