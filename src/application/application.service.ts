@@ -1,23 +1,100 @@
 import { Injectable } from '@nestjs/common';
-import { CreateApplicationDto } from './dto/create-application.dto';
-import { UpdateApplicationDto } from './dto/update-application.dto';
+import { v4 as uuidv4 } from 'uuid';
+
+import dataSource from 'db/data-source';
+import { Application } from './entities/application.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ApplicationProponent } from './entities/application-proponent.entity';
+import { ApplicationOrganizationProfile } from './entities/application-organization-profile.entity';
 
 @Injectable()
 export class ApplicationService {
-    create(createApplicationDto: CreateApplicationDto) {
-        return 'This action adds a new application';
+    uuid: string;
+
+    constructor(
+        @InjectRepository(Application)
+        private applicationRepository: Repository<Application>,
+    ) { }
+
+    async fetch() {
+        return await dataSource
+            .manager
+            .getRepository(Application)
+            .createQueryBuilder('applications')
+            .leftJoinAndSelect("applications.application_proponent", "application_proponents")
+            .leftJoinAndSelect("applications.application_organization_profile", "application_organization_profile")
+            .leftJoinAndSelect("applications.application_project", "application_projects")
+            .where("applications.archived = false")
+            .getMany();
     }
 
-    findAll() {
-        return `This action returns all application`;
+    fetchOne(pk: number) {
+        return dataSource.getRepository(Application)
+            .createQueryBuilder('applications')
+            .leftJoinAndSelect("applications.application_proponent", "application_proponents")
+            .leftJoinAndSelect("applications.application_organization_profile", "application_organization_profile")
+            .leftJoinAndSelect("applications.application_project", "application_projects")
+            .where("applications.pk = :pk", { pk })
+            .andWhere("applications.archived = :archived", { archived: false })
+            .getOne()
+            ;
     }
 
-    findOne(id: number) {
-        return `This action returns a #${id} application`;
+    async generate(user: any) {
+        this.uuid = uuidv4();
+
+        const obj: any = {
+            uuid: this.uuid,
+            created_by: user.pk
+        }
+
+        const application = this.applicationRepository.create(obj);
+        return this.applicationRepository.save(application);
     }
 
-    update(id: number, updateApplicationDto: UpdateApplicationDto) {
-        return `This action updates a #${id} application`;
+    async save(data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(
+                async (EntityManager) => {
+                    const application = await EntityManager.findOne(Application, { where: { uuid: data.uuid } });
+                    if (application) {
+                        let applicationProponent = new ApplicationProponent();
+                        applicationProponent.name = data.proponent.name;
+                        applicationProponent.address = data.proponent.address;
+                        applicationProponent.contact_number = data.proponent.contact_number;
+                        applicationProponent.email_address = data.proponent.email_address;
+                        applicationProponent.website = data.proponent.website;
+                        applicationProponent.application_pk = application.pk;
+                        const newApplicationProponent = await EntityManager.save(applicationProponent);
+
+                        let applicationOrganizationProfile = new ApplicationOrganizationProfile();
+                        applicationOrganizationProfile.organization_pk = data.organization_profile.organication_pk;
+                        const newApplicationOrganizationProfile = await EntityManager.save(applicationOrganizationProfile);
+
+                        return {
+                            status: true, data: {
+                                application,
+                                newApplicationProponent,
+                                newApplicationOrganizationProfile
+                            }
+                        };
+                    }
+                    else {
+                        return { status: false, code: 500, message: 'Application not found' };
+                    }
+
+                }
+            );
+        } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
     }
 
     remove(id: number) {

@@ -17,6 +17,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { DestroyerService } from './cron/destroyer/destroyer.service';
 import { OrganizationModule } from './organization/organization.module';
 import { CountryModule } from './country/country.module';
+import { ProvinceModule } from './province/province.module';
 
 @Module({
     imports: [
@@ -31,7 +32,9 @@ import { CountryModule } from './country/country.module';
         LogModule,
         ApplicationModule,
         OrganizationModule,
-        CountryModule
+        CountryModule,
+        ProvinceModule,
+        ApplicationModule
     ],
     controllers: [AppController],
     providers: [AppService, CheckService, MailerService, DestroyerService],
