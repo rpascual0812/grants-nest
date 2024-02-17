@@ -1,34 +1,38 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseGuards } from '@nestjs/common';
 import { ApplicationService } from './application.service';
-import { CreateApplicationDto } from './dto/create-application.dto';
-import { UpdateApplicationDto } from './dto/update-application.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('application')
 export class ApplicationController {
     constructor(private readonly applicationService: ApplicationService) { }
 
+    @UseGuards(JwtAuthGuard)
+    @Post('generate')
+    generate(@Request() req: any) {
+        return this.applicationService.generate(req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Post()
-    create(@Body() createApplicationDto: CreateApplicationDto) {
-        return this.applicationService.create(createApplicationDto);
+    save(@Body() body: any, @Request() req: any) {
+        return this.applicationService.save(body, req.user);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Get()
-    findAll() {
-        return this.applicationService.findAll();
+    fetch() {
+        return this.applicationService.fetch();
     }
 
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.applicationService.findOne(+id);
+    @UseGuards(JwtAuthGuard)
+    @Get(':pk')
+    fetchOne(@Param('pk') pk: number) {
+        return this.applicationService.fetchOne(+pk);
     }
 
-    @Patch(':id')
-    update(@Param('id') id: string, @Body() updateApplicationDto: UpdateApplicationDto) {
-        return this.applicationService.update(+id, updateApplicationDto);
-    }
-
-    @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.applicationService.remove(+id);
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk')
+    remove(@Param('pk') pk: string) {
+        return this.applicationService.remove(+pk);
     }
 }
