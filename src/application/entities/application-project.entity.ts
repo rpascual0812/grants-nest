@@ -2,6 +2,8 @@ import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, Jo
 import { User } from 'src/user/entities/user.entity';
 import { ApplicationContactPerson } from './application-contact-person.entity';
 import { Application } from './application.entity';
+import { ApplicationProjectBeneficiary } from './application-project-beneficiary.entity';
+import { ApplicationProjectLocation } from './application-project-location.entity';
 
 @Entity({ name: 'application_projects' })
 export class ApplicationProject extends BaseEntity {
@@ -26,6 +28,9 @@ export class ApplicationProject extends BaseEntity {
     @Column({ type: 'text', nullable: false })
     expected_output: string;
 
+    @Column({ type: 'text', nullable: false })
+    how_will_affect: string;
+
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
 
@@ -35,4 +40,12 @@ export class ApplicationProject extends BaseEntity {
     @OneToOne(type => Application, application => application.application_project, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'application_pk' })
     application: Application;
+
+    @OneToMany('ApplicationProjectBeneficiary', (applicationProjectBeneficiary: ApplicationProjectBeneficiary) => applicationProjectBeneficiary.application_project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'application_project_beneficiary_pk' })
+    application_project_beneficiary: ApplicationProjectBeneficiary;
+
+    @OneToMany('ApplicationProjectLocation', (applicationProjectLocation: ApplicationProjectLocation) => applicationProjectLocation.application_project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'application_project_beneficiary_pk' })
+    application_project_location: ApplicationProjectLocation;
 }
