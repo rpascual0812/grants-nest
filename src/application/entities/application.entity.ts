@@ -18,6 +18,9 @@ export class Application extends BaseEntity {
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
 
+    @Column({ default: false })
+    archived: boolean;
+
     /**
      * Relationship
      */
