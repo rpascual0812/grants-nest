@@ -18,6 +18,7 @@ import { DestroyerService } from './cron/destroyer/destroyer.service';
 import { OrganizationModule } from './organization/organization.module';
 import { CountryModule } from './country/country.module';
 import { ProvinceModule } from './province/province.module';
+import { PartnerModule } from './partner/partner.module';
 
 @Module({
     imports: [
@@ -34,7 +35,8 @@ import { ProvinceModule } from './province/province.module';
         OrganizationModule,
         CountryModule,
         ProvinceModule,
-        ApplicationModule
+        ApplicationModule,
+        PartnerModule
     ],
     controllers: [AppController],
     providers: [AppService, CheckService, MailerService, DestroyerService],
