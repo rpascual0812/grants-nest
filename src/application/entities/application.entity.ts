@@ -3,6 +3,7 @@ import { User } from 'src/user/entities/user.entity';
 import { ApplicationProponent } from './application-proponent.entity';
 import { ApplicationOrganizationProfile } from './application-organization-profile.entity';
 import { ApplicationProject } from './application-project.entity';
+import { Partner } from 'src/partner/entities/partner.entity';
 
 @Entity({ name: 'applications' })
 export class Application extends BaseEntity {
@@ -11,6 +12,9 @@ export class Application extends BaseEntity {
 
     @Column({ type: 'text', nullable: false })
     uuid: string;
+
+    @Column({ name: 'partner_pk', nullable: false })
+    partner_pk: number;
 
     @Column({ name: 'created_by', nullable: false })
     created_by: number;
@@ -28,6 +32,10 @@ export class Application extends BaseEntity {
     @ManyToOne(type => User, user => user.application, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'created_by' })
     user: User;
+
+    @ManyToOne(type => Partner, partner => partner.application, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'partner_pk' })
+    partner: Partner;
 
     @OneToOne(type => ApplicationProponent, application_proponent => application_proponent.application, { cascade: true })
     application_proponent: ApplicationProponent;
