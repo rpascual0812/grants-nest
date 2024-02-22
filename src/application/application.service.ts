@@ -21,6 +21,7 @@ export class ApplicationService {
         return await dataSource.manager
             .getRepository(Application)
             .createQueryBuilder('applications')
+            .leftJoinAndSelect('applications.partner', 'partner')
             .leftJoinAndSelect('applications.application_proponent', 'application_proponents')
             .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
             .leftJoinAndSelect('applications.application_project', 'application_projects')
@@ -32,6 +33,7 @@ export class ApplicationService {
         return dataSource
             .getRepository(Application)
             .createQueryBuilder('applications')
+            .leftJoinAndSelect('applications.partner', 'partner')
             .leftJoinAndSelect('applications.application_proponent', 'application_proponents')
             .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
             .leftJoinAndSelect('applications.application_project', 'application_projects')
@@ -40,12 +42,13 @@ export class ApplicationService {
             .getOne();
     }
 
-    async generate(user: any) {
+    async generate(data: any, user: any) {
         this.uuid = uuidv4();
 
         const obj: any = {
             uuid: this.uuid,
             created_by: user.pk,
+            partner_pk: data.partner_pk,
         };
 
         const application = this.applicationRepository.create(obj);
@@ -60,6 +63,9 @@ export class ApplicationService {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const application = await EntityManager.findOne(Application, {
                     where: { uuid: data.uuid },
+                    relations: {
+                        partner: true,
+                    },
                 });
                 if (application) {
                     const applicationProponent = new ApplicationProponent();
