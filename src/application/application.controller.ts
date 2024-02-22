@@ -8,8 +8,8 @@ export class ApplicationController {
 
     @UseGuards(JwtAuthGuard)
     @Post('generate')
-    generate(@Request() req: any) {
-        return this.applicationService.generate(req.user);
+    generate(@Body() body: any, @Request() req: any) {
+        return this.applicationService.generate(body, req.user);
     }
 
     @UseGuards(JwtAuthGuard)
