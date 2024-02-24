@@ -7,8 +7,8 @@ export class ApplicationContactPerson {
     @PrimaryGeneratedColumn()
     pk: number;
 
-    @Column({ name: 'application_pk', nullable: false })
-    application_pk: number;
+    @Column({ name: 'application_proponent_pk', nullable: false })
+    application_proponent_pk: number;
 
     @Column({ type: 'text', nullable: false })
     name: string;
