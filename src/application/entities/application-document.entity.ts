@@ -3,7 +3,6 @@ import { Entity, Column, PrimaryGeneratedColumn, Unique, JoinColumn, ManyToOne, 
 import { Application } from './application.entity';
 import { Document } from 'src/document/entities/document.entity';
 
-
 @Entity({ name: 'application_documents' })
 @Unique(['type', 'application_pk', 'document_pk'])
 export class ApplicationDocument {
