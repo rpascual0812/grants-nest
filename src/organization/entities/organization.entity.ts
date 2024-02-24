@@ -10,6 +10,9 @@ export class Organization extends BaseEntity {
     @Column({ type: 'text', nullable: false })
     name: string;
 
+    @Column({ type: 'text', nullable: true })
+    description: string;
+
     @Column({ default: false })
     archived: boolean;
 
