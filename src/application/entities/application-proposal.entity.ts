@@ -13,6 +13,15 @@ export class ApplicationProposal extends BaseEntity {
     @Column({ type: 'text', nullable: false })
     monitor: string;
 
+    @Column({ name: 'budget_request_usd', nullable: false })
+    budget_request_usd: number;
+
+    @Column({ type: 'money', name: 'budget_request_other', nullable: false })
+    budget_request_other: number;
+
+    @Column({ type: 'text', nullable: false })
+    budget_request_other_currency: string;
+
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
 

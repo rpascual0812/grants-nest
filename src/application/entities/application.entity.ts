@@ -6,6 +6,9 @@ import { ApplicationProject } from './application-project.entity';
 import { Partner } from 'src/partner/entities/partner.entity';
 import { ApplicationProposal } from './application-proposal.entity';
 import { ApplicationDocument } from './application-document.entity';
+import { ApplicationNonprofitEquivalencyDetermination } from './application-nonprofit-equivalency-determination.entity';
+import { ApplicationFiscalSponsor } from './application-fiscal-sponsor.entity';
+import { ApplicationReference } from './application-references.entity';
 
 @Entity({ name: 'applications' })
 export class Application extends BaseEntity {
@@ -51,7 +54,17 @@ export class Application extends BaseEntity {
     @OneToOne(type => ApplicationProposal, application_proposal => application_proposal.application, { cascade: true })
     application_proposal: ApplicationProposal;
 
+    @OneToOne(type => ApplicationNonprofitEquivalencyDetermination, application_nonprofit_equivalency_determination => application_nonprofit_equivalency_determination.application, { cascade: true })
+    application_nonprofit_equivalency_determination: ApplicationNonprofitEquivalencyDetermination;
+
+    @OneToOne(type => ApplicationFiscalSponsor, application_fiscal_sponsor => application_fiscal_sponsor.application, { cascade: true })
+    application_fiscal_sponsor: ApplicationFiscalSponsor;
+
     @OneToMany('ApplicationDocument', (applicationDocument: ApplicationDocument) => applicationDocument.application)
     @JoinColumn({ name: 'pk' })
     application_document: Array<ApplicationDocument>;
+
+    @OneToMany('ApplicationReference', (ApplicationReference: ApplicationReference) => ApplicationReference.application)
+    @JoinColumn({ name: 'pk' })
+    application_reference: Array<ApplicationReference>;
 }
