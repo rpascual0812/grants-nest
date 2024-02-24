@@ -25,6 +25,27 @@ export class ApplicationOrganizationProfile extends BaseEntity {
     organization_pk: number;
 
     @Column({ type: 'text', nullable: false })
+    tribe: string;
+
+    @Column({ default: false })
+    womens_organization: boolean;
+
+    @Column({ default: false })
+    youth_organization: boolean;
+
+    @Column({ default: false })
+    differently_abled_organization: boolean;
+
+    @Column({ type: 'text', nullable: true })
+    other_sectoral_group: string;
+
+    @Column({ default: false })
+    farmers_group: boolean;
+
+    @Column({ default: false })
+    fisherfolks: boolean;
+
+    @Column({ type: 'text', nullable: false })
     mission: string;
 
     @Column({ type: 'text', nullable: false })
