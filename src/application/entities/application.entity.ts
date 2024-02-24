@@ -4,6 +4,8 @@ import { ApplicationProponent } from './application-proponent.entity';
 import { ApplicationOrganizationProfile } from './application-organization-profile.entity';
 import { ApplicationProject } from './application-project.entity';
 import { Partner } from 'src/partner/entities/partner.entity';
+import { ApplicationProposal } from './application-proposal.entity';
+import { ApplicationDocument } from './application-document.entity';
 
 @Entity({ name: 'applications' })
 export class Application extends BaseEntity {
@@ -45,4 +47,11 @@ export class Application extends BaseEntity {
 
     @OneToOne(type => ApplicationProject, application_project => application_project.application, { cascade: true })
     application_project: ApplicationProject;
+
+    @OneToOne(type => ApplicationProposal, application_proposal => application_proposal.application, { cascade: true })
+    application_proposal: ApplicationProposal;
+
+    @OneToMany('ApplicationDocument', (applicationDocument: ApplicationDocument) => applicationDocument.application)
+    @JoinColumn({ name: 'pk' })
+    application_document: Array<ApplicationDocument>;
 }
