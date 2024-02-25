@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import { DateTime } from "luxon";
 
 import dataSource from 'db/data-source';
 import { Application } from './entities/application.entity';
@@ -15,7 +16,7 @@ export class ApplicationService {
     constructor(
         @InjectRepository(Application)
         private applicationRepository: Repository<Application>,
-    ) {}
+    ) { }
 
     async fetch() {
         return await dataSource.manager
@@ -43,16 +44,59 @@ export class ApplicationService {
     }
 
     async generate(data: any, user: any) {
-        this.uuid = uuidv4();
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
 
-        const obj: any = {
-            uuid: this.uuid,
-            created_by: user.pk,
-            partner_pk: data.partner_pk,
-        };
+        try {
+            this.uuid = uuidv4();
+            const date = DateTime.now();
 
-        const application = this.applicationRepository.create(obj);
-        return this.applicationRepository.save(application);
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const keyword = date.toFormat('yyLLdd');
+                const latest = await dataSource.manager.getRepository(Application)
+                    .createQueryBuilder("applications")
+                    .where("number like :number", { number: `${keyword}%` })
+                    .where("archived = false")
+                    .orderBy("number", "DESC")
+                    .getOne();
+
+                let application_number = keyword + '00001';
+                if (latest) {
+                    let new_number = parseInt(latest.number.slice(6)) + 1;
+                    application_number = keyword + new_number.toString().padStart(5, '0');
+                }
+
+                const obj: any = {
+                    uuid: this.uuid,
+                    number: application_number,
+                    created_by: user.pk,
+                    partner_pk: data.partner_pk,
+                };
+
+                const application = this.applicationRepository.create(obj);
+                return this.applicationRepository.save(application);
+            });
+        } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+
+        // this.uuid = uuidv4();
+        // const date = DateTime.now();
+
+        // const latest = await Application.findOne();
+
+        // return date.toFormat('yymmdd');
+        // const obj: any = {
+        //     uuid: this.uuid,
+        //     created_by: user.pk,
+        //     partner_pk: data.partner_pk,
+        // };
+
+        // const application = this.applicationRepository.create(obj);
+        // return this.applicationRepository.save(application);
     }
 
     async save(data: any, user: any) {
