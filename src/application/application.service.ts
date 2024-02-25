@@ -8,15 +8,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ApplicationProponent } from './entities/application-proponent.entity';
 import { ApplicationOrganizationProfile } from './entities/application-organization-profile.entity';
+import { GlobalService } from 'src/utilities/global.service';
 
 @Injectable()
-export class ApplicationService {
+export class ApplicationService extends GlobalService {
     uuid: string;
 
     constructor(
         @InjectRepository(Application)
         private applicationRepository: Repository<Application>,
-    ) { }
+    ) {
+        super();
+    }
 
     async fetch() {
         return await dataSource.manager
@@ -74,29 +77,15 @@ export class ApplicationService {
                 };
 
                 const application = this.applicationRepository.create(obj);
+                this.saveLog({});
                 return this.applicationRepository.save(application);
             });
         } catch (err) {
-            console.log(err);
+            this.saveError({});
             return { status: false, code: err.code };
         } finally {
             await queryRunner.release();
         }
-
-        // this.uuid = uuidv4();
-        // const date = DateTime.now();
-
-        // const latest = await Application.findOne();
-
-        // return date.toFormat('yymmdd');
-        // const obj: any = {
-        //     uuid: this.uuid,
-        //     created_by: user.pk,
-        //     partner_pk: data.partner_pk,
-        // };
-
-        // const application = this.applicationRepository.create(obj);
-        // return this.applicationRepository.save(application);
     }
 
     async save(data: any, user: any) {
@@ -130,6 +119,7 @@ export class ApplicationService {
                     applicationOrganizationProfile.project_website = data.organization_profile.project_website;
                     applicationOrganizationProfile.application_pk = application.pk;
                     const newApplicationOrganizationProfile = await EntityManager.save(applicationOrganizationProfile);
+                    this.saveLog({});
 
                     return {
                         status: true,
@@ -147,8 +137,9 @@ export class ApplicationService {
                     };
                 }
             });
+
         } catch (err) {
-            console.log(err);
+            this.saveError({});
             return { status: false, code: err.code };
         } finally {
             await queryRunner.release();
