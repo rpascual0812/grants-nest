@@ -11,12 +11,17 @@ import { ApplicationFiscalSponsor } from './application-fiscal-sponsor.entity';
 import { ApplicationReference } from './application-references.entity';
 
 @Entity({ name: 'applications' })
+@Unique(['uuid'])
+@Unique(['number'])
 export class Application extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
 
     @Column({ type: 'text', nullable: false })
     uuid: string;
+
+    @Column({ name: 'number', nullable: false })
+    number: string;
 
     @Column({ name: 'partner_pk', nullable: false })
     partner_pk: number;
