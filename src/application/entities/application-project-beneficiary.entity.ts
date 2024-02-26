@@ -2,6 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, Jo
 import { ApplicationProject } from './application-project.entity';
 
 @Entity({ name: 'application_project_beneficiaries' })
+@Unique(['type', 'name'])
 export class ApplicationProjectBeneficiary extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
@@ -13,10 +14,10 @@ export class ApplicationProjectBeneficiary extends BaseEntity {
     type: string;
 
     @Column({ type: 'text', nullable: false })
-    diffable: string;
+    name: string;
 
-    @Column({ type: 'text', nullable: false })
-    other: string;
+    @Column({ name: 'count', nullable: false })
+    count: number;
 
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
