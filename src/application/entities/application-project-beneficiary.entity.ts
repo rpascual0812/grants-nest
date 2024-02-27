@@ -2,7 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, Jo
 import { ApplicationProject } from './application-project.entity';
 
 @Entity({ name: 'application_project_beneficiaries' })
-@Unique(['type', 'name'])
+@Unique(['application_project_pk', 'type', 'name'])
 export class ApplicationProjectBeneficiary extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
