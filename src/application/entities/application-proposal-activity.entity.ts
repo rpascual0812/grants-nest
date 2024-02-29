@@ -1,10 +1,23 @@
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    Unique,
+    OneToOne,
+    ManyToOne,
+    JoinColumn,
+    BaseEntity,
+    OneToMany,
+} from 'typeorm';
 import { ApplicationProposal } from './application-proposal.entity';
 
 @Entity({ name: 'application_proposal_activities' })
 export class ApplicationProposalActivity extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
+
+    @Column({ name: 'application_proposal_pk', nullable: false })
+    application_proposal_pk: number;
 
     @Column({ type: 'text', nullable: false })
     name: string;
@@ -18,7 +31,11 @@ export class ApplicationProposalActivity extends BaseEntity {
     /**
      * Relationship
      */
-    @ManyToOne(type => ApplicationProposal, application_proposal => application_proposal.application_proposal_activity, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne(
+        (type) => ApplicationProposal,
+        (application_proposal) => application_proposal.application_proposal_activity,
+        { onDelete: 'CASCADE', onUpdate: 'CASCADE' },
+    )
     @JoinColumn({ name: 'application_proposal_pk' })
     application_proposal: ApplicationProposal;
 }
