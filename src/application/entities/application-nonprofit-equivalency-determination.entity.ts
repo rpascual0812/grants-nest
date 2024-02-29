@@ -14,16 +14,19 @@ export class ApplicationNonprofitEquivalencyDetermination {
     @Column({ type: 'date', nullable: false })
     year: Date;
 
-    @Column({ name: 'budget_request_usd', nullable: false })
+    @Column({ type: 'money', name: 'financial_last_year_usd', nullable: false })
     financial_last_year_usd: number;
 
-    @Column({ type: 'money', name: 'budget_request_other', nullable: false })
+    @Column({ type: 'money', name: 'financial_last_year_other', nullable: false })
     financial_last_year_other: number;
 
     @Column({ type: 'text', nullable: false })
     financial_last_year_other_currency: string;
 
-    @Column({ name: 'financial_current_usd', nullable: false })
+    @Column({ type: 'text', nullable: false })
+    financial_last_year_source: string;
+
+    @Column({ type: 'money', name: 'financial_current_usd', nullable: false })
     financial_current_usd: number;
 
     @Column({ type: 'money', name: 'financial_current_other', nullable: false })
@@ -33,7 +36,7 @@ export class ApplicationNonprofitEquivalencyDetermination {
     financial_current_other_currency: string;
 
     @Column({ type: 'text', nullable: false })
-    source: string;
+    financial_current_source: string;
 
     @Column({ type: 'text', nullable: false })
     officers: string;
