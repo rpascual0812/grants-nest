@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { ApplicationProponent } from './entities/application-proponent.entity';
 import { ApplicationOrganizationProfile } from './entities/application-organization-profile.entity';
 import { GlobalService } from 'src/utilities/global.service';
+import { Log } from 'src/log/entities/log.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -146,7 +147,25 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} application`;
+    async remove(pk: number, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                EntityManager.update(Application, { pk }, { archived: true });
+
+                // save logs
+                const model = { pk, name: 'applications', status: 'deleted' };
+                await this.saveLog({ model, user });
+
+                return { status: true };
+            });
+        } catch (err) {
+            this.saveError({});
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
     }
 }
