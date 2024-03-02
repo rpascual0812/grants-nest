@@ -5,7 +5,7 @@ import { Partner } from './entities/partner.entity';
 @Injectable()
 export class PartnerService {
 
-    async fetch() {
+    async findAll() {
         try {
             const partners = await dataSource.manager
                 .getRepository(Partner)
@@ -28,7 +28,7 @@ export class PartnerService {
         }
     }
 
-    async fetchOne(pk: number) {
+    async find(pk: number) {
         return await dataSource.manager
             .getRepository(Partner)
             .createQueryBuilder('partners')
