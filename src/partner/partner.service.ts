@@ -6,11 +6,26 @@ import { Partner } from './entities/partner.entity';
 export class PartnerService {
 
     async fetch() {
-        return await dataSource.manager
-            .getRepository(Partner)
-            .createQueryBuilder('partners')
-            .where('partners.archived = false')
-            .getMany();
+        try {
+            const partners = await dataSource.manager
+                .getRepository(Partner)
+                .createQueryBuilder('partners')
+                .select('partners')
+                .where('partners.archived=false')
+                .orderBy('partners.name')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: partners[0],
+                total: partners[1],
+            };
+        } catch (error) {
+            return {
+                status: false,
+                code: 500,
+            };
+        }
     }
 
     async fetchOne(pk: number) {
@@ -19,6 +34,6 @@ export class PartnerService {
             .createQueryBuilder('partners')
             .where('partners.pk = :pk', { pk })
             .where('partners.archived = false')
-            .getMany();
+            .getOne();
     }
 }
