@@ -9,11 +9,11 @@ export class PartnerController {
 
     @Get()
     fetch() {
-        return this.partnerService.fetch();
+        return this.partnerService.findAll();
     }
 
     @Get(':pk')
     fetchOne(@Param('pk') pk: string) {
-        return this.partnerService.fetchOne(+pk);
+        return this.partnerService.find(+pk);
     }
 }
