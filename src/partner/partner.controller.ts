@@ -5,30 +5,15 @@ import { UpdatePartnerDto } from './dto/update-partner.dto';
 
 @Controller('partner')
 export class PartnerController {
-    constructor(private readonly partnerService: PartnerService) {}
-
-    @Post()
-    create(@Body() createPartnerDto: CreatePartnerDto) {
-        return this.partnerService.create(createPartnerDto);
-    }
+    constructor(private readonly partnerService: PartnerService) { }
 
     @Get()
-    findAll() {
-        return this.partnerService.findAll();
+    fetch() {
+        return this.partnerService.fetch();
     }
 
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.partnerService.findOne(+id);
-    }
-
-    @Patch(':id')
-    update(@Param('id') id: string, @Body() updatePartnerDto: UpdatePartnerDto) {
-        return this.partnerService.update(+id, updatePartnerDto);
-    }
-
-    @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.partnerService.remove(+id);
+    @Get(':pk')
+    fetchOne(@Param('pk') pk: string) {
+        return this.partnerService.fetchOne(+pk);
     }
 }

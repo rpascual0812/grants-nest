@@ -9,6 +9,7 @@ import { ApplicationDocument } from './application-document.entity';
 import { ApplicationNonprofitEquivalencyDetermination } from './application-nonprofit-equivalency-determination.entity';
 import { ApplicationFiscalSponsor } from './application-fiscal-sponsor.entity';
 import { ApplicationReference } from './application-references.entity';
+import { ApplicationStatus } from './application-statuses.entity';
 
 @Entity({ name: 'applications' })
 @Unique(['uuid'])
@@ -31,6 +32,9 @@ export class Application extends BaseEntity {
 
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
+
+    @Column({ name: 'status_pk', nullable: true })
+    status_pk: number;
 
     @Column({ default: false })
     archived: boolean;
@@ -72,4 +76,12 @@ export class Application extends BaseEntity {
     @OneToMany('ApplicationReference', (ApplicationReference: ApplicationReference) => ApplicationReference.application)
     @JoinColumn({ name: 'pk' })
     application_reference: Array<ApplicationReference>;
+
+    // @ManyToOne(type => ApplicationStatus, application_status => application_status.application, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    // @JoinColumn({ name: 'application_status_pk' })
+    // application_status: ApplicationStatus;
+
+    @OneToMany('ApplicationStatus', (application_statuses: ApplicationStatus) => application_statuses.application)
+    @JoinColumn({ name: 'pk' })
+    application_statuses: Array<ApplicationStatus>;
 }
