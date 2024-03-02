@@ -6,6 +6,7 @@ import { UserDocument } from './user-document.entity';
 import { Log } from 'src/log/entities/log.entity';
 import { Application } from 'src/application/entities/application.entity';
 import { ApplicationDocument } from 'src/application/entities/application-document.entity';
+import { Status } from 'src/status/entities/status.entity';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
@@ -75,4 +76,8 @@ export class User extends BaseEntity {
     @OneToMany('ApplicationDocument', (application_document: ApplicationDocument) => application_document.user, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'application_document_pk' })
     application_document: ApplicationDocument;
+
+    @OneToMany('Status', (status: Status) => status.user)
+    @JoinColumn({ name: 'pk' })
+    status: Array<Status>;
 }
