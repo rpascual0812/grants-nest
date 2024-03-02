@@ -31,25 +31,38 @@ export class ApplicationService extends GlobalService {
         super();
     }
 
-    async fetch() {
-        return await dataSource.manager
-            .getRepository(Application)
-            .createQueryBuilder('applications')
-            .leftJoinAndSelect('applications.partner', 'partner')
-            .leftJoinAndSelect('applications.application_proponent', 'application_proponents')
-            .leftJoinAndMapOne(
-                'applications.application_proponent',
-                'applications.application_proponent.application_contacts',
-                'application_proponent',
-                'application_proponent.pk == application_contacts.application_propnent_pk',
-            )
-            .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
-            .leftJoinAndSelect('applications.application_project', 'application_projects')
-            .where('applications.archived = false')
-            .getMany();
+    async findAll() {
+        try {
+            const data = await dataSource.manager
+                .getRepository(Application)
+                .createQueryBuilder('applications')
+                .leftJoinAndSelect('applications.partner', 'partner')
+                .leftJoinAndSelect('applications.application_proponent', 'application_proponents')
+                .leftJoinAndMapOne(
+                    'applications.application_proponent',
+                    'applications.application_proponent.application_contacts',
+                    'application_proponent',
+                    'application_proponent.pk == application_contacts.application_propnent_pk',
+                )
+                .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
+                .leftJoinAndSelect('applications.application_project', 'application_projects')
+                .where('applications.archived = false')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: data[0],
+                total: data[1],
+            };
+        } catch (error) {
+            return {
+                status: false,
+                code: 500,
+            };
+        }
     }
 
-    fetchOne(pk: number) {
+    async find(pk: number) {
         return dataSource
             .getRepository(Application)
             .createQueryBuilder('applications')
