@@ -21,13 +21,13 @@ export class ApplicationController {
     @UseGuards(JwtAuthGuard)
     @Get()
     fetch() {
-        return this.applicationService.fetch();
+        return this.applicationService.findAll();
     }
 
     @UseGuards(JwtAuthGuard)
     @Get(':pk')
     fetchOne(@Param('pk') pk: number) {
-        return this.applicationService.fetchOne(+pk);
+        return this.applicationService.find(+pk);
     }
 
     @UseGuards(JwtAuthGuard)
