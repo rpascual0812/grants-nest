@@ -25,9 +25,9 @@ export class ApplicationController {
     }
 
     @UseGuards(JwtAuthGuard)
-    @Get(':pk')
-    fetchOne(@Param('pk') pk: number) {
-        return this.applicationService.find(+pk);
+    @Get(':uuid')
+    fetchOne(@Param('uuid') uuid: string) {
+        return this.applicationService.find(uuid);
     }
 
     @UseGuards(JwtAuthGuard)
