@@ -57,7 +57,7 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    async find(pk: number) {
+    async find(uuid: string) {
         try {
             const data = await dataSource
                 .getRepository(Application)
@@ -79,7 +79,7 @@ export class ApplicationService extends GlobalService {
                     'application_nonprofit_equivalency_determination',
                 )
                 .leftJoinAndSelect('applications.application_reference', 'application_reference')
-                .where('applications.pk = :pk', { pk })
+                .where('applications.uuid = :uuid', { uuid })
                 .andWhere('applications.archived = :archived', { archived: false })
                 .getOne();
             return {
@@ -127,7 +127,7 @@ export class ApplicationService extends GlobalService {
                 };
 
                 const application = this.applicationRepository.create(obj);
-                this.saveLog({});
+                // this.saveLog({});
                 return this.applicationRepository.save(application);
             });
         } catch (err) {
@@ -188,7 +188,7 @@ export class ApplicationService extends GlobalService {
                     applicationOrganizationProfile.other_sectoral_group =
                         data?.organization_profile?.other_sectoral_group;
                     const newApplicationOrganizationProfile = await EntityManager.save(applicationOrganizationProfile);
-                    this.saveLog({});
+                    // this.saveLog({});
 
                     // Project Information
                     const applicationProjectInfo = new ApplicationProject();
