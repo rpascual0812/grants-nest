@@ -37,13 +37,8 @@ export class ApplicationService extends GlobalService {
                 .getRepository(Application)
                 .createQueryBuilder('applications')
                 .leftJoinAndSelect('applications.partner', 'partner')
-                .leftJoinAndSelect('applications.application_proponent', 'application_proponents')
-                .leftJoinAndMapOne(
-                    'applications.application_proponent',
-                    'applications.application_proponent.application_contacts',
-                    'application_proponent',
-                    'application_proponent.pk == application_contacts.application_propnent_pk',
-                )
+                .leftJoinAndSelect('applications.application_proponent', 'application_proponent')
+                .leftJoinAndSelect('application_proponent.contact_person', 'application_contact')
                 .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
                 .leftJoinAndSelect('applications.application_project', 'application_projects')
                 .where('applications.archived = false')
@@ -62,17 +57,42 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    async find(pk: number) {
-        return dataSource
-            .getRepository(Application)
-            .createQueryBuilder('applications')
-            .leftJoinAndSelect('applications.partner', 'partner')
-            .leftJoinAndSelect('applications.application_proponent', 'application_proponents')
-            .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
-            .leftJoinAndSelect('applications.application_project', 'application_projects')
-            .where('applications.pk = :pk', { pk })
-            .andWhere('applications.archived = :archived', { archived: false })
-            .getOne();
+    async find(uuid: string) {
+        try {
+            const data = await dataSource
+                .getRepository(Application)
+                .createQueryBuilder('applications')
+                .leftJoinAndSelect('applications.partner', 'partner')
+                .leftJoinAndSelect('applications.application_proponent', 'application_proponent')
+                .leftJoinAndSelect('application_proponent.contact_person', 'application_contact')
+                .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
+                .leftJoinAndSelect('applications.application_project', 'application_projects')
+                .leftJoinAndSelect('application_projects.application_project_location', 'application_project_location')
+                .leftJoinAndSelect('applications.application_proposal', 'application_proposal')
+                .leftJoinAndSelect(
+                    'application_proposal.application_proposal_activity',
+                    'application_proposal_activity',
+                )
+                .leftJoinAndSelect('applications.application_fiscal_sponsor', 'application_fiscal_sponsor')
+                .leftJoinAndSelect(
+                    'applications.application_nonprofit_equivalency_determination',
+                    'application_nonprofit_equivalency_determination',
+                )
+                .leftJoinAndSelect('applications.application_reference', 'application_reference')
+                .where('applications.uuid = :uuid', { uuid })
+                .andWhere('applications.archived = :archived', { archived: false })
+                .getOne();
+            return {
+                status: true,
+                data,
+            };
+        } catch {
+            this.saveLog({});
+            return {
+                status: false,
+                code: 500,
+            };
+        }
     }
 
     async generate(data: any, user: any) {
@@ -107,7 +127,7 @@ export class ApplicationService extends GlobalService {
                 };
 
                 const application = this.applicationRepository.create(obj);
-                this.saveLog({});
+                // this.saveLog({});
                 return this.applicationRepository.save(application);
             });
         } catch (err) {
@@ -168,7 +188,7 @@ export class ApplicationService extends GlobalService {
                     applicationOrganizationProfile.other_sectoral_group =
                         data?.organization_profile?.other_sectoral_group;
                     const newApplicationOrganizationProfile = await EntityManager.save(applicationOrganizationProfile);
-                    this.saveLog({});
+                    // this.saveLog({});
 
                     // Project Information
                     const applicationProjectInfo = new ApplicationProject();
