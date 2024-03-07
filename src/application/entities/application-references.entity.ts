@@ -1,6 +1,4 @@
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
-import { User } from 'src/user/entities/user.entity';
-import { ApplicationContactPerson } from './application-contact-person.entity';
 import { Application } from './application.entity';
 
 @Entity({ name: 'application_references' })
