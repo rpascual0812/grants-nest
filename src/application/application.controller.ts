@@ -4,7 +4,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('application')
 export class ApplicationController {
-    constructor(private readonly applicationService: ApplicationService) {}
+    constructor(private readonly applicationService: ApplicationService) { }
 
     @UseGuards(JwtAuthGuard)
     @Post('generate')
@@ -25,9 +25,15 @@ export class ApplicationController {
     }
 
     @UseGuards(JwtAuthGuard)
-    @Get(':uuid')
-    fetchOne(@Param('uuid') uuid: string) {
-        return this.applicationService.find(uuid);
+    @Get(':pk')
+    fetchOne(@Param('pk') pk: string) {
+        return this.applicationService.find({ pk });
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':number/review')
+    review(@Param('number') number: string) {
+        return this.applicationService.find({ number });
     }
 
     @UseGuards(JwtAuthGuard)

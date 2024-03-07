@@ -62,14 +62,19 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    async find(uuid: string) {
+    async find(filter: any) {
         try {
             const data = await dataSource
                 .getRepository(Application)
                 .createQueryBuilder('applications')
                 .leftJoinAndSelect('applications.partner', 'partner')
-                .leftJoinAndSelect('applications.application_proponent', 'application_proponent')
-                .leftJoinAndSelect('application_proponent.contact_person', 'application_contact')
+                .leftJoinAndSelect('applications.application_proponent', 'application_proponents')
+                .leftJoinAndMapMany(
+                    'application_proponents.contacts',
+                    ApplicationProponentContact,
+                    'application_proponent_contacts',
+                    'application_proponents.pk=application_proponent_contacts.application_proponent_pk'
+                )
                 .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
                 .leftJoinAndSelect('applications.application_project', 'application_projects')
                 .leftJoinAndSelect('application_projects.application_project_location', 'application_project_location')
@@ -84,15 +89,17 @@ export class ApplicationService extends GlobalService {
                     'application_nonprofit_equivalency_determination',
                 )
                 .leftJoinAndSelect('applications.application_reference', 'application_reference')
-                .where('applications.uuid = :uuid', { uuid })
+                .andWhere(filter.hasOwnProperty('pk') ? "applications.pk = :pk" : '1=1', { pk: filter.pk })
+                .andWhere(filter.hasOwnProperty('uuid') ? "applications.uuid = :uuid" : '1=1', { uuid: filter.uuid })
+                .andWhere(filter.hasOwnProperty('number') ? "applications.number = :number" : '1=1', { number: filter.number })
                 .andWhere('applications.archived = :archived', { archived: false })
                 .getOne();
             return {
                 status: true,
                 data,
             };
-        } catch {
-            this.saveLog({});
+        } catch (err) {
+            console.log(err);
             return {
                 status: false,
                 code: 500,
