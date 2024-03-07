@@ -10,7 +10,6 @@ import { ApplicationProponent } from './entities/application-proponent.entity';
 import { ApplicationOrganizationProfile } from './entities/application-organization-profile.entity';
 import { GlobalService } from 'src/utilities/global.service';
 import { Log } from 'src/log/entities/log.entity';
-import { ApplicationContactPerson } from './entities/application-contact-person.entity';
 import { ApplicationProject } from './entities/application-project.entity';
 import { ApplicationProjectLocation } from './entities/application-project-location.entity';
 import { ApplicationProjectBeneficiary } from './entities/application-project-beneficiary.entity';
@@ -19,6 +18,7 @@ import { ApplicationProposal } from './entities/application-proposal.entity';
 import { ApplicationProposalActivity } from './entities/application-proposal-activity.entity';
 import { ApplicationFiscalSponsor } from './entities/application-fiscal-sponsor.entity';
 import { ApplicationNonprofitEquivalencyDetermination } from './entities/application-nonprofit-equivalency-determination.entity';
+import { ApplicationProponentContact } from './entities/application-proponent-contact.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -37,8 +37,13 @@ export class ApplicationService extends GlobalService {
                 .getRepository(Application)
                 .createQueryBuilder('applications')
                 .leftJoinAndSelect('applications.partner', 'partner')
-                .leftJoinAndSelect('applications.application_proponent', 'application_proponent')
-                .leftJoinAndSelect('application_proponent.contact_person', 'application_contact')
+                .leftJoinAndSelect('applications.application_proponent', 'application_proponents')
+                .leftJoinAndMapMany(
+                    'application_proponents.contacts',
+                    ApplicationProponentContact,
+                    'application_proponent_contacts',
+                    'application_proponents.pk=application_proponent_contacts.application_proponent_pk'
+                )
                 .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
                 .leftJoinAndSelect('applications.application_project', 'application_projects')
                 .where('applications.archived = false')
@@ -161,7 +166,7 @@ export class ApplicationService extends GlobalService {
                     applicationProponent.application_pk = application.pk;
                     const newApplicationProponent = await EntityManager.save(applicationProponent);
 
-                    const applicationProponentContact = new ApplicationContactPerson();
+                    const applicationProponentContact = new ApplicationProponentContact();
                     applicationProponentContact.application_proponent_pk = newApplicationProponent.pk;
                     applicationProponentContact.name = data.proponent.contact_person_name;
                     applicationProponentContact.contact_number = data.proponent.contact_person_number;

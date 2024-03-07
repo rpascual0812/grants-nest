@@ -2,8 +2,8 @@ import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, Jo
 import { Application } from './application.entity';
 import { ApplicationProponent } from './application-proponent.entity';
 
-@Entity({ name: 'application_contacts' })
-export class ApplicationContactPerson {
+@Entity({ name: 'application_proponent_contacts' })
+export class ApplicationProponentContact {
     @PrimaryGeneratedColumn()
     pk: number;
 
@@ -26,7 +26,7 @@ export class ApplicationContactPerson {
      * Relationship
      */
 
-    @ManyToOne(type => ApplicationProponent, application_proponent => application_proponent.contact_person, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne(type => ApplicationProponent, application_proponent => application_proponent.contacts, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'application_proponent_pk' })
     application_proponent: ApplicationProponent;
 

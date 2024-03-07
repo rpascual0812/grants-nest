@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
 import { User } from 'src/user/entities/user.entity';
-import { ApplicationContactPerson } from './application-contact-person.entity';
 import { Application } from './application.entity';
+import { ApplicationProponentContact } from './application-proponent-contact.entity';
 
 @Entity({ name: 'application_proponents' })
 export class ApplicationProponent extends BaseEntity {
@@ -33,9 +33,9 @@ export class ApplicationProponent extends BaseEntity {
      * Relationship
      */
 
-    @OneToMany('ApplicationContactPerson', (applicationContactPerson: ApplicationContactPerson) => applicationContactPerson.application_proponent, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToMany('ApplicationProponentContact', (applicationProponentContact: ApplicationProponentContact) => applicationProponentContact.application_proponent, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'application_contact_person_pk' })
-    contact_person: ApplicationContactPerson;
+    contacts: ApplicationProponentContact;
 
     @OneToOne(type => Application, application => application.application_proponent, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'application_pk' })
