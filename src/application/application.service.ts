@@ -42,7 +42,7 @@ export class ApplicationService extends GlobalService {
                     'application_proponents.contacts',
                     ApplicationProponentContact,
                     'application_proponent_contacts',
-                    'application_proponents.pk=application_proponent_contacts.application_proponent_pk'
+                    'application_proponents.pk=application_proponent_contacts.application_proponent_pk',
                 )
                 .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
                 .leftJoinAndSelect('applications.application_project', 'application_projects')
@@ -73,7 +73,7 @@ export class ApplicationService extends GlobalService {
                     'application_proponents.contacts',
                     ApplicationProponentContact,
                     'application_proponent_contacts',
-                    'application_proponents.pk=application_proponent_contacts.application_proponent_pk'
+                    'application_proponents.pk=application_proponent_contacts.application_proponent_pk',
                 )
                 .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
                 .leftJoinAndSelect('applications.application_project', 'application_projects')
@@ -89,9 +89,11 @@ export class ApplicationService extends GlobalService {
                     'application_nonprofit_equivalency_determination',
                 )
                 .leftJoinAndSelect('applications.application_reference', 'application_reference')
-                .andWhere(filter.hasOwnProperty('pk') ? "applications.pk = :pk" : '1=1', { pk: filter.pk })
-                .andWhere(filter.hasOwnProperty('uuid') ? "applications.uuid = :uuid" : '1=1', { uuid: filter.uuid })
-                .andWhere(filter.hasOwnProperty('number') ? "applications.number = :number" : '1=1', { number: filter.number })
+                .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
+                .andWhere(filter.hasOwnProperty('uuid') ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
+                .andWhere(filter.hasOwnProperty('number') ? 'applications.number = :number' : '1=1', {
+                    number: filter.number,
+                })
                 .andWhere('applications.archived = :archived', { archived: false })
                 .getOne();
             return {
