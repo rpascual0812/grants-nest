@@ -1,5 +1,16 @@
 import { User } from 'src/user/entities/user.entity';
-import { Entity, Column, PrimaryGeneratedColumn, Unique, JoinColumn, ManyToOne, OneToOne, OneToMany, ManyToMany, JoinTable } from 'typeorm';
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    Unique,
+    JoinColumn,
+    ManyToOne,
+    OneToOne,
+    OneToMany,
+    ManyToMany,
+    JoinTable,
+} from 'typeorm';
 import { Application } from './application.entity';
 import { Document } from 'src/document/entities/document.entity';
 
@@ -14,10 +25,10 @@ export class ApplicationNonprofitEquivalencyDetermination {
     @Column({ type: 'date', nullable: false })
     year: Date;
 
-    @Column({ type: 'money', name: 'financial_last_year_usd', nullable: false })
+    @Column({ type: 'decimal', name: 'financial_last_year_usd', nullable: false })
     financial_last_year_usd: number;
 
-    @Column({ type: 'money', name: 'financial_last_year_other', nullable: false })
+    @Column({ type: 'decimal', name: 'financial_last_year_other', nullable: false })
     financial_last_year_other: number;
 
     @Column({ type: 'text', nullable: false })
@@ -26,10 +37,10 @@ export class ApplicationNonprofitEquivalencyDetermination {
     @Column({ type: 'text', nullable: false })
     financial_last_year_source: string;
 
-    @Column({ type: 'money', name: 'financial_current_usd', nullable: false })
+    @Column({ type: 'decimal', name: 'financial_current_usd', nullable: false })
     financial_current_usd: number;
 
-    @Column({ type: 'money', name: 'financial_current_other', nullable: false })
+    @Column({ type: 'decimal', name: 'financial_current_other', nullable: false })
     financial_current_other: number;
 
     @Column({ type: 'text', nullable: false })
@@ -74,8 +85,9 @@ export class ApplicationNonprofitEquivalencyDetermination {
     /**
      * Relationship
      */
-    @OneToOne(type => Application, application => application.application_nonprofit_equivalency_determination, { onDelete: 'CASCADE' })
+    @OneToOne((type) => Application, (application) => application.application_nonprofit_equivalency_determination, {
+        onDelete: 'CASCADE',
+    })
     @JoinColumn({ name: 'application_pk' })
     application: Application;
-
 }
