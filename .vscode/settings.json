@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "localhost",
+            "database": "grants_management",
+            "username": "grants",
+            "password": "krXKK9DbD2P7HPFZvkaVXxYaLEuP7pcPj2bHjL5svBNXWV3bY579PpmkcQy9"
+        }
+    ]
+}

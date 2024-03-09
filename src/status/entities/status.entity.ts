@@ -14,7 +14,7 @@ export class Status extends BaseEntity {
     @Column({ name: 'parent_pk', nullable: true })
     parent_pk: number;
 
-    @Column({ type: 'text', nullable: false })
+    @Column({ type: 'text', nullable: true })
     description: string;
 
     @Column({ name: 'sort', nullable: false })
