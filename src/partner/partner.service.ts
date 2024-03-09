@@ -36,4 +36,24 @@ export class PartnerService {
             .where('partners.archived = false')
             .getOne();
     }
+
+    async save(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        console.log('saving link', data);
+        try {
+            return await queryRunner.manager.transaction(
+                async (EntityManager) => {
+
+
+                    return { status: true, data: {} };
+                }
+            );
+        } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
 }

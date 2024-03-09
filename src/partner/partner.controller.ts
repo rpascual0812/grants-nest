@@ -1,7 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, UseInterceptors, UploadedFile, Response, HttpStatus, UnauthorizedException, InternalServerErrorException, Put } from '@nestjs/common';
 import { PartnerService } from './partner.service';
-import { CreatePartnerDto } from './dto/create-partner.dto';
-import { UpdatePartnerDto } from './dto/update-partner.dto';
 
 @Controller('partner')
 export class PartnerController {
@@ -15,5 +13,10 @@ export class PartnerController {
     @Get(':pk')
     fetchOne(@Param('pk') pk: string) {
         return this.partnerService.find(+pk);
+    }
+
+    @Post()
+    async save(@Request() req: any, @Body() body: any) {
+        return await this.partnerService.save(body);
     }
 }
