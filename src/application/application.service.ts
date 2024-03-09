@@ -19,6 +19,7 @@ import { ApplicationProposalActivity } from './entities/application-proposal-act
 import { ApplicationFiscalSponsor } from './entities/application-fiscal-sponsor.entity';
 import { ApplicationNonprofitEquivalencyDetermination } from './entities/application-nonprofit-equivalency-determination.entity';
 import { ApplicationProponentContact } from './entities/application-proponent-contact.entity';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -27,6 +28,7 @@ export class ApplicationService extends GlobalService {
     constructor(
         @InjectRepository(Application)
         private applicationRepository: Repository<Application>,
+        private emailService: EmailService,
     ) {
         super();
     }
@@ -114,7 +116,7 @@ export class ApplicationService extends GlobalService {
         await queryRunner.connect();
 
         try {
-            this.uuid = uuidv4();
+            this.uuid = data.uuid ? data.uuid : uuidv4();
             const date = DateTime.now();
 
             return await queryRunner.manager.transaction(async (_EntityManager) => {
@@ -141,7 +143,18 @@ export class ApplicationService extends GlobalService {
                 };
 
                 const application = this.applicationRepository.create(obj);
-                // this.saveLog({});
+
+                this.emailService.uuid = uuidv4();
+                this.emailService.user_pk = user.pk;
+                this.emailService.from = process.env.SEND_FROM;
+                this.emailService.from_name = process.env.SENDER;
+                this.emailService.to = data.email_address;
+                this.emailService.to_name = '';
+                this.emailService.subject = 'Grants Application';
+                this.emailService.body = '<a href="' + data.link + '">Please follow this link</a>'; // MODIFY: must be a template from the database
+
+                await this.emailService.create();
+
                 return this.applicationRepository.save(application);
             });
         } catch (err) {
