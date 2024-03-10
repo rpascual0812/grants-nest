@@ -20,6 +20,7 @@ import { ApplicationFiscalSponsor } from './entities/application-fiscal-sponsor.
 import { ApplicationNonprofitEquivalencyDetermination } from './entities/application-nonprofit-equivalency-determination.entity';
 import { ApplicationProponentContact } from './entities/application-proponent-contact.entity';
 import { EmailService } from 'src/email/email.service';
+import { Partner } from 'src/partner/entities/partner.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -119,7 +120,7 @@ export class ApplicationService extends GlobalService {
             this.uuid = data.uuid ? data.uuid : uuidv4();
             const date = DateTime.now();
 
-            return await queryRunner.manager.transaction(async (_EntityManager) => {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
                 const keyword = date.toFormat('yyLLdd');
                 const latest = await dataSource.manager
                     .getRepository(Application)
@@ -135,6 +136,47 @@ export class ApplicationService extends GlobalService {
                     application_number = keyword + new_number.toString().padStart(5, '0');
                 }
 
+                if(!data.partner_pk) {
+                    
+                    const lastPartner = await dataSource.manager.getRepository(Partner)
+                        .createQueryBuilder('partners')
+                        .orderBy('partner_id', 'DESC')
+                        .limit(1)
+                        .getOne()
+                        ;
+
+                    const year = date.toFormat('yyyy');
+                    const new_number = parseInt(lastPartner.partner_id.slice(4)) + 1;
+                    const new_partner_id = year + new_number.toString().padStart(5, '0');
+
+                    // this is one better than the insert below. Once one of the queries here failed, everything will be rolled back.
+                    // the only problem with this query is the new pk is still not visible when inserting the application below
+                    // const partner = new Partner();
+                    // partner.partner_id = new_partner_id.toString();
+                    // partner.name = data.partner_name;
+                    // partner.email_address = data.email_address;
+                    // let partnerObj = await EntityManager.save(partner);
+
+                    // this is a little off because it won't roll back if something went wrong with the other queries here.
+                    const partner = await dataSource.manager.getRepository(Partner)
+                        .createQueryBuilder('partners')
+                        .createQueryBuilder()
+                        .insert()
+                        .into(Partner)
+                        .values([
+                            { 
+                                partner_id: new_partner_id.toString(), 
+                                name: data.partner_name,
+                                email_address: data.email_address
+                            }
+                        ])
+                        .returning("pk")
+                        .execute()
+                        ;
+
+                    data.partner_pk = partner.generatedMaps[0].pk;
+                }
+
                 const obj: any = {
                     uuid: this.uuid,
                     number: application_number,
@@ -143,7 +185,8 @@ export class ApplicationService extends GlobalService {
                 };
 
                 const application = this.applicationRepository.create(obj);
-
+                
+                // send email
                 this.emailService.uuid = uuidv4();
                 this.emailService.user_pk = user.pk;
                 this.emailService.from = process.env.SEND_FROM;
