@@ -396,6 +396,20 @@ export class ApplicationService extends GlobalService {
                         return { ...newApplicationReferences };
                     });
                     const savedReferences = await Promise.all(tempReferences);
+
+                    this.emailService.uuid = uuidv4();
+                    // if application, get created_by from applications table
+                    // as application has no logged user
+                    this.emailService.user_pk = application.created_by;
+                    this.emailService.from = process.env.SEND_FROM;
+                    this.emailService.from_name = process.env.SENDER;
+                    this.emailService.to = data.proponent.contact_person_email_address;
+                    this.emailService.to_name = '';
+                    this.emailService.subject = 'We Have Received Your Application!';
+                    this.emailService.body = 'RECEIVED'; // MODIFY: must be a template from the database
+
+                    await this.emailService.create();
+
                     return {
                         status: true,
                         data: {
@@ -440,6 +454,7 @@ export class ApplicationService extends GlobalService {
             });
         } catch (err) {
             this.saveError({});
+            console.log(err);
             return { status: false, code: err.code };
         } finally {
             await queryRunner.release();
