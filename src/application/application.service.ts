@@ -145,9 +145,10 @@ export class ApplicationService extends GlobalService {
                         .getOne()
                         ;
 
+                    const newPartnerId = lastPartner ? parseInt(lastPartner.partner_id.slice(4)) + 1 : 1;
+
                     const year = date.toFormat('yyyy');
-                    const new_number = parseInt(lastPartner.partner_id.slice(4)) + 1;
-                    const new_partner_id = year + new_number.toString().padStart(5, '0');
+                    const new_partner_id = year + newPartnerId.toString().padStart(5, '0');
 
                     // this is one better than the insert below. Once one of the queries here failed, everything will be rolled back.
                     // the only problem with this query is the new pk is still not visible when inserting the application below
