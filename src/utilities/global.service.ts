@@ -32,6 +32,7 @@ export class GlobalService {
     }
 
     async saveError(data: any): Promise<any> {
+        console.log(data);
         console.log('Saving errors from the global service...');
     }
 }
