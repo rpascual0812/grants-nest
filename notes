@@ -44,3 +44,10 @@ BadGatewayException
 ServiceUnavailableException
 GatewayTimeoutException
 PreconditionFailedException
+
+sudo npm i -g forever
+cd ~/api
+npm run build
+forever start dist/src/main.js
+
+forever stopall
