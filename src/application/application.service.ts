@@ -136,8 +136,8 @@ export class ApplicationService extends GlobalService {
                     application_number = keyword + new_number.toString().padStart(5, '0');
                 }
 
-                if(!data.partner_pk) {
-                    
+                if (!data.partner_pk) {
+
                     const lastPartner = await dataSource.manager.getRepository(Partner)
                         .createQueryBuilder('partners')
                         .orderBy('partner_id', 'DESC')
@@ -164,8 +164,8 @@ export class ApplicationService extends GlobalService {
                         .insert()
                         .into(Partner)
                         .values([
-                            { 
-                                partner_id: new_partner_id.toString(), 
+                            {
+                                partner_id: new_partner_id.toString(),
                                 name: data.partner_name,
                                 email_address: data.email_address
                             }
@@ -185,7 +185,7 @@ export class ApplicationService extends GlobalService {
                 };
 
                 const application = this.applicationRepository.create(obj);
-                
+
                 // send email
                 this.emailService.uuid = uuidv4();
                 this.emailService.user_pk = user.pk;
@@ -201,7 +201,7 @@ export class ApplicationService extends GlobalService {
                 return this.applicationRepository.save(application);
             });
         } catch (err) {
-            this.saveError({});
+            this.saveError(err);
             return { status: false, code: err.code };
         } finally {
             await queryRunner.release();
