@@ -38,8 +38,22 @@ export class ApplicationController {
 
     @UseGuards(JwtAuthGuard)
     @Delete(':pk')
-    remove(@Param('pk') pk: string, @Request() req: any) {
+    remove(@Param('pk') pk: number, @Request() req: any) {
         console.log('deleting', pk);
         return this.applicationService.remove(+pk, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk/project/:project_pk/location/:location_pk')
+    removeProjectLocation(@Param('pk') pk: number, @Param('project_pk') project_pk: number, @Param('location_pk') location_pk: number, @Request() req: any) {
+        console.log('deleting', pk, project_pk, location_pk);
+        return this.applicationService.removeProjectLocation(+pk, +project_pk, +location_pk, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk/proposal/:proposal_pk/activity/:activity_pk')
+    removeProposalActivity(@Param('pk') pk: number, @Param('proposal_pk') proposal_pk: number, @Param('activity_pk') activity_pk: number, @Request() req: any) {
+        console.log('deleting', pk, proposal_pk, activity_pk);
+        return this.applicationService.removeProposalActivity(+pk, +proposal_pk, +activity_pk, req.user);
     }
 }
