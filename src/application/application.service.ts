@@ -526,4 +526,54 @@ export class ApplicationService extends GlobalService {
             await queryRunner.release();
         }
     }
+
+    async removeProjectLocation(pk: number, project_pk: number, location_pk: number, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const location = await ApplicationProjectLocation.findOneBy({
+                    pk: location_pk
+                });
+                await location.remove();
+
+                // save logs
+                const model = { application_pk: pk, project_pk, location_pk, name: 'application_project_locations', status: 'deleted' };
+                await this.saveLog({ model, user });
+
+                return { status: true };
+            });
+        } catch (err) {
+            this.saveError({});
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async removeProposalActivity(pk: number, proposal_pk: number, activity_pk: number, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const location = await ApplicationProposalActivity.findOneBy({
+                    pk: activity_pk
+                });
+                await location.remove();
+
+                // save logs
+                const model = { application_pk: pk, proposal_pk, activity_pk, name: 'application_proposal_activities', status: 'deleted' };
+                await this.saveLog({ model, user });
+
+                return { status: true };
+            });
+        } catch (err) {
+            this.saveError({});
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
 }
