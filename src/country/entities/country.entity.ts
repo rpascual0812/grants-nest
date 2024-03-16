@@ -3,6 +3,7 @@ import { ApplicationOrganizationProfile } from 'src/application/entities/applica
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
 import { Province } from 'src/province/entities/province.entity';
 import { ApplicationProjectLocation } from 'src/application/entities/application-project-location.entity';
+import { PartnerOrganization } from 'src/partner/entities/partner-organization.entity';
 
 @Entity({ name: 'countries' })
 @Unique(['name', 'code'])
@@ -44,9 +45,9 @@ export class Country extends BaseEntity {
     @JoinColumn({ name: 'pk' })
     province: Array<Province>;
 
-    @OneToMany('ApplicationOrganizationProfile', (application_organization_profile: ApplicationOrganizationProfile) => application_organization_profile.country)
+    @OneToMany('PartnerOrganization', (partner_organization: PartnerOrganization) => partner_organization.country)
     @JoinColumn({ name: 'pk' })
-    application_organization_profile: Array<ApplicationOrganizationProfile>;
+    partner_organization: Array<PartnerOrganization>;
 
     @OneToMany('ApplicationProjectLocation', (applicationProjectLocation: ApplicationProjectLocation) => applicationProjectLocation.country)
     @JoinColumn({ name: 'pk' })

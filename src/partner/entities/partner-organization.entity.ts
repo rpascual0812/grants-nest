@@ -11,20 +11,20 @@ import {
     BaseEntity,
     OneToMany,
 } from 'typeorm';
-import { Application } from './application.entity';
+import { Partner } from './partner.entity';
 
-@Entity({ name: 'application_organization_profile' })
-export class ApplicationOrganizationProfile extends BaseEntity {
+@Entity({ name: 'partner_organizations' })
+export class PartnerOrganization extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
 
-    @Column({ name: 'application_pk', nullable: false })
-    application_pk: number;
+    @Column({ name: 'partner_pk', nullable: false })
+    partner_pk: number;
 
     @Column({ name: 'organization_pk', nullable: true })
     organization_pk: number;
 
-    @Column({ type: 'text', nullable: false })
+    @Column({ type: 'text', nullable: true })
     tribe: string;
 
     @Column({ default: false })
@@ -66,23 +66,23 @@ export class ApplicationOrganizationProfile extends BaseEntity {
     /**
      * Relationship
      */
-    // @ManyToOne('Organization', (organization: Organization) => organization.application_organization_profile, {
-    //     onDelete: 'CASCADE',
-    //     onUpdate: 'CASCADE',
-    // })
-    // @JoinColumn({ name: 'organization_pk' })
-    // organization: Organization;
+    @ManyToOne('Organization', (organization: Organization) => organization.partner_organization, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
+    @JoinColumn({ name: 'organization_pk' })
+    organization: Organization;
 
-    // @ManyToOne('Country', (country: Country) => country.application_organization_profile, {
-    //     onDelete: 'CASCADE',
-    //     onUpdate: 'CASCADE',
-    // })
-    // @JoinColumn({ name: 'country_pk' })
-    // country: Country;
+    @ManyToOne('Country', (country: Country) => country.partner_organization, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
+    @JoinColumn({ name: 'country_pk' })
+    country: Country;
 
-    @OneToOne((type) => Application, (application) => application.application_organization_profile, {
+    @OneToOne((type) => Partner, (partner) => partner.partner_organization, {
         onDelete: 'CASCADE',
     })
-    @JoinColumn({ name: 'application_pk' })
-    application: Application;
+    @JoinColumn({ name: 'partner_pk' })
+    partner: Partner;
 }
