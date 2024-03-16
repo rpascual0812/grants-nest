@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseGuards, Req } from '@nestjs/common';
 import { ApplicationService } from './application.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('application')
 export class ApplicationController {
-    constructor(private readonly applicationService: ApplicationService) { }
+    constructor(private readonly applicationService: ApplicationService) {}
 
     @UseGuards(JwtAuthGuard)
     @Post('generate')
@@ -18,6 +18,16 @@ export class ApplicationController {
         return this.applicationService.save(body, req.user);
     }
 
+    @Post('partner')
+    savePartner(@Body() body: any, @Request() req: any) {
+        return this.applicationService.savePartner(body);
+    }
+
+    @Post('partner_organization')
+    savePartnerOrg(@Body() body: any, @Request() req: any) {
+        return this.applicationService.savePartnerOrg(body);
+    }
+
     @UseGuards(JwtAuthGuard)
     @Get()
     fetch() {
@@ -28,6 +38,11 @@ export class ApplicationController {
     @Get(':pk')
     fetchOne(@Param('pk') pk: string) {
         return this.applicationService.find({ pk });
+    }
+
+    @Get(':uuid/generated')
+    generated(@Param('uuid') uuid: string) {
+        return this.applicationService.find({ uuid });
     }
 
     @UseGuards(JwtAuthGuard)
@@ -45,14 +60,24 @@ export class ApplicationController {
 
     @UseGuards(JwtAuthGuard)
     @Delete(':pk/project/:project_pk/location/:location_pk')
-    removeProjectLocation(@Param('pk') pk: number, @Param('project_pk') project_pk: number, @Param('location_pk') location_pk: number, @Request() req: any) {
+    removeProjectLocation(
+        @Param('pk') pk: number,
+        @Param('project_pk') project_pk: number,
+        @Param('location_pk') location_pk: number,
+        @Request() req: any,
+    ) {
         console.log('deleting', pk, project_pk, location_pk);
         return this.applicationService.removeProjectLocation(+pk, +project_pk, +location_pk, req.user);
     }
 
     @UseGuards(JwtAuthGuard)
     @Delete(':pk/proposal/:proposal_pk/activity/:activity_pk')
-    removeProposalActivity(@Param('pk') pk: number, @Param('proposal_pk') proposal_pk: number, @Param('activity_pk') activity_pk: number, @Request() req: any) {
+    removeProposalActivity(
+        @Param('pk') pk: number,
+        @Param('proposal_pk') proposal_pk: number,
+        @Param('activity_pk') activity_pk: number,
+        @Request() req: any,
+    ) {
         console.log('deleting', pk, proposal_pk, activity_pk);
         return this.applicationService.removeProposalActivity(+pk, +proposal_pk, +activity_pk, req.user);
     }
