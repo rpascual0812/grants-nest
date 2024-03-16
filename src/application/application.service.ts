@@ -24,6 +24,7 @@ import { Partner } from 'src/partner/entities/partner.entity';
 import { PartnerContact } from 'src/partner/entities/partner-contacts.entity';
 import { PartnerOrganization } from 'src/partner/entities/partner-organization.entity';
 import { Country } from 'src/country/entities/country.entity';
+import { getDefaultValue } from './utilities/get-default-value.utils';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -172,7 +173,8 @@ export class ApplicationService extends GlobalService {
                     // let partnerObj = await EntityManager.save(partner);
 
                     // this is a little off because it won't roll back if something went wrong with the other queries here.
-                    const partner = await dataSource.manager.getRepository(Partner)
+                    const partner = await dataSource.manager
+                        .getRepository(Partner)
                         .createQueryBuilder('partners')
                         .createQueryBuilder()
                         .insert()
@@ -181,13 +183,11 @@ export class ApplicationService extends GlobalService {
                             {
                                 partner_id: new_partner_id.toString(),
                                 name: data.partner_name,
-                                email_address: data.email_address
-                            }
+                                email_address: data.email_address,
+                            },
                         ])
-                        .returning("pk")
-                        .execute()
-                        ;
-
+                        .returning('pk')
+                        .execute();
                     data.partner_pk = partner.generatedMaps[0].pk;
                 }
 
@@ -247,14 +247,14 @@ export class ApplicationService extends GlobalService {
                                 address: data.proponent.address,
                                 contact_number: data.proponent.contact_number,
                                 email_address: data.proponent.email_address,
-                                website: data.proponent.website
-                            }
+                                website: data.proponent.website,
+                            },
                         ],
                         [partner_id],
                     );
 
                     const partner = await EntityManager.findOne(Partner, {
-                        where: { partner_id: partner_id }
+                        where: { partner_id: partner_id },
                     });
 
                     const newPartnerContact = await dataSource.manager.upsert(
@@ -266,7 +266,7 @@ export class ApplicationService extends GlobalService {
                                 name: data.proponent.contact_person_name,
                                 contact_number: data.proponent.contact_person_number,
                                 email_address: data.proponent.contact_person_email_address,
-                            }
+                            },
                         ],
                         [data.proponent.contact_person_pk],
                     );
@@ -286,12 +286,13 @@ export class ApplicationService extends GlobalService {
                                 project_website: data.organization_profile.project_website,
                                 tribe: data.organization_profile.tribe ?? '',
                                 womens_organization: data?.organization_profile?.womens_organization,
-                                differently_abled_organization: data?.organization_profile?.differently_abled_organization,
+                                differently_abled_organization:
+                                    data?.organization_profile?.differently_abled_organization,
                                 youth_organization: data?.organization_profile?.youth_organization,
                                 farmers_group: data?.organization_profile?.farmers_group,
                                 fisherfolks: data?.organization_profile?.fisherfolks,
                                 other_sectoral_group: data?.organization_profile?.other_sectoral_group,
-                            }
+                            },
                         ],
                         [data.organization_profile?.pk],
                     );
@@ -540,6 +541,140 @@ export class ApplicationService extends GlobalService {
         }
     }
 
+    async savePartner(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const partner_id = data?.partner_id;
+                const existingPartner = await EntityManager.findOne(Partner, {
+                    where: {
+                        partner_id,
+                    },
+                });
+                const partner = existingPartner ? existingPartner : new Partner();
+                partner.partner_id = getDefaultValue(partner_id, existingPartner?.partner_id);
+                partner.name = getDefaultValue(data?.name, existingPartner?.name);
+                partner.email_address = getDefaultValue(data?.email_address, existingPartner?.email_address);
+                partner.address = getDefaultValue(data?.address, existingPartner?.address);
+                partner.contact_number = getDefaultValue(data?.contact_number, existingPartner?.contact_number);
+                partner.website = getDefaultValue(data?.website, existingPartner?.website);
+                const savedPartner = await EntityManager.save(Partner, {
+                    ...partner,
+                });
+
+                let savedPartnerContacts = undefined;
+                const existingContact = await EntityManager.findOne(PartnerContact, {
+                    where: {
+                        partner_pk: savedPartner.pk,
+                    },
+                });
+
+                const partnerContact = existingContact ? existingContact : new PartnerContact();
+                partnerContact.partner_pk = savedPartner.pk;
+                partnerContact.name = getDefaultValue(data?.contacts?.at(0)?.name, existingContact?.name);
+                partnerContact.contact_number = getDefaultValue(
+                    data?.contacts?.at(0).contact_number,
+                    existingContact?.contact_number,
+                );
+                partnerContact.email_address = getDefaultValue(
+                    data?.contacts?.at(0).email_address,
+                    existingContact?.email_address,
+                );
+                if (existingContact || data?.contacts?.length > 0) {
+                    savedPartnerContacts = await EntityManager.save(PartnerContact, {
+                        ...partnerContact,
+                    });
+                }
+
+                return {
+                    status: true,
+                    data: {
+                        ...savedPartner,
+                        contacts: savedPartnerContacts ? [savedPartnerContacts] : [],
+                    },
+                };
+            });
+        } catch (err) {
+            this.saveError({});
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async savePartnerOrg(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const partner_id = data?.partner_id;
+
+                const existingPartner = await EntityManager.findOne(Partner, {
+                    where: {
+                        partner_id,
+                    },
+                });
+                const partner_pk = existingPartner.pk;
+                const existingPartnerOrg = await EntityManager.findOne(PartnerOrganization, {
+                    where: {
+                        partner_pk: existingPartner?.pk,
+                    },
+                });
+                const partnerOrg = existingPartnerOrg ? existingPartnerOrg : new PartnerOrganization();
+                partnerOrg.partner_pk = getDefaultValue(partner_pk, existingPartnerOrg?.partner_pk);
+                partnerOrg.organization_pk = getDefaultValue(
+                    data?.organization_pk,
+                    existingPartnerOrg?.organization_pk,
+                );
+                partnerOrg.tribe = getDefaultValue(data?.tribe, existingPartnerOrg?.tribe);
+                partnerOrg.womens_organization = getDefaultValue(
+                    data?.womens_organization,
+                    existingPartnerOrg?.womens_organization,
+                );
+                partnerOrg.youth_organization = getDefaultValue(
+                    data?.youth_organization,
+                    existingPartnerOrg?.youth_organization,
+                );
+                partnerOrg.differently_abled_organization = getDefaultValue(
+                    data?.differently_abled_organization,
+                    existingPartnerOrg?.differently_abled_organization,
+                );
+                partnerOrg.other_sectoral_group = getDefaultValue(
+                    data?.other_sectoral_group,
+                    existingPartnerOrg?.other_sectoral_group,
+                );
+                partnerOrg.farmers_group = getDefaultValue(data?.farmers_group, existingPartnerOrg?.farmers_group);
+                partnerOrg.fisherfolks = getDefaultValue(data?.fisherfolks, existingPartnerOrg?.fisherfolks);
+                partnerOrg.mission = getDefaultValue(data?.mission, existingPartnerOrg?.mission);
+                partnerOrg.vision = getDefaultValue(data?.vision, existingPartnerOrg?.vision);
+                partnerOrg.description = getDefaultValue(data?.description, existingPartnerOrg?.description);
+                partnerOrg.country_pk = getDefaultValue(data?.country_pk, existingPartnerOrg?.country_pk);
+                partnerOrg.project_website = getDefaultValue(
+                    data?.project_website,
+                    existingPartnerOrg?.project_website,
+                );
+
+                const savedPartnerOrg = await EntityManager.save(PartnerOrganization, {
+                    ...partnerOrg,
+                });
+
+                return {
+                    status: true,
+                    data: {
+                        ...savedPartnerOrg,
+                    },
+                };
+            });
+        } catch (err) {
+            console.log('🚀 ~ ApplicationService ~ savePartnerOrg ~ err:', err);
+            this.saveError({});
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
     async remove(pk: number, user: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
@@ -569,12 +704,18 @@ export class ApplicationService extends GlobalService {
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const location = await ApplicationProjectLocation.findOneBy({
-                    pk: location_pk
+                    pk: location_pk,
                 });
                 await location.remove();
 
                 // save logs
-                const model = { application_pk: pk, project_pk, location_pk, name: 'application_project_locations', status: 'deleted' };
+                const model = {
+                    application_pk: pk,
+                    project_pk,
+                    location_pk,
+                    name: 'application_project_locations',
+                    status: 'deleted',
+                };
                 await this.saveLog({ model, user });
 
                 return { status: true };
@@ -594,12 +735,18 @@ export class ApplicationService extends GlobalService {
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const location = await ApplicationProposalActivity.findOneBy({
-                    pk: activity_pk
+                    pk: activity_pk,
                 });
                 await location.remove();
 
                 // save logs
-                const model = { application_pk: pk, proposal_pk, activity_pk, name: 'application_proposal_activities', status: 'deleted' };
+                const model = {
+                    application_pk: pk,
+                    proposal_pk,
+                    activity_pk,
+                    name: 'application_proposal_activities',
+                    status: 'deleted',
+                };
                 await this.saveLog({ model, user });
 
                 return { status: true };
