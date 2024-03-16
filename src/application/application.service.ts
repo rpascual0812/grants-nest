@@ -23,6 +23,7 @@ import { EmailService } from 'src/email/email.service';
 import { Partner } from 'src/partner/entities/partner.entity';
 import { PartnerContact } from 'src/partner/entities/partner-contacts.entity';
 import { PartnerOrganization } from 'src/partner/entities/partner-organization.entity';
+import { Country } from 'src/country/entities/country.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -47,6 +48,12 @@ export class ApplicationService extends GlobalService {
                     PartnerOrganization,
                     'partner_organizations',
                     'partners.pk=partner_organizations.partner_pk',
+                )
+                .leftJoinAndMapOne(
+                    'partner_organizations.country',
+                    Country,
+                    'countries',
+                    'partner_organizations.country_pk=countries.pk',
                 )
                 .leftJoinAndMapMany(
                     'partners.contacts',
@@ -96,6 +103,12 @@ export class ApplicationService extends GlobalService {
                     PartnerOrganization,
                     'partner_organizations',
                     'partners.pk=partner_organizations.partner_pk',
+                )
+                .leftJoinAndMapOne(
+                    'partner_organizations.country',
+                    Country,
+                    'countries',
+                    'partner_organizations.country_pk=countries.pk',
                 )
                 .leftJoinAndMapMany(
                     'partners.contacts',
