@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import dataSource from 'db/data-source';
 import { Partner } from './entities/partner.entity';
+import { PartnerOrganization } from './entities/partner-organization.entity';
+import { PartnerContact } from './entities/partner-contacts.entity';
+import { Country } from 'src/country/entities/country.entity';
+import { Application } from 'src/application/entities/application.entity';
 
 @Injectable()
 export class PartnerService {
@@ -11,6 +15,34 @@ export class PartnerService {
                 .getRepository(Partner)
                 .createQueryBuilder('partners')
                 .select('partners')
+                .leftJoinAndMapOne(
+                    'partners.organization',
+                    PartnerOrganization,
+                    'partner_organizations',
+                    'partners.pk=partner_organizations.partner_pk',
+                )
+                .leftJoinAndMapOne(
+                    'partner_organizations.country',
+                    Country,
+                    'countries',
+                    'partner_organizations.country_pk=countries.pk',
+                )
+                .leftJoinAndMapMany(
+                    'partners.contacts',
+                    PartnerContact,
+                    'partner_contacts',
+                    'partners.pk=partner_contacts.partner_pk',
+                )
+                .leftJoinAndMapMany(
+                    'partners.application',
+                    Application,
+                    'applications',
+                    'partners.pk=applications.partner_pk',
+                )
+                .leftJoinAndSelect('applications.application_project', 'application_projects')
+                .leftJoinAndSelect('applications.application_proposal', 'application_proposal')
+                .leftJoinAndSelect('applications.application_statuses', 'application_statuses')
+                .leftJoinAndSelect('application_statuses.status', 'statuses')
                 .where('partners.archived=false')
                 .orderBy('partners.name')
                 .getManyAndCount();
@@ -21,6 +53,7 @@ export class PartnerService {
                 total: partners[1],
             };
         } catch (error) {
+            console.log(error);
             return {
                 status: false,
                 code: 500,
