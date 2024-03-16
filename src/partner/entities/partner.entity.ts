@@ -4,6 +4,7 @@ import { PartnerContact } from './partner-contacts.entity';
 import { PartnerOrganization } from './partner-organization.entity';
 
 @Entity({ name: 'partners' })
+@Unique(['partner_id'])
 export class Partner extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;

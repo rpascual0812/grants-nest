@@ -66,23 +66,15 @@ export class PartnerOrganization extends BaseEntity {
     /**
      * Relationship
      */
-    @ManyToOne('Organization', (organization: Organization) => organization.partner_organization, {
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-    })
+    @ManyToOne('Organization', (organization: Organization) => organization.partner_organization, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'organization_pk' })
     organization: Organization;
 
-    @ManyToOne('Country', (country: Country) => country.partner_organization, {
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-    })
+    @ManyToOne('Country', (country: Country) => country.partner_organization, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'country_pk' })
     country: Country;
 
-    @OneToOne((type) => Partner, (partner) => partner.partner_organization, {
-        onDelete: 'CASCADE',
-    })
+    @OneToOne((type) => Partner, (partner) => partner.partner_organization, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'partner_pk' })
     partner: Partner;
 }
