@@ -37,7 +37,7 @@ export class ApplicationProponent extends BaseEntity {
     @JoinColumn({ name: 'application_contact_person_pk' })
     contacts: ApplicationProponentContact;
 
-    @OneToOne(type => Application, application => application.application_proponent, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'application_pk' })
-    application: Application;
+    // @OneToOne(type => Application, application => application.application_proponent, { onDelete: 'CASCADE' })
+    // @JoinColumn({ name: 'application_pk' })
+    // application: Application;
 }

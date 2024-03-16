@@ -1,6 +1,7 @@
 import { Application } from 'src/application/entities/application.entity';
 import { ApplicationOrganizationProfile } from 'src/application/entities/application-organization-profile.entity';
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
+import { PartnerOrganization } from 'src/partner/entities/partner-organization.entity';
 
 @Entity({ name: 'organizations' })
 export class Organization extends BaseEntity {
@@ -19,7 +20,7 @@ export class Organization extends BaseEntity {
     /**
      * Relationship
      */
-    @OneToMany('ApplicationOrganizationProfile', (application_organization_profile: ApplicationOrganizationProfile) => application_organization_profile.organization)
+    @OneToMany('PartnerOrganization', (partner_organization: PartnerOrganization) => partner_organization.organization)
     @JoinColumn({ name: 'pk' })
-    application_organization_profile: Array<ApplicationOrganizationProfile>;
+    partner_organization: Array<PartnerOrganization>;
 }

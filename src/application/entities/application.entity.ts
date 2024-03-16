@@ -51,8 +51,8 @@ export class Application extends BaseEntity {
     @JoinColumn({ name: 'partner_pk' })
     partner: Partner;
 
-    @OneToOne(type => ApplicationProponent, application_proponent => application_proponent.application, { cascade: true })
-    application_proponent: ApplicationProponent;
+    // @OneToOne(type => ApplicationProponent, application_proponent => application_proponent.application, { cascade: true })
+    // application_proponent: ApplicationProponent;
 
     @OneToOne(type => ApplicationOrganizationProfile, application_organization_profile => application_organization_profile.application, { cascade: true })
     application_organization_profile: ApplicationOrganizationProfile;
