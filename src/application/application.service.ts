@@ -21,6 +21,8 @@ import { ApplicationNonprofitEquivalencyDetermination } from './entities/applica
 import { ApplicationProponentContact } from './entities/application-proponent-contact.entity';
 import { EmailService } from 'src/email/email.service';
 import { Partner } from 'src/partner/entities/partner.entity';
+import { PartnerContact } from 'src/partner/entities/partner-contacts.entity';
+import { PartnerOrganization } from 'src/partner/entities/partner-organization.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -39,17 +41,34 @@ export class ApplicationService extends GlobalService {
             const data = await dataSource.manager
                 .getRepository(Application)
                 .createQueryBuilder('applications')
-                .leftJoinAndSelect('applications.partner', 'partner')
-                .leftJoinAndSelect('applications.application_proponent', 'application_proponents')
-                .leftJoinAndMapMany(
-                    'application_proponents.contacts',
-                    ApplicationProponentContact,
-                    'application_proponent_contacts',
-                    'application_proponents.pk=application_proponent_contacts.application_proponent_pk',
+                .leftJoinAndSelect('applications.partner', 'partners')
+                .leftJoinAndMapOne(
+                    'partners.organization',
+                    PartnerOrganization,
+                    'partner_organizations',
+                    'partners.pk=partner_organizations.partner_pk',
                 )
-                .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
+                .leftJoinAndMapMany(
+                    'partners.contacts',
+                    PartnerContact,
+                    'partner_contacts',
+                    'partners.pk=partner_contacts.partner_pk',
+                )
                 .leftJoinAndSelect('applications.application_project', 'application_projects')
+                .leftJoinAndSelect('application_projects.application_project_location', 'application_project_location')
+                .leftJoinAndSelect('applications.application_proposal', 'application_proposal')
+                .leftJoinAndSelect(
+                    'application_proposal.application_proposal_activity',
+                    'application_proposal_activity',
+                )
+                .leftJoinAndSelect('applications.application_fiscal_sponsor', 'application_fiscal_sponsor')
+                .leftJoinAndSelect(
+                    'applications.application_nonprofit_equivalency_determination',
+                    'application_nonprofit_equivalency_determination',
+                )
+                .leftJoinAndSelect('applications.application_reference', 'application_reference')
                 .where('applications.archived = false')
+                .orderBy('applications.date_created', 'DESC')
                 .getManyAndCount();
 
             return {
@@ -58,6 +77,7 @@ export class ApplicationService extends GlobalService {
                 total: data[1],
             };
         } catch (error) {
+            console.log(error);
             return {
                 status: false,
                 code: 500,
@@ -70,15 +90,19 @@ export class ApplicationService extends GlobalService {
             const data = await dataSource
                 .getRepository(Application)
                 .createQueryBuilder('applications')
-                .leftJoinAndSelect('applications.partner', 'partner')
-                .leftJoinAndSelect('applications.application_proponent', 'application_proponents')
-                .leftJoinAndMapMany(
-                    'application_proponents.contacts',
-                    ApplicationProponentContact,
-                    'application_proponent_contacts',
-                    'application_proponents.pk=application_proponent_contacts.application_proponent_pk',
+                .leftJoinAndSelect('applications.partner', 'partners')
+                .leftJoinAndMapOne(
+                    'partners.organization',
+                    PartnerOrganization,
+                    'partner_organizations',
+                    'partners.pk=partner_organizations.partner_pk',
                 )
-                .leftJoinAndSelect('applications.application_organization_profile', 'application_organization_profile')
+                .leftJoinAndMapMany(
+                    'partners.contacts',
+                    PartnerContact,
+                    'partner_contacts',
+                    'partners.pk=partner_contacts.partner_pk',
+                )
                 .leftJoinAndSelect('applications.application_project', 'application_projects')
                 .leftJoinAndSelect('application_projects.application_project_location', 'application_project_location')
                 .leftJoinAndSelect('applications.application_proposal', 'application_proposal')
@@ -121,34 +145,10 @@ export class ApplicationService extends GlobalService {
             const date = DateTime.now();
 
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const keyword = date.toFormat('yyLLdd');
-                const latest = await dataSource.manager
-                    .getRepository(Application)
-                    .createQueryBuilder('applications')
-                    .where('number like :number', { number: `${keyword}%` })
-                    .where('archived = false')
-                    .orderBy('number', 'DESC')
-                    .getOne();
-
-                let application_number = keyword + '00001';
-                if (latest) {
-                    const new_number = parseInt(latest.number.slice(6)) + 1;
-                    application_number = keyword + new_number.toString().padStart(5, '0');
-                }
+                const application_number = await this.setApplicationNumber();
 
                 if (!data.partner_pk) {
-
-                    const lastPartner = await dataSource.manager.getRepository(Partner)
-                        .createQueryBuilder('partners')
-                        .orderBy('partner_id', 'DESC')
-                        .limit(1)
-                        .getOne()
-                        ;
-
-                    const newPartnerId = lastPartner ? parseInt(lastPartner.partner_id.slice(4)) + 1 : 1;
-
-                    const year = date.toFormat('yyyy');
-                    const new_partner_id = year + newPartnerId.toString().padStart(5, '0');
+                    const new_partner_id = await this.setPartnerId();
 
                     // this is one better than the insert below. Once one of the queries here failed, everything will be rolled back.
                     // the only problem with this query is the new pk is still not visible when inserting the application below
@@ -221,45 +221,67 @@ export class ApplicationService extends GlobalService {
                         partner: true,
                     },
                 });
+
                 if (application) {
                     // Proponent Information
-                    const applicationProponent = new ApplicationProponent();
-                    applicationProponent.name = data.proponent.name;
-                    applicationProponent.address = data.proponent.address;
-                    applicationProponent.contact_number = data.proponent.contact_number;
-                    applicationProponent.email_address = data.proponent.email_address;
-                    applicationProponent.website = data.proponent.website;
-                    applicationProponent.application_pk = application.pk;
-                    const newApplicationProponent = await EntityManager.save(applicationProponent);
+                    const partner_id = data.partner_id ? data.partner_id : this.setPartnerId();
+                    await dataSource.manager.upsert(
+                        Partner,
+                        [
+                            {
+                                partner_id: partner_id,
+                                name: data.proponent.name,
+                                address: data.proponent.address,
+                                contact_number: data.proponent.contact_number,
+                                email_address: data.proponent.email_address,
+                                website: data.proponent.website
+                            }
+                        ],
+                        [partner_id],
+                    );
 
-                    const applicationProponentContact = new ApplicationProponentContact();
-                    applicationProponentContact.application_proponent_pk = newApplicationProponent.pk;
-                    applicationProponentContact.name = data.proponent.contact_person_name;
-                    applicationProponentContact.contact_number = data.proponent.contact_person_number;
-                    applicationProponentContact.email_address = data.proponent.contact_person_email_address;
-                    const newApplicationProponentContact = await EntityManager.save(applicationProponentContact);
+                    const partner = await EntityManager.findOne(Partner, {
+                        where: { partner_id: partner_id }
+                    });
+
+                    const newPartnerContact = await dataSource.manager.upsert(
+                        PartnerContact,
+                        [
+                            {
+                                pk: data.proponent.contact_person_pk,
+                                partner_pk: partner.pk,
+                                name: data.proponent.contact_person_name,
+                                contact_number: data.proponent.contact_person_number,
+                                email_address: data.proponent.contact_person_email_address,
+                            }
+                        ],
+                        [data.proponent.contact_person_pk],
+                    );
 
                     // Organization Profile
-                    const applicationOrganizationProfile = new ApplicationOrganizationProfile();
-                    applicationOrganizationProfile.application_pk = application.pk;
-                    applicationOrganizationProfile.organization_pk = data.organization_profile.organization_pk;
-                    applicationOrganizationProfile.mission = data.organization_profile.mission;
-                    applicationOrganizationProfile.vision = data.organization_profile.vision;
-                    applicationOrganizationProfile.description = data.organization_profile.description;
-                    applicationOrganizationProfile.country_pk = data.organization_profile.country_pk;
-                    applicationOrganizationProfile.project_website = data.organization_profile.project_website;
-                    applicationOrganizationProfile.tribe = data.organization_profile.tribe ?? '';
-                    applicationOrganizationProfile.womens_organization =
-                        data?.organization_profile?.womens_organization;
-                    applicationOrganizationProfile.differently_abled_organization =
-                        data?.organization_profile?.differently_abled_organization;
-                    applicationOrganizationProfile.youth_organization = data?.organization_profile?.youth_organization;
-                    applicationOrganizationProfile.farmers_group = data?.organization_profile?.farmers_group;
-                    applicationOrganizationProfile.fisherfolks = data?.organization_profile?.fisherfolks;
-                    applicationOrganizationProfile.other_sectoral_group =
-                        data?.organization_profile?.other_sectoral_group;
-                    const newApplicationOrganizationProfile = await EntityManager.save(applicationOrganizationProfile);
-                    // this.saveLog({});
+                    const newPartnerOrganization = await dataSource.manager.upsert(
+                        PartnerOrganization,
+                        [
+                            {
+                                pk: data.organization_profile?.pk,
+                                partner_pk: partner.pk,
+                                organization_pk: data.organization_profile.organization_pk,
+                                mission: data.organization_profile.mission,
+                                vision: data.organization_profile.vision,
+                                description: data.organization_profile.description,
+                                country_pk: data.organization_profile.country_,
+                                project_website: data.organization_profile.project_website,
+                                tribe: data.organization_profile.tribe ?? '',
+                                womens_organization: data?.organization_profile?.womens_organization,
+                                differently_abled_organization: data?.organization_profile?.differently_abled_organization,
+                                youth_organization: data?.organization_profile?.youth_organization,
+                                farmers_group: data?.organization_profile?.farmers_group,
+                                fisherfolks: data?.organization_profile?.fisherfolks,
+                                other_sectoral_group: data?.organization_profile?.other_sectoral_group,
+                            }
+                        ],
+                        [data.organization_profile?.pk],
+                    );
 
                     // Project Information
                     const applicationProjectInfo = new ApplicationProject();
@@ -459,13 +481,13 @@ export class ApplicationService extends GlobalService {
                         data: {
                             application,
                             proponent: {
-                                ...newApplicationProponent,
+                                ...partner,
                                 contact_person: {
-                                    ...newApplicationProponentContact,
+                                    ...newPartnerContact,
                                 },
                             },
                             organization_profile: {
-                                ...newApplicationOrganizationProfile,
+                                ...newPartnerOrganization,
                             },
                             project: {
                                 ...newApplicationProjectInfo,
