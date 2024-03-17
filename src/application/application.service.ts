@@ -236,67 +236,6 @@ export class ApplicationService extends GlobalService {
                 });
 
                 if (application) {
-                    // Proponent Information
-                    const partner_id = data.partner_id ? data.partner_id : this.setPartnerId();
-                    await dataSource.manager.upsert(
-                        Partner,
-                        [
-                            {
-                                partner_id: partner_id,
-                                name: data.proponent.name,
-                                address: data.proponent.address,
-                                contact_number: data.proponent.contact_number,
-                                email_address: data.proponent.email_address,
-                                website: data.proponent.website,
-                            },
-                        ],
-                        [partner_id],
-                    );
-
-                    const partner = await EntityManager.findOne(Partner, {
-                        where: { partner_id: partner_id },
-                    });
-
-                    const newPartnerContact = await dataSource.manager.upsert(
-                        PartnerContact,
-                        [
-                            {
-                                pk: data.proponent.contact_person_pk,
-                                partner_pk: partner.pk,
-                                name: data.proponent.contact_person_name,
-                                contact_number: data.proponent.contact_person_number,
-                                email_address: data.proponent.contact_person_email_address,
-                            },
-                        ],
-                        [data.proponent.contact_person_pk],
-                    );
-
-                    // Organization Profile
-                    const newPartnerOrganization = await dataSource.manager.upsert(
-                        PartnerOrganization,
-                        [
-                            {
-                                pk: data.organization_profile?.pk,
-                                partner_pk: partner.pk,
-                                organization_pk: data.organization_profile.organization_pk,
-                                mission: data.organization_profile.mission,
-                                vision: data.organization_profile.vision,
-                                description: data.organization_profile.description,
-                                country_pk: data.organization_profile.country_,
-                                project_website: data.organization_profile.project_website,
-                                tribe: data.organization_profile.tribe ?? '',
-                                womens_organization: data?.organization_profile?.womens_organization,
-                                differently_abled_organization:
-                                    data?.organization_profile?.differently_abled_organization,
-                                youth_organization: data?.organization_profile?.youth_organization,
-                                farmers_group: data?.organization_profile?.farmers_group,
-                                fisherfolks: data?.organization_profile?.fisherfolks,
-                                other_sectoral_group: data?.organization_profile?.other_sectoral_group,
-                            },
-                        ],
-                        [data.organization_profile?.pk],
-                    );
-
                     // Project Information
                     const applicationProjectInfo = new ApplicationProject();
                     applicationProjectInfo.application_pk = application.pk;
@@ -483,7 +422,7 @@ export class ApplicationService extends GlobalService {
                     this.emailService.user_pk = application.created_by;
                     this.emailService.from = process.env.SEND_FROM;
                     this.emailService.from_name = process.env.SENDER;
-                    this.emailService.to = data.proponent.contact_person_email_address;
+                    this.emailService.to = application?.partner?.email_address;
                     this.emailService.to_name = '';
                     this.emailService.subject = 'We Have Received Your Application!';
                     this.emailService.body = 'RECEIVED'; // MODIFY: must be a template from the database
@@ -494,15 +433,6 @@ export class ApplicationService extends GlobalService {
                         status: true,
                         data: {
                             application,
-                            proponent: {
-                                ...partner,
-                                contact_person: {
-                                    ...newPartnerContact,
-                                },
-                            },
-                            organization_profile: {
-                                ...newPartnerOrganization,
-                            },
                             project: {
                                 ...newApplicationProjectInfo,
                                 project_locations: [...savedProjLoc],
@@ -667,7 +597,7 @@ export class ApplicationService extends GlobalService {
                 };
             });
         } catch (err) {
-            console.log('🚀 ~ ApplicationService ~ savePartnerOrg ~ err:', err);
+            console.log(err);
             this.saveError({});
             return { status: false, code: err?.code };
         } finally {
