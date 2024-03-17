@@ -119,6 +119,10 @@ export class ApplicationService extends GlobalService {
                 )
                 .leftJoinAndSelect('applications.application_project', 'application_projects')
                 .leftJoinAndSelect('application_projects.application_project_location', 'application_project_location')
+                .leftJoinAndSelect(
+                    'application_projects.application_project_beneficiary',
+                    'application_project_beneficiary',
+                )
                 .leftJoinAndSelect('applications.application_proposal', 'application_proposal')
                 .leftJoinAndSelect(
                     'application_proposal.application_proposal_activity',
@@ -334,74 +338,6 @@ export class ApplicationService extends GlobalService {
                     });
                     const savedProposalActivities = await Promise.all(tempActivities);
 
-                    // Fiscal Sponsor
-                    const applicationFiscalSponsor = new ApplicationFiscalSponsor();
-                    applicationFiscalSponsor.application_pk = application.pk;
-                    applicationFiscalSponsor.name = data.fiscal_sponsor.name;
-                    applicationFiscalSponsor.address = data.fiscal_sponsor.address;
-                    applicationFiscalSponsor.head = data.fiscal_sponsor.head;
-                    applicationFiscalSponsor.person_in_charge = data.fiscal_sponsor.person_in_charge;
-                    applicationFiscalSponsor.contact_number = data.fiscal_sponsor.contact_number;
-                    applicationFiscalSponsor.email_address = data.fiscal_sponsor.email_address;
-                    applicationFiscalSponsor.bank_account_name = data.fiscal_sponsor.bank_account_name;
-                    applicationFiscalSponsor.account_number = data.fiscal_sponsor.account_number;
-                    applicationFiscalSponsor.bank_name = data.fiscal_sponsor.bank_name;
-                    applicationFiscalSponsor.bank_branch = data.fiscal_sponsor.bank_branch;
-                    applicationFiscalSponsor.bank_address = data.fiscal_sponsor.bank_address;
-                    const newApplicationFiscalSponsor = await EntityManager.save(applicationFiscalSponsor);
-
-                    // Non-Profit Equivalency Determination
-                    const applicationNonProfitEquivalencyDetermination =
-                        new ApplicationNonprofitEquivalencyDetermination();
-                    applicationNonProfitEquivalencyDetermination.application_pk = application.pk;
-                    applicationNonProfitEquivalencyDetermination.year = data.non_profit_equivalency_determination.year;
-
-                    applicationNonProfitEquivalencyDetermination.financial_last_year_usd =
-                        data.non_profit_equivalency_determination.financial_last_year_usd;
-                    applicationNonProfitEquivalencyDetermination.financial_last_year_other =
-                        data.non_profit_equivalency_determination.financial_last_year_other;
-                    applicationNonProfitEquivalencyDetermination.financial_last_year_other_currency =
-                        data.non_profit_equivalency_determination.financial_last_year_other_currency;
-                    applicationNonProfitEquivalencyDetermination.financial_last_year_source =
-                        data.non_profit_equivalency_determination.financial_last_year_source;
-
-                    applicationNonProfitEquivalencyDetermination.financial_current_usd =
-                        data.non_profit_equivalency_determination.financial_current_usd;
-                    applicationNonProfitEquivalencyDetermination.financial_current_other =
-                        data.non_profit_equivalency_determination.financial_current_other;
-                    applicationNonProfitEquivalencyDetermination.financial_current_other_currency =
-                        data.non_profit_equivalency_determination.financial_current_other_currency;
-                    applicationNonProfitEquivalencyDetermination.financial_current_source =
-                        data.non_profit_equivalency_determination.financial_current_source;
-
-                    applicationNonProfitEquivalencyDetermination.officers =
-                        data.non_profit_equivalency_determination.officers;
-                    applicationNonProfitEquivalencyDetermination.members =
-                        data.non_profit_equivalency_determination.members;
-
-                    applicationNonProfitEquivalencyDetermination.operated_for_others =
-                        data.non_profit_equivalency_determination.operated_for_others;
-
-                    applicationNonProfitEquivalencyDetermination.any_assets =
-                        data.non_profit_equivalency_determination.any_assets;
-                    applicationNonProfitEquivalencyDetermination.any_assets_description =
-                        data.non_profit_equivalency_determination.any_assets_description;
-                    applicationNonProfitEquivalencyDetermination.any_payments =
-                        data.non_profit_equivalency_determination.any_payments;
-                    applicationNonProfitEquivalencyDetermination.any_payments_description =
-                        data.non_profit_equivalency_determination.any_payments_description;
-                    applicationNonProfitEquivalencyDetermination.upon_dissolution =
-                        data.non_profit_equivalency_determination.upon_dissolution;
-                    applicationNonProfitEquivalencyDetermination.is_controlled_by =
-                        data.non_profit_equivalency_determination.is_controlled_by;
-
-                    applicationNonProfitEquivalencyDetermination.operated_for =
-                        data.non_profit_equivalency_determination.operated_for;
-
-                    const newApplicationNonProfitEquivalencyDetermination = await EntityManager.save(
-                        applicationNonProfitEquivalencyDetermination,
-                    );
-
                     // References
                     const references = data?.references ?? [];
                     const tempReferences = await references.map(async (data) => {
@@ -444,12 +380,6 @@ export class ApplicationService extends GlobalService {
                             proposal: {
                                 ...saveProposal,
                                 activities: [...savedProposalActivities],
-                            },
-                            fiscal_sponsor: {
-                                ...newApplicationFiscalSponsor,
-                            },
-                            non_profit_equivalency_determination: {
-                                ...newApplicationNonProfitEquivalencyDetermination,
                             },
                             references: [...savedReferences],
                         },
@@ -593,6 +523,189 @@ export class ApplicationService extends GlobalService {
                     status: true,
                     data: {
                         ...savedPartnerOrg,
+                    },
+                };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveFiscalSponsor(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const appFiscalSponsorPk = data?.pk;
+                const applicationPk = data?.application_pk;
+                const existingFiscalSponsor = await EntityManager.findOne(ApplicationFiscalSponsor, {
+                    where: {
+                        pk: appFiscalSponsorPk,
+                    },
+                });
+
+                const fiscalSponsor = existingFiscalSponsor ? existingFiscalSponsor : new ApplicationFiscalSponsor();
+                fiscalSponsor.application_pk = applicationPk;
+                fiscalSponsor.name = getDefaultValue(data?.name, existingFiscalSponsor?.name);
+                fiscalSponsor.address = getDefaultValue(data?.address, existingFiscalSponsor?.address);
+                fiscalSponsor.head = getDefaultValue(data?.head, existingFiscalSponsor?.head);
+                fiscalSponsor.person_in_charge = getDefaultValue(
+                    data?.person_in_charge,
+                    existingFiscalSponsor?.person_in_charge,
+                );
+                fiscalSponsor.contact_number = getDefaultValue(
+                    data?.contact_number,
+                    existingFiscalSponsor?.contact_number,
+                );
+                fiscalSponsor.email_address = getDefaultValue(
+                    data?.email_address,
+                    existingFiscalSponsor?.email_address,
+                );
+                fiscalSponsor.account_number = getDefaultValue(
+                    data?.account_number,
+                    existingFiscalSponsor?.account_number,
+                );
+                fiscalSponsor.bank_account_name = getDefaultValue(
+                    data?.bank_account_name,
+                    existingFiscalSponsor?.bank_account_name,
+                );
+                fiscalSponsor.bank_name = getDefaultValue(data?.bank_name, existingFiscalSponsor?.bank_name);
+                fiscalSponsor.bank_branch = getDefaultValue(data?.bank_branch, existingFiscalSponsor?.bank_branch);
+                fiscalSponsor.bank_address = getDefaultValue(data?.bank_address, existingFiscalSponsor?.bank_address);
+
+                const savedFiscalSponsor = await EntityManager.save(ApplicationFiscalSponsor, {
+                    ...fiscalSponsor,
+                });
+
+                return {
+                    status: true,
+                    data: {
+                        ...savedFiscalSponsor,
+                    },
+                };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveNonProfitEquivalencyDetermination(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const appNonProfitEquivalencyDeterminationPk = data?.pk;
+                const applicationPk = data?.application_pk;
+                const existingNonProfitEquivalencyDetermination = await EntityManager.findOne(
+                    ApplicationNonprofitEquivalencyDetermination,
+                    {
+                        where: {
+                            pk: appNonProfitEquivalencyDeterminationPk,
+                        },
+                    },
+                );
+
+                const nonProfitEquivalencyDetermination = existingNonProfitEquivalencyDetermination
+                    ? existingNonProfitEquivalencyDetermination
+                    : new ApplicationNonprofitEquivalencyDetermination();
+
+                nonProfitEquivalencyDetermination.application_pk = applicationPk;
+                nonProfitEquivalencyDetermination.year = getDefaultValue(
+                    data?.year,
+                    existingNonProfitEquivalencyDetermination?.year,
+                );
+                nonProfitEquivalencyDetermination.financial_last_year_usd = getDefaultValue(
+                    data?.financial_last_year_usd,
+                    existingNonProfitEquivalencyDetermination?.financial_last_year_usd,
+                );
+                nonProfitEquivalencyDetermination.financial_last_year_other = getDefaultValue(
+                    data?.financial_last_year_other,
+                    existingNonProfitEquivalencyDetermination?.financial_last_year_other,
+                );
+                nonProfitEquivalencyDetermination.financial_last_year_other_currency = getDefaultValue(
+                    data?.financial_last_year_other_currency,
+                    existingNonProfitEquivalencyDetermination?.financial_last_year_other_currency,
+                );
+                nonProfitEquivalencyDetermination.financial_last_year_source = getDefaultValue(
+                    data?.financial_last_year_source,
+                    existingNonProfitEquivalencyDetermination?.financial_last_year_source,
+                );
+                nonProfitEquivalencyDetermination.financial_current_usd = getDefaultValue(
+                    data?.financial_current_usd,
+                    existingNonProfitEquivalencyDetermination?.financial_current_usd,
+                );
+                nonProfitEquivalencyDetermination.financial_current_other = getDefaultValue(
+                    data?.financial_current_other,
+                    existingNonProfitEquivalencyDetermination?.financial_current_other,
+                );
+                nonProfitEquivalencyDetermination.financial_current_other_currency = getDefaultValue(
+                    data?.financial_current_other_currency,
+                    existingNonProfitEquivalencyDetermination?.financial_current_other_currency,
+                );
+                nonProfitEquivalencyDetermination.financial_current_source = getDefaultValue(
+                    data?.financial_current_source,
+                    existingNonProfitEquivalencyDetermination?.financial_current_source,
+                );
+                nonProfitEquivalencyDetermination.officers = getDefaultValue(
+                    data?.officers,
+                    existingNonProfitEquivalencyDetermination?.officers,
+                );
+                nonProfitEquivalencyDetermination.members = getDefaultValue(
+                    data?.members,
+                    existingNonProfitEquivalencyDetermination?.members,
+                );
+                nonProfitEquivalencyDetermination.operated_for = getDefaultValue(
+                    data?.operated_for,
+                    existingNonProfitEquivalencyDetermination?.operated_for,
+                );
+                nonProfitEquivalencyDetermination.operated_for_others = getDefaultValue(
+                    data?.operated_for_others,
+                    existingNonProfitEquivalencyDetermination?.operated_for_others,
+                );
+                nonProfitEquivalencyDetermination.any_assets = getDefaultValue(
+                    data?.any_assets,
+                    existingNonProfitEquivalencyDetermination?.any_assets,
+                );
+                nonProfitEquivalencyDetermination.any_assets_description = getDefaultValue(
+                    data?.any_assets_description,
+                    existingNonProfitEquivalencyDetermination?.any_assets_description,
+                );
+                nonProfitEquivalencyDetermination.any_payments = getDefaultValue(
+                    data?.any_payments,
+                    existingNonProfitEquivalencyDetermination?.any_payments,
+                );
+                nonProfitEquivalencyDetermination.any_payments_description = getDefaultValue(
+                    data?.any_payments_description,
+                    existingNonProfitEquivalencyDetermination?.any_payments_description,
+                );
+                nonProfitEquivalencyDetermination.upon_dissolution = getDefaultValue(
+                    data?.upon_dissolution,
+                    existingNonProfitEquivalencyDetermination?.upon_dissolution,
+                );
+                nonProfitEquivalencyDetermination.is_controlled_by = getDefaultValue(
+                    data?.is_controlled_by,
+                    existingNonProfitEquivalencyDetermination?.is_controlled_by,
+                );
+
+                const savedNonProfitEquivalencyDetermination = await EntityManager.save(
+                    ApplicationNonprofitEquivalencyDetermination,
+                    {
+                        ...nonProfitEquivalencyDetermination,
+                    },
+                );
+
+                return {
+                    status: true,
+                    data: {
+                        ...savedNonProfitEquivalencyDetermination,
                     },
                 };
             });
