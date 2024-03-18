@@ -20,6 +20,7 @@ import { CountryModule } from './country/country.module';
 import { ProvinceModule } from './province/province.module';
 import { PartnerModule } from './partner/partner.module';
 import { StatusModule } from './status/status.module';
+import { DonorModule } from './donor/donor.module';
 
 @Module({
     imports: [
@@ -38,7 +39,8 @@ import { StatusModule } from './status/status.module';
         ProvinceModule,
         ApplicationModule,
         PartnerModule,
-        StatusModule
+        StatusModule,
+        DonorModule
     ],
     controllers: [AppController],
     providers: [AppService, CheckService, MailerService, DestroyerService],
