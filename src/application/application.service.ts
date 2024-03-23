@@ -38,7 +38,7 @@ export class ApplicationService extends GlobalService {
         super();
     }
 
-    async findAll() {
+    async findAll(filters: any) {
         try {
             const data = await dataSource.manager
                 .getRepository(Application)
@@ -76,6 +76,11 @@ export class ApplicationService extends GlobalService {
                 )
                 .leftJoinAndSelect('applications.application_reference', 'application_reference')
                 .where('applications.archived = false')
+                .andWhere(
+                    filters.hasOwnProperty('keyword') && filters.keyword != '' ?
+                        "(partners.name ILIKE :keyword or partners.email_address ILIKE :keyword)" :
+                        '1=1', { keyword: `%${filters.keyword}%` }
+                )
                 .orderBy('applications.date_created', 'DESC')
                 .getManyAndCount();
 
