@@ -28,6 +28,16 @@ export class ApplicationController {
         return this.applicationService.savePartnerOrg(body);
     }
 
+    @Post('fiscal_sponsor')
+    saveFiscalSponsor(@Body() body: any, @Request() req: any) {
+        return this.applicationService.saveFiscalSponsor(body);
+    }
+
+    @Post('nonprofit_equivalency_determination')
+    saveNonProfitEquivalencyDetermination(@Body() body: any, @Request() req: any) {
+        return this.applicationService.saveNonProfitEquivalencyDetermination(body);
+    }
+
     @UseGuards(JwtAuthGuard)
     @Get()
     fetch(@Request() req: any) {
