@@ -10,9 +10,6 @@ import { ApplicationProponent } from './entities/application-proponent.entity';
 import { ApplicationOrganizationProfile } from './entities/application-organization-profile.entity';
 import { GlobalService } from 'src/utilities/global.service';
 import { Log } from 'src/log/entities/log.entity';
-import { ApplicationProject } from './entities/application-project.entity';
-import { ApplicationProjectLocation } from './entities/application-project-location.entity';
-import { ApplicationProjectBeneficiary } from './entities/application-project-beneficiary.entity';
 import { ApplicationReference } from './entities/application-references.entity';
 import { ApplicationProposal } from './entities/application-proposal.entity';
 import { ApplicationProposalActivity } from './entities/application-proposal-activity.entity';
@@ -25,6 +22,9 @@ import { PartnerContact } from 'src/partner/entities/partner-contacts.entity';
 import { PartnerOrganization } from 'src/partner/entities/partner-organization.entity';
 import { Country } from 'src/country/entities/country.entity';
 import { getDefaultValue } from './utilities/get-default-value.utils';
+import { Project } from 'src/projects/entities/project.entity';
+import { ProjectBeneficiary } from 'src/projects/entities/project-beneficiary.entity';
+import { ProjectLocation } from 'src/projects/entities/project-location.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -62,8 +62,8 @@ export class ApplicationService extends GlobalService {
                     'partner_contacts',
                     'partners.pk=partner_contacts.partner_pk',
                 )
-                .leftJoinAndSelect('applications.application_project', 'application_projects')
-                .leftJoinAndSelect('application_projects.application_project_location', 'application_project_location')
+                .leftJoinAndSelect('applications.project', 'projects')
+                .leftJoinAndSelect('projects.project_location', 'project_location')
                 .leftJoinAndSelect('applications.application_proposal', 'application_proposal')
                 .leftJoinAndSelect(
                     'application_proposal.application_proposal_activity',
@@ -122,11 +122,11 @@ export class ApplicationService extends GlobalService {
                     'partner_contacts',
                     'partners.pk=partner_contacts.partner_pk',
                 )
-                .leftJoinAndSelect('applications.application_project', 'application_projects')
-                .leftJoinAndSelect('application_projects.application_project_location', 'application_project_location')
+                .leftJoinAndSelect('applications.project', 'projects')
+                .leftJoinAndSelect('projects.project_location', 'project_location')
                 .leftJoinAndSelect(
-                    'application_projects.application_project_beneficiary',
-                    'application_project_beneficiary',
+                    'projects.project_beneficiary',
+                    'project_beneficiary',
                 )
                 .leftJoinAndSelect('applications.application_proposal', 'application_proposal')
                 .leftJoinAndSelect(
@@ -246,7 +246,7 @@ export class ApplicationService extends GlobalService {
 
                 if (application) {
                     // Project Information
-                    const applicationProjectInfo = new ApplicationProject();
+                    const applicationProjectInfo = new Project();
                     applicationProjectInfo.application_pk = application.pk;
                     applicationProjectInfo.title = data.project.title;
                     applicationProjectInfo.duration = data.project.duration;
@@ -254,12 +254,12 @@ export class ApplicationService extends GlobalService {
                     applicationProjectInfo.objective = data.project.objective;
                     applicationProjectInfo.expected_output = data.project.expected_output;
                     applicationProjectInfo.how_will_affect = data.project.how_will_affect;
-                    const newApplicationProjectInfo = await EntityManager.save(applicationProjectInfo);
+                    const newProjectInfo = await EntityManager.save(applicationProjectInfo);
 
                     const womenType = data?.project?.beneficiary_women ?? [];
                     const tempWomenType = womenType.map(async (data) => {
-                        const applicationProjInfoBeneficiaries = new ApplicationProjectBeneficiary();
-                        applicationProjInfoBeneficiaries.application_project_pk = newApplicationProjectInfo.pk;
+                        const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
+                        applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
                         applicationProjInfoBeneficiaries.type = data.type;
                         applicationProjInfoBeneficiaries.name = data.name;
                         applicationProjInfoBeneficiaries.count = data.count;
@@ -272,8 +272,8 @@ export class ApplicationService extends GlobalService {
 
                     const youngWomenType = data?.project?.beneficiary_young_women ?? [];
                     const tempYoungWomenType = youngWomenType.map(async (data) => {
-                        const applicationProjInfoBeneficiaries = new ApplicationProjectBeneficiary();
-                        applicationProjInfoBeneficiaries.application_project_pk = newApplicationProjectInfo.pk;
+                        const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
+                        applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
                         applicationProjInfoBeneficiaries.type = data.type;
                         applicationProjInfoBeneficiaries.name = data.name;
                         applicationProjInfoBeneficiaries.count = data.count;
@@ -286,8 +286,8 @@ export class ApplicationService extends GlobalService {
 
                     const menType = data?.project?.beneficiary_men ?? [];
                     const tempMenType = menType.map(async (data) => {
-                        const applicationProjInfoBeneficiaries = new ApplicationProjectBeneficiary();
-                        applicationProjInfoBeneficiaries.application_project_pk = newApplicationProjectInfo.pk;
+                        const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
+                        applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
                         applicationProjInfoBeneficiaries.type = data.type;
                         applicationProjInfoBeneficiaries.name = data.name;
                         applicationProjInfoBeneficiaries.count = data.count;
@@ -300,8 +300,8 @@ export class ApplicationService extends GlobalService {
 
                     const youngMenType = data?.project?.beneficiary_young_men ?? [];
                     const tempYoungMenType = youngMenType.map(async (data) => {
-                        const applicationProjInfoBeneficiaries = new ApplicationProjectBeneficiary();
-                        applicationProjInfoBeneficiaries.application_project_pk = newApplicationProjectInfo.pk;
+                        const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
+                        applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
                         applicationProjInfoBeneficiaries.type = data.type;
                         applicationProjInfoBeneficiaries.name = data.name;
                         applicationProjInfoBeneficiaries.count = data.count;
@@ -314,8 +314,8 @@ export class ApplicationService extends GlobalService {
 
                     const projectLocations = data?.project?.project_locations ?? [];
                     const tempProjLoc = await projectLocations.map(async (data) => {
-                        const applicationProjInfoProjLoc = new ApplicationProjectLocation();
-                        applicationProjInfoProjLoc.application_project_pk = newApplicationProjectInfo.pk;
+                        const applicationProjInfoProjLoc = new ProjectLocation();
+                        applicationProjInfoProjLoc.project_pk = newProjectInfo.pk;
                         applicationProjInfoProjLoc.country_pk = data?.country_pk;
                         applicationProjInfoProjLoc.province_code = data?.province_code;
                         const newApplicationProjInfoProjLoc = await EntityManager.save(applicationProjInfoProjLoc);
@@ -375,7 +375,7 @@ export class ApplicationService extends GlobalService {
                         data: {
                             application,
                             project: {
-                                ...newApplicationProjectInfo,
+                                ...newProjectInfo,
                                 project_locations: [...savedProjLoc],
                                 women_beneficiary: [...savedWomenBeneficiary],
                                 young_women_beneficiary: [...savedYoungWomenBeneficiary],
@@ -751,7 +751,7 @@ export class ApplicationService extends GlobalService {
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const location = await ApplicationProjectLocation.findOneBy({
+                const location = await ProjectLocation.findOneBy({
                     pk: location_pk,
                 });
                 await location.remove();
@@ -761,7 +761,7 @@ export class ApplicationService extends GlobalService {
                     application_pk: pk,
                     project_pk,
                     location_pk,
-                    name: 'application_project_locations',
+                    name: 'project_locations',
                     status: 'deleted',
                 };
                 await this.saveLog({ model, user });

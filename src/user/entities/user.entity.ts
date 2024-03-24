@@ -2,11 +2,10 @@ import { Entity, Column, PrimaryGeneratedColumn, Unique, JoinColumn, ManyToOne, 
 import { Account } from 'src/account/entities/account.entity';
 import { Gender } from 'src/gender/entities/gender.entity';
 import { UserRole } from './user-role.entity';
-import { UserDocument } from './user-document.entity';
 import { Log } from 'src/log/entities/log.entity';
 import { Application } from 'src/application/entities/application.entity';
-import { ApplicationDocument } from 'src/application/entities/application-document.entity';
 import { Status } from 'src/status/entities/status.entity';
+import { Documentable } from 'src/document/entities/documentable.entity';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
@@ -61,10 +60,6 @@ export class User extends BaseEntity {
     @JoinColumn({ name: 'user_role_pk' })
     user_role: UserRole;
 
-    @OneToMany('UserDocument', (user_document: UserDocument) => user_document.user, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-    @JoinColumn({ name: 'user_document_pk' })
-    user_document: UserDocument;
-
     @OneToMany('Log', (log: Log) => log.user)
     @JoinColumn({ name: 'pk' })
     log: Array<Log>;
@@ -73,9 +68,9 @@ export class User extends BaseEntity {
     @JoinColumn({ name: 'pk' })
     application: Array<Application>;
 
-    @OneToMany('ApplicationDocument', (application_document: ApplicationDocument) => application_document.user, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-    @JoinColumn({ name: 'application_document_pk' })
-    application_document: ApplicationDocument;
+    @OneToMany('Documentable', (documentable: Documentable) => documentable.user, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'pk' })
+    documentable: Documentable;
 
     @OneToMany('Status', (status: Status) => status.user)
     @JoinColumn({ name: 'pk' })

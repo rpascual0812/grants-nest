@@ -1,15 +1,13 @@
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
 import { User } from 'src/user/entities/user.entity';
-import { ApplicationProponent } from './application-proponent.entity';
 import { ApplicationOrganizationProfile } from './application-organization-profile.entity';
-import { ApplicationProject } from './application-project.entity';
 import { Partner } from 'src/partner/entities/partner.entity';
 import { ApplicationProposal } from './application-proposal.entity';
-import { ApplicationDocument } from './application-document.entity';
 import { ApplicationNonprofitEquivalencyDetermination } from './application-nonprofit-equivalency-determination.entity';
 import { ApplicationFiscalSponsor } from './application-fiscal-sponsor.entity';
 import { ApplicationReference } from './application-references.entity';
 import { ApplicationStatus } from './application-statuses.entity';
+import { Project } from 'src/projects/entities/project.entity';
 
 @Entity({ name: 'applications' })
 @Unique(['uuid'])
@@ -33,9 +31,6 @@ export class Application extends BaseEntity {
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
 
-    @Column({ name: 'status_pk', nullable: true })
-    status_pk: number;
-
     @Column({ default: false })
     archived: boolean;
 
@@ -51,14 +46,11 @@ export class Application extends BaseEntity {
     @JoinColumn({ name: 'partner_pk' })
     partner: Partner;
 
-    // @OneToOne(type => ApplicationProponent, application_proponent => application_proponent.application, { cascade: true })
-    // application_proponent: ApplicationProponent;
-
     @OneToOne(type => ApplicationOrganizationProfile, application_organization_profile => application_organization_profile.application, { cascade: true })
     application_organization_profile: ApplicationOrganizationProfile;
 
-    @OneToOne(type => ApplicationProject, application_project => application_project.application, { cascade: true })
-    application_project: ApplicationProject;
+    @OneToOne(type => Project, project => project.application, { cascade: true })
+    project: Project;
 
     @OneToOne(type => ApplicationProposal, application_proposal => application_proposal.application, { cascade: true })
     application_proposal: ApplicationProposal;
@@ -68,10 +60,6 @@ export class Application extends BaseEntity {
 
     @OneToOne(type => ApplicationFiscalSponsor, application_fiscal_sponsor => application_fiscal_sponsor.application, { cascade: true })
     application_fiscal_sponsor: ApplicationFiscalSponsor;
-
-    @OneToMany('ApplicationDocument', (applicationDocument: ApplicationDocument) => applicationDocument.application)
-    @JoinColumn({ name: 'pk' })
-    application_document: Array<ApplicationDocument>;
 
     @OneToMany('ApplicationReference', (ApplicationReference: ApplicationReference) => ApplicationReference.application)
     @JoinColumn({ name: 'pk' })
