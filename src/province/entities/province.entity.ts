@@ -1,5 +1,5 @@
-import { ApplicationProjectLocation } from 'src/application/entities/application-project-location.entity';
 import { Country } from 'src/country/entities/country.entity';
+import { ProjectLocation } from 'src/projects/entities/project-location.entity';
 import { Entity, Column, PrimaryGeneratedColumn, Unique, JoinColumn, ManyToOne, OneToOne, BaseEntity, AfterLoad, OneToMany, ManyToMany, PrimaryColumn } from 'typeorm';
 
 @Entity({ name: 'provinces' })
@@ -36,7 +36,7 @@ export class Province {
     @JoinColumn({ name: 'country_pk' })
     country: Country;
 
-    @OneToMany('ApplicationProjectLocation', (applicationProjectLocation: ApplicationProjectLocation) => applicationProjectLocation.province)
+    @OneToMany('ProjectLocation', (projectLocation: ProjectLocation) => projectLocation.province)
     @JoinColumn({ name: 'pk' })
-    application_project_location: Array<ApplicationProjectLocation>;
+    project_location: Array<ProjectLocation>;
 }

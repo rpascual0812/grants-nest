@@ -1,10 +1,10 @@
-import { Document } from 'src/document/entities/document.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, Unique, JoinColumn, ManyToOne, OneToOne, OneToMany, ManyToMany, JoinTable } from 'typeorm';
+import { Document } from 'src/document/entities/document.entity';
 
-@Entity({ name: 'user_documents' })
-@Unique(['type', 'document_pk', 'user_pk'])
-export class UserDocument {
+@Entity({ name: 'documentable' })
+@Unique(['type', 'table_name', 'table_pk', 'document_pk'])
+export class Documentable {
     @PrimaryGeneratedColumn()
     pk: number;
 
@@ -12,6 +12,12 @@ export class UserDocument {
     user_pk: number;
 
     @Column({ type: 'text', nullable: false })
+    table_name: string;
+
+    @Column({ name: 'application_pk', nullable: false })
+    table_pk: number;
+
+    @Column({ type: 'text', nullable: true })
     type: string;
 
     @Column({ name: 'document_pk', nullable: false })
@@ -24,11 +30,11 @@ export class UserDocument {
      * Relationship
      */
 
-    @ManyToOne(type => User, user => user.user_document, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne(type => User, user => user.documentable, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'user_pk' })
     user: User;
 
-    @OneToOne(type => Document, document => document.user_document, { eager: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToOne(type => Document, document => document.documentable, { eager: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'document_pk' })
     @JoinTable()
     document: Document[];
