@@ -8,9 +8,9 @@ import { Application } from 'src/application/entities/application.entity';
 
 @Injectable()
 export class PartnerService {
-
-    async findAll() {
+    async findAll(filters?: { organization_pk: number }) {
         try {
+            const organizationPk = filters?.organization_pk ?? null;
             const partners = await dataSource.manager
                 .getRepository(Partner)
                 .createQueryBuilder('partners')
@@ -44,6 +44,9 @@ export class PartnerService {
                 .leftJoinAndSelect('applications.application_statuses', 'application_statuses')
                 .leftJoinAndSelect('application_statuses.status', 'statuses')
                 .where('partners.archived=false')
+                .andWhere(organizationPk ? 'partner_organizations.organization_pk = :organizationPk' : '1=1', {
+                    organizationPk,
+                })
                 .orderBy('partners.name')
                 .getManyAndCount();
 
@@ -75,13 +78,9 @@ export class PartnerService {
         await queryRunner.connect();
         console.log('saving link', data);
         try {
-            return await queryRunner.manager.transaction(
-                async (EntityManager) => {
-
-
-                    return { status: true, data: {} };
-                }
-            );
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                return { status: true, data: {} };
+            });
         } catch (err) {
             console.log(err);
             return { status: false, code: err.code };
