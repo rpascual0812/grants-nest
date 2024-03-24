@@ -4,7 +4,7 @@ import { Document } from 'src/document/entities/document.entity';
 import { Review } from './review.entity';
 
 @Entity({ name: 'reviewable' })
-@Unique(['type', 'table_name', 'table_pk', 'document_pk'])
+@Unique(['type', 'table_name', 'table_pk', 'review_pk'])
 export class Reviewable {
     @PrimaryGeneratedColumn()
     pk: number;
