@@ -12,9 +12,9 @@ import { DateTime, DurationObjectUnits } from 'luxon';
 import { AccountService } from 'src/account/account.service';
 import { EmailService } from 'src/email/email.service';
 import { SessionService } from 'src/session/session.service';
-import { UserDocument } from './entities/user-document.entity';
 import { Document } from 'src/document/entities/document.entity';
 import { UserRole } from './entities/user-role.entity';
+import { Documentable } from 'src/document/entities/documentable.entity';
 
 // import { Document } from 'src/documents/entities/document.entity';
 // import { UserDocument } from './entities/user-document.entity';
@@ -84,15 +84,15 @@ export class UserService {
                 )
                 .leftJoinAndMapOne(
                     'users.user_document',
-                    UserDocument,
-                    'user_documents',
-                    'users.pk=user_documents.user_pk and user_documents.type = \'profile_photo\''
+                    Documentable,
+                    'documentable',
+                    'users.pk=documentable.table_pk and documentable.table_name = \'users\''
                 )
                 .leftJoinAndMapOne(
-                    'user_documents.document',
+                    'documentable.document',
                     Document,
                     'documents',
-                    'user_documents.document_pk=documents.pk',
+                    'documentable.document_pk=documents.pk',
                 )
                 .andWhere(
                     filters.hasOwnProperty('keyword') && filters.keyword != '' ?
@@ -144,15 +144,15 @@ export class UserService {
             )
             .leftJoinAndMapOne(
                 'users.user_document',
-                UserDocument,
-                'user_documents',
-                'users.pk=user_documents.user_pk and user_documents.type = \'profile_photo\''
+                Documentable,
+                'documentable',
+                'users.pk=documentable.user_pk and documentable.table_name = \'users\''
             )
             .leftJoinAndMapOne(
-                'user_documents.document',
+                'documentable.document',
                 Document,
                 'documents',
-                'user_documents.document_pk=documents.pk',
+                'documentable.document_pk=documents.pk',
             )
             .where("users.pk = :pk", { pk: data.pk })
             .getOne()
@@ -169,9 +169,9 @@ export class UserService {
             .addSelect(["accounts.pk", "accounts.username", "accounts.active", "accounts.verified"])
             .leftJoinAndMapOne(
                 'users.user_document',
-                UserDocument,
-                'user_documents',
-                'users.pk=user_documents.user_pk and user_documents.type = \'profile_photo\''
+                Documentable,
+                'documentable',
+                'users.pk=documentable.user_pk and documentable.table_name = \'users\''
             )
             .leftJoinAndMapOne(
                 'user_documents.document',
@@ -246,14 +246,14 @@ export class UserService {
 
                         // update the profile photo
                         if (data.image) {
-                            let profilePhoto = await EntityManager.findOne(UserDocument, { where: { user_pk: data.pk, type: 'profile_photo' } });
+                            let profilePhoto = await EntityManager.findOne(Documentable, { where: { table_name: 'users', table_pk: data.pk, type: 'profile_photo' } });
                             if (profilePhoto) {
-                                await EntityManager.update(UserDocument, { pk: profilePhoto.pk }, { document_pk: data.image.pk });
+                                await EntityManager.update(Documentable, { pk: profilePhoto.pk }, { document_pk: data.image.pk });
                             }
                             else {
-                                const document = new UserDocument();
-                                document.user_pk = data.pk;
-                                document.type = 'profile_photo';
+                                const document = new Documentable();
+                                document.table_name = 'users';
+                                document.table_pk = data.pk;
                                 document.document_pk = data.image.pk;
                                 await EntityManager.save(document);
                             }
@@ -296,9 +296,9 @@ export class UserService {
 
                         // create user document
                         if (data.image) {
-                            const user_document = new UserDocument();
-                            user_document.user_pk = newUser.pk;
-                            user_document.type = 'profile_photo';
+                            const user_document = new Documentable();
+                            user_document.table_name = 'users';
+                            user_document.table_pk = newUser.pk;
                             user_document.document_pk = data.image.pk;
                             await EntityManager.save(user_document);
                         }

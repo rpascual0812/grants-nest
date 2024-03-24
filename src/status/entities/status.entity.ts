@@ -1,4 +1,5 @@
 import { ApplicationStatus } from 'src/application/entities/application-statuses.entity';
+import { ProjectStatus } from 'src/projects/entities/project-statuses.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
 
@@ -36,6 +37,10 @@ export class Status extends BaseEntity {
     @OneToMany('ApplicationStatus', (applicationStatus: ApplicationStatus) => applicationStatus.status)
     @JoinColumn({ name: 'pk' })
     application_status: Array<ApplicationStatus>;
+
+    @OneToMany('ProjectStatus', (projectStatus: ProjectStatus) => projectStatus.status)
+    @JoinColumn({ name: 'pk' })
+    project_status: Array<ProjectStatus>;
 
     @ManyToOne(type => User, user => user.status, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'created_by' })

@@ -2,8 +2,8 @@ import { Application } from 'src/application/entities/application.entity';
 import { ApplicationOrganizationProfile } from 'src/application/entities/application-organization-profile.entity';
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
 import { Province } from 'src/province/entities/province.entity';
-import { ApplicationProjectLocation } from 'src/application/entities/application-project-location.entity';
 import { PartnerOrganization } from 'src/partner/entities/partner-organization.entity';
+import { ProjectLocation } from 'src/projects/entities/project-location.entity';
 
 @Entity({ name: 'countries' })
 @Unique(['name', 'code'])
@@ -49,7 +49,7 @@ export class Country extends BaseEntity {
     @JoinColumn({ name: 'pk' })
     partner_organization: Array<PartnerOrganization>;
 
-    @OneToMany('ApplicationProjectLocation', (applicationProjectLocation: ApplicationProjectLocation) => applicationProjectLocation.country)
+    @OneToMany('ProjectLocation', (projectLocation: ProjectLocation) => projectLocation.country)
     @JoinColumn({ name: 'pk' })
-    application_project_location: Array<ApplicationProjectLocation>;
+    project_location: Array<ProjectLocation>;
 }

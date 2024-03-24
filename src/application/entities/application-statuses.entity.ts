@@ -1,5 +1,4 @@
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
-import { ApplicationDocument } from './application-document.entity';
 import { Application } from './application.entity';
 import { Status } from 'src/status/entities/status.entity';
 
