@@ -91,4 +91,9 @@ export class ApplicationController {
         console.log('deleting', pk, proposal_pk, activity_pk);
         return this.applicationService.removeProposalActivity(+pk, +proposal_pk, +activity_pk, req.user);
     }
+
+    @Post('review')
+    saveReview(@Body() body: any, @Request() req: any) {
+        return this.applicationService.saveReview(body, req.user);
+    }
 }

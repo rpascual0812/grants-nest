@@ -22,6 +22,8 @@ import { PartnerModule } from './partner/partner.module';
 import { StatusModule } from './status/status.module';
 import { DonorModule } from './donor/donor.module';
 import { ProjectsModule } from './projects/projects.module';
+import { TypeModule } from './type/type.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
     imports: [
@@ -42,7 +44,9 @@ import { ProjectsModule } from './projects/projects.module';
         PartnerModule,
         StatusModule,
         DonorModule,
-        ProjectsModule
+        ProjectsModule,
+        TypeModule,
+        ReviewModule
     ],
     controllers: [AppController],
     providers: [AppService, CheckService, MailerService, DestroyerService],
