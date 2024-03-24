@@ -9,7 +9,6 @@ import { DocumentService } from './document.service';
 export class DocumentController {
     constructor(private readonly documentService: DocumentService) { }
 
-    @UseGuards(JwtAuthGuard)
     @Post('upload')
     @UseInterceptors(
         FileInterceptor('file', {
@@ -30,5 +29,10 @@ export class DocumentController {
     @Get()
     async findAll(@Request() req: any) {
         return this.documentService.findAll(req.query);
+    }
+
+    @Post('documentable')
+    async saveDocumentable(@Request() req: any, @Body() body: any) {
+        return await this.documentService.saveDocumentable(body);
     }
 }
