@@ -9,20 +9,23 @@ export class PartnerController {
     async fetch() {
         let partners = await this.partnerService.findAll();
         // ugly hack to get the last status and count grand total
-        partners.data.forEach(partner => {
-            partner['grand_total_amount'] = 0;
-            partner.application.forEach(application => {
-                application['application_status'] = null;
-                if (application.application_statuses.length > 0) {
-                    const count = application.application_statuses.length;
-                    application['application_status'] = application.application_statuses[count - 1];
-                }
-                if (application.application_proposal) {
-                    partner['grand_total_amount'] += parseInt(application.application_proposal.budget_request_usd.toString());
-                }
-                delete application.application_statuses;
+        if (partners && partners.data) {
+            partners.data.forEach(partner => {
+                partner['grand_total_amount'] = 0;
+                partner.application.forEach(application => {
+                    application['application_status'] = null;
+                    if (application.application_statuses.length > 0) {
+                        const count = application.application_statuses.length;
+                        application['application_status'] = application.application_statuses[count - 1];
+                    }
+                    if (application.application_proposal) {
+                        partner['grand_total_amount'] += parseInt(application.application_proposal.budget_request_usd.toString());
+                    }
+                    delete application.application_statuses;
+                });
             });
-        });
+        }
+
         return partners;
     }
 
