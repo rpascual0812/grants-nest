@@ -3,6 +3,7 @@ import { ProjectBeneficiary } from './project-beneficiary.entity';
 import { Application } from 'src/application/entities/application.entity';
 import { ProjectLocation } from './project-location.entity';
 import { ProjectStatus } from './project-statuses.entity';
+import { Type } from 'src/type/entities/type.entity';
 
 @Entity({ name: 'projects' })
 export class Project extends BaseEntity {
@@ -33,6 +34,9 @@ export class Project extends BaseEntity {
     @Column({ name: 'status_pk', nullable: true })
     status_pk: number;
 
+    @Column({ name: 'type_pk', nullable: true })
+    type_pk: number;
+
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
 
@@ -52,6 +56,10 @@ export class Project extends BaseEntity {
     project_location: ProjectLocation;
 
     @OneToMany('ProjectStatus', (project_statuses: ProjectStatus) => project_statuses.project)
-    @JoinColumn({ name: 'pk' })
+    @JoinColumn({ name: 'status_pk' })
     project_statuses: Array<ProjectStatus>;
+
+    @ManyToOne(type => Type, type => type.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'type_pk' })
+    type: Type;
 }
