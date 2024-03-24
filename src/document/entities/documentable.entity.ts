@@ -8,13 +8,13 @@ export class Documentable {
     @PrimaryGeneratedColumn()
     pk: number;
 
-    @Column({ name: 'user_pk', nullable: false })
+    @Column({ name: 'user_pk', nullable: true })
     user_pk: number;
 
     @Column({ type: 'text', nullable: false })
     table_name: string;
 
-    @Column({ name: 'application_pk', nullable: false })
+    @Column({ name: 'table_pk', nullable: false })
     table_pk: number;
 
     @Column({ type: 'text', nullable: true })

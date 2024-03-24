@@ -83,7 +83,7 @@ export class UserService {
                     'user_roles.role_pk=roles.pk'
                 )
                 .leftJoinAndMapOne(
-                    'users.user_document',
+                    'users.documentable',
                     Documentable,
                     'documentable',
                     'users.pk=documentable.table_pk and documentable.table_name = \'users\''
@@ -143,7 +143,7 @@ export class UserService {
                 'user_roles.role_pk=roles.pk'
             )
             .leftJoinAndMapOne(
-                'users.user_document',
+                'users.documentable',
                 Documentable,
                 'documentable',
                 'users.pk=documentable.user_pk and documentable.table_name = \'users\''
@@ -168,16 +168,16 @@ export class UserService {
             .leftJoinAndSelect("users.account", "accounts")
             .addSelect(["accounts.pk", "accounts.username", "accounts.active", "accounts.verified"])
             .leftJoinAndMapOne(
-                'users.user_document',
+                'users.documentable',
                 Documentable,
                 'documentable',
                 'users.pk=documentable.user_pk and documentable.table_name = \'users\''
             )
             .leftJoinAndMapOne(
-                'user_documents.document',
+                'documentable.document',
                 Document,
                 'documents',
-                'user_documents.document_pk=documents.pk',
+                'documentable.document_pk=documents.pk',
             )
             .where("accounts.pk = :pk", { pk: user.account.pk })
             .getOne()
@@ -296,11 +296,11 @@ export class UserService {
 
                         // create user document
                         if (data.image) {
-                            const user_document = new Documentable();
-                            user_document.table_name = 'users';
-                            user_document.table_pk = newUser.pk;
-                            user_document.document_pk = data.image.pk;
-                            await EntityManager.save(user_document);
+                            const documentable = new Documentable();
+                            documentable.table_name = 'users';
+                            documentable.table_pk = newUser.pk;
+                            documentable.document_pk = data.image.pk;
+                            await EntityManager.save(documentable);
                         }
                     }
 
