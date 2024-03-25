@@ -6,7 +6,6 @@ import { Log } from 'src/log/entities/log.entity';
 import { Application } from 'src/application/entities/application.entity';
 import { Status } from 'src/status/entities/status.entity';
 import { Documentable } from 'src/document/entities/documentable.entity';
-import { Reviewable } from 'src/review/entities/reviewable.entity';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
@@ -76,8 +75,4 @@ export class User extends BaseEntity {
     @OneToMany('Status', (status: Status) => status.user)
     @JoinColumn({ name: 'pk' })
     status: Array<Status>;
-
-    @OneToMany('Reviewable', (reviewable: Reviewable) => reviewable.user, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-    @JoinColumn({ name: 'pk' })
-    reviewable: Reviewable;
 }
