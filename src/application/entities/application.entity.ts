@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany, ManyToMany } from 'typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { ApplicationOrganizationProfile } from './application-organization-profile.entity';
 import { Partner } from 'src/partner/entities/partner.entity';
@@ -8,6 +8,7 @@ import { ApplicationFiscalSponsor } from './application-fiscal-sponsor.entity';
 import { ApplicationReference } from './application-references.entity';
 import { ApplicationStatus } from './application-statuses.entity';
 import { Project } from 'src/projects/entities/project.entity';
+import { Review } from 'src/review/entities/review.entity';
 
 @Entity({ name: 'applications' })
 @Unique(['uuid'])
@@ -72,4 +73,7 @@ export class Application extends BaseEntity {
     @OneToMany('ApplicationStatus', (application_statuses: ApplicationStatus) => application_statuses.application)
     @JoinColumn({ name: 'pk' })
     application_statuses: Array<ApplicationStatus>;
+
+    @ManyToMany(() => Review, review => review.applications, { cascade: ['insert', 'update'] })
+    reviews: Review[];
 }

@@ -2,8 +2,8 @@ import { ApplicationStatus } from 'src/application/entities/application-statuses
 import { ProjectStatus } from 'src/projects/entities/project-statuses.entity';
 import { Project } from 'src/projects/entities/project.entity';
 import { User } from 'src/user/entities/user.entity';
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
-import { Reviewable } from './reviewable.entity';
+import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany, ManyToMany, JoinTable } from 'typeorm';
+import { Application } from 'src/application/entities/application.entity';
 
 @Entity({ name: 'reviews' })
 export class Review extends BaseEntity {
@@ -15,6 +15,9 @@ export class Review extends BaseEntity {
 
     @Column({ type: 'text', nullable: true })
     flag: string;
+
+    @Column({ type: 'text', nullable: true })
+    type: string;
 
     @Column({ name: 'created_by', nullable: false })
     created_by: number;
@@ -33,9 +36,19 @@ export class Review extends BaseEntity {
     @JoinColumn({ name: 'created_by' })
     user: User;
 
-    @OneToMany('Reviewable', (reviewable: Reviewable) => reviewable.review, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-    @JoinColumn({ name: 'pk' })
-    reviewable: Reviewable;
+    @ManyToMany(() => Application, application => application.reviews)
+    @JoinTable({
+        name: 'review_application_relation',
+        joinColumn: {
+            name: 'review_pk',
+            referencedColumnName: 'pk',
+        },
+        inverseJoinColumn: {
+            name: 'application_pk',
+            referencedColumnName: 'pk',
+        }
+    })
+    applications: Application[];
 }
 
 
