@@ -26,7 +26,6 @@ import { Project } from 'src/projects/entities/project.entity';
 import { ProjectBeneficiary } from 'src/projects/entities/project-beneficiary.entity';
 import { ProjectLocation } from 'src/projects/entities/project-location.entity';
 import { Review } from 'src/review/entities/review.entity';
-import { Reviewable } from 'src/review/entities/reviewable.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -141,12 +140,14 @@ export class ApplicationService extends GlobalService {
                     'application_nonprofit_equivalency_determination',
                 )
                 .leftJoinAndSelect('applications.application_reference', 'application_reference')
+                .leftJoinAndSelect('applications.reviews', 'review_application_relation')
                 .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere(filter.hasOwnProperty('uuid') ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
                 .andWhere(filter.hasOwnProperty('number') ? 'applications.number = :number' : '1=1', {
                     number: filter.number,
                 })
                 .andWhere('applications.archived = :archived', { archived: false })
+                .orderBy("review_application_relation", "ASC")
                 .getOne();
             return {
                 status: true,
@@ -819,17 +820,12 @@ export class ApplicationService extends GlobalService {
                 const review = new Review();
                 review.message = data.message;
                 review.flag = data.flag;
+                review.type = data.type;
+                review.created_by = user.pk;
                 const newReview = await EntityManager.save(review);
 
                 if (newReview) {
-                    // Reviewable
-                    const reviewable = new Reviewable();
-                    reviewable.user_pk = user.pk;
-                    reviewable.table_name = 'applications';
-                    reviewable.table_pk = 1;
-                    reviewable.type = 'grants_team_review';
-                    reviewable.review_pk = newReview.pk;
-                    const newProjectInfo = await EntityManager.save(reviewable);
+                    await EntityManager.query('insert into review_application_relation (review_pk, application_pk) values ($1 ,$2);', [newReview.pk, data.application_pk]);
 
                     return {
                         status: true,
