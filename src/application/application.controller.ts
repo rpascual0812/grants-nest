@@ -92,6 +92,7 @@ export class ApplicationController {
         return this.applicationService.removeProposalActivity(+pk, +proposal_pk, +activity_pk, req.user);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Post('review')
     saveReview(@Body() body: any, @Request() req: any) {
         return this.applicationService.saveReview(body, req.user);
