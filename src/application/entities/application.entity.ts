@@ -1,4 +1,15 @@
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany, ManyToMany } from 'typeorm';
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    Unique,
+    OneToOne,
+    ManyToOne,
+    JoinColumn,
+    BaseEntity,
+    OneToMany,
+    ManyToMany,
+} from 'typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { ApplicationOrganizationProfile } from './application-organization-profile.entity';
 import { Partner } from 'src/partner/entities/partner.entity';
@@ -9,6 +20,7 @@ import { ApplicationReference } from './application-references.entity';
 import { ApplicationStatus } from './application-statuses.entity';
 import { Project } from 'src/projects/entities/project.entity';
 import { Review } from 'src/review/entities/review.entity';
+import { Type } from 'src/type/entities/type.entity';
 
 @Entity({ name: 'applications' })
 @Unique(['uuid'])
@@ -39,27 +51,42 @@ export class Application extends BaseEntity {
      * Relationship
      */
 
-    @ManyToOne(type => User, user => user.application, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne((type) => User, (user) => user.application, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'created_by' })
     user: User;
 
-    @ManyToOne(type => Partner, partner => partner.application, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne((type) => Partner, (partner) => partner.application, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'partner_pk' })
     partner: Partner;
 
-    @OneToOne(type => ApplicationOrganizationProfile, application_organization_profile => application_organization_profile.application, { cascade: true })
+    @OneToOne(
+        (type) => ApplicationOrganizationProfile,
+        (application_organization_profile) => application_organization_profile.application,
+        { cascade: true },
+    )
     application_organization_profile: ApplicationOrganizationProfile;
 
-    @OneToOne(type => Project, project => project.application, { cascade: true })
+    @OneToOne((type) => Project, (project) => project.application, { cascade: true })
     project: Project;
 
-    @OneToOne(type => ApplicationProposal, application_proposal => application_proposal.application, { cascade: true })
+    @OneToOne((type) => ApplicationProposal, (application_proposal) => application_proposal.application, {
+        cascade: true,
+    })
     application_proposal: ApplicationProposal;
 
-    @OneToOne(type => ApplicationNonprofitEquivalencyDetermination, application_nonprofit_equivalency_determination => application_nonprofit_equivalency_determination.application, { cascade: true })
+    @OneToOne(
+        (type) => ApplicationNonprofitEquivalencyDetermination,
+        (application_nonprofit_equivalency_determination) =>
+            application_nonprofit_equivalency_determination.application,
+        { cascade: true },
+    )
     application_nonprofit_equivalency_determination: ApplicationNonprofitEquivalencyDetermination;
 
-    @OneToOne(type => ApplicationFiscalSponsor, application_fiscal_sponsor => application_fiscal_sponsor.application, { cascade: true })
+    @OneToOne(
+        (type) => ApplicationFiscalSponsor,
+        (application_fiscal_sponsor) => application_fiscal_sponsor.application,
+        { cascade: true },
+    )
     application_fiscal_sponsor: ApplicationFiscalSponsor;
 
     @OneToMany('ApplicationReference', (ApplicationReference: ApplicationReference) => ApplicationReference.application)
@@ -74,6 +101,9 @@ export class Application extends BaseEntity {
     @JoinColumn({ name: 'pk' })
     application_statuses: Array<ApplicationStatus>;
 
-    @ManyToMany(() => Review, review => review.applications, { cascade: ['insert', 'update'] })
+    @ManyToMany(() => Review, (review) => review.applications, { cascade: ['insert', 'update'] })
     reviews: Review[];
+
+    @ManyToMany(() => Type, (type) => type.applications, { cascade: ['insert', 'update'] })
+    types: Type[];
 }
