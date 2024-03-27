@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 
 import dataSource from 'db/data-source';
 import { Document } from './entities/document.entity';
-import { Documentable } from './entities/documentable.entity';
 
 @Injectable()
 export class DocumentService {
@@ -45,13 +44,13 @@ export class DocumentService {
         try {
             return await queryRunner.manager.transaction(
                 async (EntityManager) => {
-                    const document = new Documentable();
-                    document.table_name = data.table_name;
-                    document.table_pk = data.table_pk;
-                    document.document_pk = data.document_pk;
-                    const documentable = await EntityManager.save(document);
+                    // const document = new Documentable();
+                    // document.table_name = data.table_name;
+                    // document.table_pk = data.table_pk;
+                    // document.document_pk = data.document_pk;
+                    // const documentable = await EntityManager.save(document);
 
-                    return { status: true, data: documentable };
+                    // return { status: true, data: documentable };
                 }
             );
         } catch (err) {
