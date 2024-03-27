@@ -53,6 +53,10 @@ export class Type extends BaseEntity {
             name: 'type_pk',
             referencedColumnName: 'pk',
         },
+        inverseJoinColumn: {
+            name: 'application_pk',
+            referencedColumnName: 'pk',
+        }
     })
     applications: Application[];
 
