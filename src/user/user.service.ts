@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getRepository, getConnection, Any, Brackets } from 'typeorm';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import dataSource from 'db/data-source';
@@ -14,7 +12,6 @@ import { EmailService } from 'src/email/email.service';
 import { SessionService } from 'src/session/session.service';
 import { Document } from 'src/document/entities/document.entity';
 import { UserRole } from './entities/user-role.entity';
-import { Documentable } from 'src/document/entities/documentable.entity';
 
 // import { Document } from 'src/documents/entities/document.entity';
 // import { UserDocument } from './entities/user-document.entity';
@@ -82,18 +79,18 @@ export class UserService {
                     'roles',
                     'user_roles.role_pk=roles.pk'
                 )
-                .leftJoinAndMapOne(
-                    'users.documentable',
-                    Documentable,
-                    'documentable',
-                    'users.pk=documentable.table_pk and documentable.table_name = \'users\''
-                )
-                .leftJoinAndMapOne(
-                    'documentable.document',
-                    Document,
-                    'documents',
-                    'documentable.document_pk=documents.pk',
-                )
+                // .leftJoinAndMapOne(
+                //     'users.documentable',
+                //     Documentable,
+                //     'documentable',
+                //     'users.pk=documentable.table_pk and documentable.table_name = \'users\''
+                // )
+                // .leftJoinAndMapOne(
+                //     'documentable.document',
+                //     Document,
+                //     'documents',
+                //     'documentable.document_pk=documents.pk',
+                // )
                 .andWhere(
                     filters.hasOwnProperty('keyword') && filters.keyword != '' ?
                         "(users.first_name ILIKE :keyword or users.last_name ILIKE :keyword or users.middle_name ILIKE :keyword or users.unique_id ILIKE :keyword)" :
@@ -142,18 +139,18 @@ export class UserService {
                 'roles',
                 'user_roles.role_pk=roles.pk'
             )
-            .leftJoinAndMapOne(
-                'users.documentable',
-                Documentable,
-                'documentable',
-                'users.pk=documentable.user_pk and documentable.table_name = \'users\''
-            )
-            .leftJoinAndMapOne(
-                'documentable.document',
-                Document,
-                'documents',
-                'documentable.document_pk=documents.pk',
-            )
+            // .leftJoinAndMapOne(
+            //     'users.documentable',
+            //     Documentable,
+            //     'documentable',
+            //     'users.pk=documentable.user_pk and documentable.table_name = \'users\''
+            // )
+            // .leftJoinAndMapOne(
+            //     'documentable.document',
+            //     Document,
+            //     'documents',
+            //     'documentable.document_pk=documents.pk',
+            // )
             .where("users.pk = :pk", { pk: data.pk })
             .getOne()
             ;
@@ -167,18 +164,18 @@ export class UserService {
             .select('users')
             .leftJoinAndSelect("users.account", "accounts")
             .addSelect(["accounts.pk", "accounts.username", "accounts.active", "accounts.verified"])
-            .leftJoinAndMapOne(
-                'users.documentable',
-                Documentable,
-                'documentable',
-                'users.pk=documentable.user_pk and documentable.table_name = \'users\''
-            )
-            .leftJoinAndMapOne(
-                'documentable.document',
-                Document,
-                'documents',
-                'documentable.document_pk=documents.pk',
-            )
+            // .leftJoinAndMapOne(
+            //     'users.documentable',
+            //     Documentable,
+            //     'documentable',
+            //     'users.pk=documentable.user_pk and documentable.table_name = \'users\''
+            // )
+            // .leftJoinAndMapOne(
+            //     'documentable.document',
+            //     Document,
+            //     'documents',
+            //     'documentable.document_pk=documents.pk',
+            // )
             .where("accounts.pk = :pk", { pk: user.account.pk })
             .getOne()
             ;
@@ -246,17 +243,17 @@ export class UserService {
 
                         // update the profile photo
                         if (data.image) {
-                            let profilePhoto = await EntityManager.findOne(Documentable, { where: { table_name: 'users', table_pk: data.pk, type: 'profile_photo' } });
-                            if (profilePhoto) {
-                                await EntityManager.update(Documentable, { pk: profilePhoto.pk }, { document_pk: data.image.pk });
-                            }
-                            else {
-                                const document = new Documentable();
-                                document.table_name = 'users';
-                                document.table_pk = data.pk;
-                                document.document_pk = data.image.pk;
-                                await EntityManager.save(document);
-                            }
+                            // let profilePhoto = await EntityManager.findOne(Documentable, { where: { table_name: 'users', table_pk: data.pk, type: 'profile_photo' } });
+                            // if (profilePhoto) {
+                            //     await EntityManager.update(Documentable, { pk: profilePhoto.pk }, { document_pk: data.image.pk });
+                            // }
+                            // else {
+                            //     const document = new Documentable();
+                            //     document.table_name = 'users';
+                            //     document.table_pk = data.pk;
+                            //     document.document_pk = data.image.pk;
+                            //     await EntityManager.save(document);
+                            // }
                         }
 
                         // update the roles
@@ -296,11 +293,11 @@ export class UserService {
 
                         // create user document
                         if (data.image) {
-                            const documentable = new Documentable();
-                            documentable.table_name = 'users';
-                            documentable.table_pk = newUser.pk;
-                            documentable.document_pk = data.image.pk;
-                            await EntityManager.save(documentable);
+                            // const documentable = new Documentable();
+                            // documentable.table_name = 'users';
+                            // documentable.table_pk = newUser.pk;
+                            // documentable.document_pk = data.image.pk;
+                            // await EntityManager.save(documentable);
                         }
                     }
 

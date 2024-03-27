@@ -56,7 +56,7 @@ export class Type extends BaseEntity {
         inverseJoinColumn: {
             name: 'application_pk',
             referencedColumnName: 'pk',
-        },
+        }
     })
     applications: Application[];
 
