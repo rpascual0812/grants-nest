@@ -4,6 +4,7 @@ import { Project } from 'src/projects/entities/project.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { Application } from 'src/application/entities/application.entity';
+import { Document } from 'src/document/entities/document.entity';
 
 @Entity({ name: 'reviews' })
 export class Review extends BaseEntity {
@@ -49,6 +50,9 @@ export class Review extends BaseEntity {
         }
     })
     applications: Application[];
+
+    @ManyToMany(() => Document, (document) => document.reviews, { cascade: ['insert', 'update'] })
+    documents: Document[];
 }
 
 
