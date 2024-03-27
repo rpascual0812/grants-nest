@@ -24,10 +24,11 @@ export class PartnerController {
     constructor(private readonly partnerService: PartnerService) {}
 
     @Get()
-    async fetch(@Query() query: { organization_pk?: number }) {
-        const { organization_pk } = query;
+    async fetch(@Query() query: { organization_pk?: number; type_pk?: number }) {
+        const { organization_pk, type_pk } = query;
         const partners = await this.partnerService.findAll({
             organization_pk: organization_pk ? +organization_pk : null,
+            type_pk: type_pk ? +type_pk : null,
         });
         // ugly hack to get the last status and count grand total
         if (partners && partners.data) {

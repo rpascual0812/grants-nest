@@ -26,6 +26,7 @@ import { Project } from 'src/projects/entities/project.entity';
 import { ProjectBeneficiary } from 'src/projects/entities/project-beneficiary.entity';
 import { ProjectLocation } from 'src/projects/entities/project-location.entity';
 import { Review } from 'src/review/entities/review.entity';
+import { Type } from 'src/type/entities/type.entity';
 import { Document } from 'src/document/entities/document.entity';
 
 @Injectable()
@@ -77,11 +78,22 @@ export class ApplicationService extends GlobalService {
                     'application_nonprofit_equivalency_determination',
                 )
                 .leftJoinAndSelect('applications.application_reference', 'application_reference')
+                .leftJoinAndSelect('applications.reviews', 'review_application_relation')
+                .leftJoinAndSelect('applications.types', 'type_application_relation')
                 .where('applications.archived = false')
                 .andWhere(
-                    filters.hasOwnProperty('keyword') && filters.keyword != '' ?
-                        "(partners.name ILIKE :keyword or partners.email_address ILIKE :keyword)" :
-                        '1=1', { keyword: `%${filters.keyword}%` }
+                    filters.hasOwnProperty('keyword') && filters.keyword != ''
+                        ? '(partners.name ILIKE :keyword or partners.email_address ILIKE :keyword)'
+                        : '1=1',
+                    { keyword: `%${filters.keyword}%` },
+                )
+                .andWhere(
+                    filters.hasOwnProperty('type_pk') && filters?.type_pk && filters?.type_pk?.trim() !== ''
+                        ? 'type_application_relation.pk = :type_pk'
+                        : '1=1',
+                    {
+                        type_pk: +filters.type_pk,
+                    },
                 )
                 .orderBy('applications.date_created', 'DESC')
                 .getManyAndCount();
@@ -126,10 +138,7 @@ export class ApplicationService extends GlobalService {
                 )
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
-                .leftJoinAndSelect(
-                    'projects.project_beneficiary',
-                    'project_beneficiary',
-                )
+                .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
                 .leftJoinAndSelect('applications.application_proposal', 'application_proposal')
                 .leftJoinAndSelect(
                     'application_proposal.application_proposal_activity',
@@ -141,9 +150,10 @@ export class ApplicationService extends GlobalService {
                     'application_nonprofit_equivalency_determination',
                 )
                 .leftJoinAndSelect('applications.application_reference', 'application_reference')
-                .leftJoinAndSelect('applications.reviews', 'reviews')
 
+                .leftJoinAndSelect('applications.reviews', 'reviews')
                 .leftJoinAndSelect("reviews.documents", "documents")
+                .leftJoinAndSelect('applications.type', 'types')
                 .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere(filter.hasOwnProperty('uuid') ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
                 .andWhere(filter.hasOwnProperty('number') ? 'applications.number = :number' : '1=1', {
@@ -844,7 +854,6 @@ export class ApplicationService extends GlobalService {
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-
                 const review = new Review();
                 review.message = data.message;
                 review.flag = data.flag;
@@ -866,13 +875,57 @@ export class ApplicationService extends GlobalService {
 
                     return {
                         status: true,
-                        data: newReview
+                        data: newReview,
                     };
                 } else {
                     return {
                         status: false,
                         code: 500,
                         message: 'Application not found',
+                    };
+                }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveType(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const typePk = data?.type_pk;
+                const applicationPk = data?.application_pk;
+                const type = await EntityManager.findOne(Type, {
+                    where: {
+                        pk: typePk,
+                    },
+                });
+
+                if (type && applicationPk) {
+                    await EntityManager.query(
+                        'insert into type_application_relation (type_pk, application_pk) values ($1 ,$2);',
+                        [type.pk, applicationPk],
+                    );
+
+                    return {
+                        status: true,
+                        data: {
+                            ...type,
+                            application_pk: applicationPk,
+                        },
+                    };
+                } else {
+                    return {
+                        status: false,
+                        code: 500,
+                        message: 'Type/Application not found',
                     };
                 }
             });
