@@ -153,7 +153,7 @@ export class ApplicationService extends GlobalService {
 
                 .leftJoinAndSelect('applications.reviews', 'reviews')
                 .leftJoinAndSelect("reviews.documents", "documents")
-                .leftJoinAndSelect('applications.type', 'types')
+                .leftJoinAndSelect('applications.types', 'types')
                 .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere(filter.hasOwnProperty('uuid') ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
                 .andWhere(filter.hasOwnProperty('number') ? 'applications.number = :number' : '1=1', {
