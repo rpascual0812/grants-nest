@@ -27,6 +27,7 @@ import { ProjectBeneficiary } from 'src/projects/entities/project-beneficiary.en
 import { ProjectLocation } from 'src/projects/entities/project-location.entity';
 import { Review } from 'src/review/entities/review.entity';
 import { Type } from 'src/type/entities/type.entity';
+import { Document } from 'src/document/entities/document.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -35,7 +36,7 @@ export class ApplicationService extends GlobalService {
     constructor(
         @InjectRepository(Application)
         private applicationRepository: Repository<Application>,
-        private emailService: EmailService,
+        private emailService: EmailService
     ) {
         super();
     }
@@ -149,15 +150,17 @@ export class ApplicationService extends GlobalService {
                     'application_nonprofit_equivalency_determination',
                 )
                 .leftJoinAndSelect('applications.application_reference', 'application_reference')
-                .leftJoinAndSelect('applications.reviews', 'review_application_relation')
-                .leftJoinAndSelect('applications.type', 'type_application_relation')
+
+                .leftJoinAndSelect('applications.reviews', 'reviews')
+                .leftJoinAndSelect("reviews.documents", "documents")
+                .leftJoinAndSelect('applications.type', 'types')
                 .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere(filter.hasOwnProperty('uuid') ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
                 .andWhere(filter.hasOwnProperty('number') ? 'applications.number = :number' : '1=1', {
                     number: filter.number,
                 })
                 .andWhere('applications.archived = :archived', { archived: false })
-                .orderBy('review_application_relation', 'ASC')
+                .orderBy("reviews.pk", "ASC")
                 .getOne();
             return {
                 status: true,
@@ -244,171 +247,196 @@ export class ApplicationService extends GlobalService {
         }
     }
 
+    // async save(data: any, user: any) {
+    //     const queryRunner = dataSource.createQueryRunner();
+    //     await queryRunner.connect();
+
+    //     try {
+    //         return await queryRunner.manager.transaction(async (EntityManager) => {
+    //             const application = await EntityManager.findOne(Application, {
+    //                 where: { uuid: data.uuid },
+    //                 relations: {
+    //                     partner: true,
+    //                 },
+    //             });
+
+    //             if (application) {
+    //                 // Project Information
+    //                 const applicationProjectInfo = new Project();
+    //                 applicationProjectInfo.application_pk = application.pk;
+    //                 applicationProjectInfo.title = data.project.title;
+    //                 applicationProjectInfo.duration = data.project.duration;
+    //                 applicationProjectInfo.background = data.project.background;
+    //                 applicationProjectInfo.objective = data.project.objective;
+    //                 applicationProjectInfo.expected_output = data.project.expected_output;
+    //                 applicationProjectInfo.how_will_affect = data.project.how_will_affect;
+    //                 const newProjectInfo = await EntityManager.save(applicationProjectInfo);
+
+    //                 const womenType = data?.project?.beneficiary_women ?? [];
+    //                 const tempWomenType = womenType.map(async (data) => {
+    //                     const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
+    //                     applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
+    //                     applicationProjInfoBeneficiaries.type = data.type;
+    //                     applicationProjInfoBeneficiaries.name = data.name;
+    //                     applicationProjInfoBeneficiaries.count = data.count;
+    //                     const newApplicationProjInfoBeneficiaries = await EntityManager.save(
+    //                         applicationProjInfoBeneficiaries,
+    //                     );
+    //                     return { ...newApplicationProjInfoBeneficiaries };
+    //                 });
+    //                 const savedWomenBeneficiary = await Promise.all(tempWomenType);
+
+    //                 const youngWomenType = data?.project?.beneficiary_young_women ?? [];
+    //                 const tempYoungWomenType = youngWomenType.map(async (data) => {
+    //                     const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
+    //                     applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
+    //                     applicationProjInfoBeneficiaries.type = data.type;
+    //                     applicationProjInfoBeneficiaries.name = data.name;
+    //                     applicationProjInfoBeneficiaries.count = data.count;
+    //                     const newApplicationProjInfoBeneficiaries = await EntityManager.save(
+    //                         applicationProjInfoBeneficiaries,
+    //                     );
+    //                     return { ...newApplicationProjInfoBeneficiaries };
+    //                 });
+    //                 const savedYoungWomenBeneficiary = await Promise.all(tempYoungWomenType);
+
+    //                 const menType = data?.project?.beneficiary_men ?? [];
+    //                 const tempMenType = menType.map(async (data) => {
+    //                     const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
+    //                     applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
+    //                     applicationProjInfoBeneficiaries.type = data.type;
+    //                     applicationProjInfoBeneficiaries.name = data.name;
+    //                     applicationProjInfoBeneficiaries.count = data.count;
+    //                     const newApplicationProjInfoBeneficiaries = await EntityManager.save(
+    //                         applicationProjInfoBeneficiaries,
+    //                     );
+    //                     return { ...newApplicationProjInfoBeneficiaries };
+    //                 });
+    //                 const savedMenBeneficiary = await Promise.all(tempMenType);
+
+    //                 const youngMenType = data?.project?.beneficiary_young_men ?? [];
+    //                 const tempYoungMenType = youngMenType.map(async (data) => {
+    //                     const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
+    //                     applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
+    //                     applicationProjInfoBeneficiaries.type = data.type;
+    //                     applicationProjInfoBeneficiaries.name = data.name;
+    //                     applicationProjInfoBeneficiaries.count = data.count;
+    //                     const newApplicationProjInfoBeneficiaries = await EntityManager.save(
+    //                         applicationProjInfoBeneficiaries,
+    //                     );
+    //                     return { ...newApplicationProjInfoBeneficiaries };
+    //                 });
+    //                 const savedYoungMenBeneficiary = await Promise.all(tempYoungMenType);
+
+    //                 const projectLocations = data?.project?.project_locations ?? [];
+    //                 const tempProjLoc = await projectLocations.map(async (data) => {
+    //                     const applicationProjInfoProjLoc = new ProjectLocation();
+    //                     applicationProjInfoProjLoc.project_pk = newProjectInfo.pk;
+    //                     applicationProjInfoProjLoc.country_pk = data?.country_pk;
+    //                     applicationProjInfoProjLoc.province_code = data?.province_code;
+    //                     const newApplicationProjInfoProjLoc = await EntityManager.save(applicationProjInfoProjLoc);
+    //                     return { ...newApplicationProjInfoProjLoc };
+    //                 });
+    //                 const savedProjLoc = await Promise.all(tempProjLoc);
+
+    //                 // Proposed activities and timeline
+    //                 const applicationProposal = new ApplicationProposal();
+    //                 applicationProposal.application_pk = application.pk;
+    //                 applicationProposal.monitor = data.proposal.monitor;
+    //                 applicationProposal.budget_request_usd = data.proposal.budget_request_usd;
+    //                 applicationProposal.budget_request_other = data.proposal.budget_request_other;
+    //                 applicationProposal.budget_request_other_currency = data.proposal.budget_request_other_currency;
+    //                 const saveProposal = await EntityManager.save(applicationProposal);
+
+    //                 const activities = data?.proposal?.activities ?? [];
+    //                 const tempActivities = await activities.map(async (data) => {
+    //                     const proposalActivities = new ApplicationProposalActivity();
+    //                     proposalActivities.application_proposal_pk = saveProposal.pk;
+    //                     proposalActivities.name = data?.name;
+    //                     proposalActivities.duration = data?.duration;
+    //                     const newActivities = await EntityManager.save(proposalActivities);
+    //                     return { ...newActivities };
+    //                 });
+    //                 const savedProposalActivities = await Promise.all(tempActivities);
+
+    //                 // References
+    //                 const references = data?.references ?? [];
+    //                 const tempReferences = await references.map(async (data) => {
+    //                     const applicationReference = new ApplicationReference();
+    //                     applicationReference.application_pk = application.pk;
+    //                     applicationReference.name = data?.name;
+    //                     applicationReference.email_address = data?.email_address;
+    //                     applicationReference.contact_number = data?.contact_number;
+    //                     applicationReference.organization_name = data?.organization_name;
+    //                     const newApplicationReferences = await EntityManager.save(applicationReference);
+    //                     return { ...newApplicationReferences };
+    //                 });
+    //                 const savedReferences = await Promise.all(tempReferences);
+
+    //                 this.emailService.uuid = uuidv4();
+    //                 // if application, get created_by from applications table
+    //                 // as application has no logged user
+    //                 this.emailService.user_pk = application.created_by;
+    //                 this.emailService.from = process.env.SEND_FROM;
+    //                 this.emailService.from_name = process.env.SENDER;
+    //                 this.emailService.to = application?.partner?.email_address;
+    //                 this.emailService.to_name = '';
+    //                 this.emailService.subject = 'We Have Received Your Application!';
+    //                 this.emailService.body = 'RECEIVED'; // MODIFY: must be a template from the database
+
+    //                 await this.emailService.create();
+
+    //                 return {
+    //                     status: true,
+    //                     data: {
+    //                         application,
+    //                         project: {
+    //                             ...newProjectInfo,
+    //                             project_locations: [...savedProjLoc],
+    //                             women_beneficiary: [...savedWomenBeneficiary],
+    //                             young_women_beneficiary: [...savedYoungWomenBeneficiary],
+    //                             men_beneficiary: [...savedMenBeneficiary],
+    //                             young_men_beneficiary: [...savedYoungMenBeneficiary],
+    //                         },
+    //                         proposal: {
+    //                             ...saveProposal,
+    //                             activities: [...savedProposalActivities],
+    //                         },
+    //                         references: [...savedReferences],
+    //                     },
+    //                 };
+    //             } else {
+    //                 return {
+    //                     status: false,
+    //                     code: 500,
+    //                     message: 'Application not found',
+    //                 };
+    //             }
+    //         });
+    //     } catch (err) {
+    //         this.saveError({});
+    //         console.log(err);
+    //         return { status: false, code: err.code };
+    //     } finally {
+    //         await queryRunner.release();
+    //     }
+    // }
+
     async save(data: any, user: any) {
+        console.log(data, user);
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const application = await EntityManager.findOne(Application, {
-                    where: { uuid: data.uuid },
-                    relations: {
-                        partner: true,
-                    },
-                });
-
-                if (application) {
-                    // Project Information
-                    const applicationProjectInfo = new Project();
-                    applicationProjectInfo.application_pk = application.pk;
-                    applicationProjectInfo.title = data.project.title;
-                    applicationProjectInfo.duration = data.project.duration;
-                    applicationProjectInfo.background = data.project.background;
-                    applicationProjectInfo.objective = data.project.objective;
-                    applicationProjectInfo.expected_output = data.project.expected_output;
-                    applicationProjectInfo.how_will_affect = data.project.how_will_affect;
-                    const newProjectInfo = await EntityManager.save(applicationProjectInfo);
-
-                    const womenType = data?.project?.beneficiary_women ?? [];
-                    const tempWomenType = womenType.map(async (data) => {
-                        const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
-                        applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
-                        applicationProjInfoBeneficiaries.type = data.type;
-                        applicationProjInfoBeneficiaries.name = data.name;
-                        applicationProjInfoBeneficiaries.count = data.count;
-                        const newApplicationProjInfoBeneficiaries = await EntityManager.save(
-                            applicationProjInfoBeneficiaries,
-                        );
-                        return { ...newApplicationProjInfoBeneficiaries };
-                    });
-                    const savedWomenBeneficiary = await Promise.all(tempWomenType);
-
-                    const youngWomenType = data?.project?.beneficiary_young_women ?? [];
-                    const tempYoungWomenType = youngWomenType.map(async (data) => {
-                        const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
-                        applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
-                        applicationProjInfoBeneficiaries.type = data.type;
-                        applicationProjInfoBeneficiaries.name = data.name;
-                        applicationProjInfoBeneficiaries.count = data.count;
-                        const newApplicationProjInfoBeneficiaries = await EntityManager.save(
-                            applicationProjInfoBeneficiaries,
-                        );
-                        return { ...newApplicationProjInfoBeneficiaries };
-                    });
-                    const savedYoungWomenBeneficiary = await Promise.all(tempYoungWomenType);
-
-                    const menType = data?.project?.beneficiary_men ?? [];
-                    const tempMenType = menType.map(async (data) => {
-                        const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
-                        applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
-                        applicationProjInfoBeneficiaries.type = data.type;
-                        applicationProjInfoBeneficiaries.name = data.name;
-                        applicationProjInfoBeneficiaries.count = data.count;
-                        const newApplicationProjInfoBeneficiaries = await EntityManager.save(
-                            applicationProjInfoBeneficiaries,
-                        );
-                        return { ...newApplicationProjInfoBeneficiaries };
-                    });
-                    const savedMenBeneficiary = await Promise.all(tempMenType);
-
-                    const youngMenType = data?.project?.beneficiary_young_men ?? [];
-                    const tempYoungMenType = youngMenType.map(async (data) => {
-                        const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
-                        applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
-                        applicationProjInfoBeneficiaries.type = data.type;
-                        applicationProjInfoBeneficiaries.name = data.name;
-                        applicationProjInfoBeneficiaries.count = data.count;
-                        const newApplicationProjInfoBeneficiaries = await EntityManager.save(
-                            applicationProjInfoBeneficiaries,
-                        );
-                        return { ...newApplicationProjInfoBeneficiaries };
-                    });
-                    const savedYoungMenBeneficiary = await Promise.all(tempYoungMenType);
-
-                    const projectLocations = data?.project?.project_locations ?? [];
-                    const tempProjLoc = await projectLocations.map(async (data) => {
-                        const applicationProjInfoProjLoc = new ProjectLocation();
-                        applicationProjInfoProjLoc.project_pk = newProjectInfo.pk;
-                        applicationProjInfoProjLoc.country_pk = data?.country_pk;
-                        applicationProjInfoProjLoc.province_code = data?.province_code;
-                        const newApplicationProjInfoProjLoc = await EntityManager.save(applicationProjInfoProjLoc);
-                        return { ...newApplicationProjInfoProjLoc };
-                    });
-                    const savedProjLoc = await Promise.all(tempProjLoc);
-
-                    // Proposed activities and timeline
-                    const applicationProposal = new ApplicationProposal();
-                    applicationProposal.application_pk = application.pk;
-                    applicationProposal.monitor = data.proposal.monitor;
-                    applicationProposal.budget_request_usd = data.proposal.budget_request_usd;
-                    applicationProposal.budget_request_other = data.proposal.budget_request_other;
-                    applicationProposal.budget_request_other_currency = data.proposal.budget_request_other_currency;
-                    const saveProposal = await EntityManager.save(applicationProposal);
-
-                    const activities = data?.proposal?.activities ?? [];
-                    const tempActivities = await activities.map(async (data) => {
-                        const proposalActivities = new ApplicationProposalActivity();
-                        proposalActivities.application_proposal_pk = saveProposal.pk;
-                        proposalActivities.name = data?.name;
-                        proposalActivities.duration = data?.duration;
-                        const newActivities = await EntityManager.save(proposalActivities);
-                        return { ...newActivities };
-                    });
-                    const savedProposalActivities = await Promise.all(tempActivities);
-
-                    // References
-                    const references = data?.references ?? [];
-                    const tempReferences = await references.map(async (data) => {
-                        const applicationReference = new ApplicationReference();
-                        applicationReference.application_pk = application.pk;
-                        applicationReference.name = data?.name;
-                        applicationReference.email_address = data?.email_address;
-                        applicationReference.contact_number = data?.contact_number;
-                        applicationReference.organization_name = data?.organization_name;
-                        const newApplicationReferences = await EntityManager.save(applicationReference);
-                        return { ...newApplicationReferences };
-                    });
-                    const savedReferences = await Promise.all(tempReferences);
-
-                    this.emailService.uuid = uuidv4();
-                    // if application, get created_by from applications table
-                    // as application has no logged user
-                    this.emailService.user_pk = application.created_by;
-                    this.emailService.from = process.env.SEND_FROM;
-                    this.emailService.from_name = process.env.SENDER;
-                    this.emailService.to = application?.partner?.email_address;
-                    this.emailService.to_name = '';
-                    this.emailService.subject = 'We Have Received Your Application!';
-                    this.emailService.body = 'RECEIVED'; // MODIFY: must be a template from the database
-
-                    await this.emailService.create();
-
-                    return {
-                        status: true,
-                        data: {
-                            application,
-                            project: {
-                                ...newProjectInfo,
-                                project_locations: [...savedProjLoc],
-                                women_beneficiary: [...savedWomenBeneficiary],
-                                young_women_beneficiary: [...savedYoungWomenBeneficiary],
-                                men_beneficiary: [...savedMenBeneficiary],
-                                young_men_beneficiary: [...savedYoungMenBeneficiary],
-                            },
-                            proposal: {
-                                ...saveProposal,
-                                activities: [...savedProposalActivities],
-                            },
-                            references: [...savedReferences],
-                        },
-                    };
-                } else {
-                    return {
-                        status: false,
-                        code: 500,
-                        message: 'Application not found',
-                    };
+                if (data.hasOwnProperty('application')) {
+                    await EntityManager.update(Application, { pk: data.application_pk }, data.application);
                 }
+                if (data.hasOwnProperty('project')) {
+                    await EntityManager.update(Project, { application_pk: data.application_pk }, data.project);
+                }
+
+                return { status: true, code: 200 };
             });
         } catch (err) {
             this.saveError({});
@@ -831,13 +859,19 @@ export class ApplicationService extends GlobalService {
                 review.flag = data.flag;
                 review.type = data.type;
                 review.created_by = user.pk;
-                const newReview = await EntityManager.save(review);
+                review.documents = data.documents;
+                const newReview = await dataSource.manager.save(review);
 
                 if (newReview) {
-                    await EntityManager.query(
-                        'insert into review_application_relation (review_pk, application_pk) values ($1 ,$2);',
-                        [newReview.pk, data.application_pk],
-                    );
+                    // this is working but it only keep one record per application
+                    // let application = await Application.findOneBy({
+                    //     pk: data.application_pk
+                    // });
+
+                    // application.reviews = [review];
+                    // application.save();
+
+                    await EntityManager.query('insert into review_application_relation (review_pk, application_pk) values ($1 ,$2);', [newReview.pk, data.application_pk]);
 
                     return {
                         status: true,

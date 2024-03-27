@@ -21,6 +21,7 @@ import { ApplicationStatus } from './application-statuses.entity';
 import { Project } from 'src/projects/entities/project.entity';
 import { Review } from 'src/review/entities/review.entity';
 import { Type } from 'src/type/entities/type.entity';
+import { Document } from 'src/document/entities/document.entity';
 
 @Entity({ name: 'applications' })
 @Unique(['uuid'])
@@ -37,6 +38,9 @@ export class Application extends BaseEntity {
 
     @Column({ name: 'partner_pk', nullable: false })
     partner_pk: number;
+
+    @Column({ default: false })
+    approved: boolean;
 
     @Column({ name: 'created_by', nullable: false })
     created_by: number;
@@ -103,6 +107,9 @@ export class Application extends BaseEntity {
 
     @ManyToMany(() => Review, (review) => review.applications, { cascade: ['insert', 'update'] })
     reviews: Review[];
+
+    @ManyToMany(() => Document, (document) => document.applications, { cascade: ['insert', 'update'] })
+    documents: Document[];
 
     @ManyToMany(() => Type, (type) => type.applications, { cascade: ['insert', 'update'] })
     types: Type[];

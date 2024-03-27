@@ -12,7 +12,7 @@ export class ApplicationController {
         return this.applicationService.generate(body, req.user);
     }
 
-    // @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard)
     @Post()
     save(@Body() body: any, @Request() req: any) {
         return this.applicationService.save(body, req.user);
