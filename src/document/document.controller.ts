@@ -22,6 +22,7 @@ export class DocumentController {
         }),
     )
     async uploadedFile(@UploadedFile() file: Express.Multer.File, @Request() req) {
+        console.log(33, file);
         return await this.documentService.create(file);
     }
 
@@ -29,10 +30,5 @@ export class DocumentController {
     @Get()
     async findAll(@Request() req: any) {
         return this.documentService.findAll(req.query);
-    }
-
-    @Post('documentable')
-    async saveDocumentable(@Request() req: any, @Body() body: any) {
-        return await this.documentService.saveDocumentable(body);
     }
 }

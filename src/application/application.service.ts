@@ -151,8 +151,10 @@ export class ApplicationService extends GlobalService {
                 )
                 .leftJoinAndSelect('applications.application_reference', 'application_reference')
 
+                .leftJoinAndSelect('applications.documents', 'documents')
                 .leftJoinAndSelect('applications.reviews', 'reviews')
-                .leftJoinAndSelect("reviews.documents", "documents")
+                .leftJoinAndSelect('reviews.user', 'users')
+                .leftJoinAndSelect("reviews.documents", "documents as review_documents")
                 .leftJoinAndSelect('applications.types', 'types')
                 .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere(filter.hasOwnProperty('uuid') ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
@@ -849,6 +851,7 @@ export class ApplicationService extends GlobalService {
     }
 
     async saveReview(data: any, user: any) {
+        console.log('review', data);
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
@@ -863,7 +866,7 @@ export class ApplicationService extends GlobalService {
                 const newReview = await dataSource.manager.save(review);
 
                 if (newReview) {
-                    // this is working but it only keep one record per application
+                    // this is working but it only keeps one record per application
                     // let application = await Application.findOneBy({
                     //     pk: data.application_pk
                     // });
@@ -928,6 +931,65 @@ export class ApplicationService extends GlobalService {
                         message: 'Type/Application not found',
                     };
                 }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveAttachment(data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const application_pk = data?.application_pk;
+
+                if (application_pk && data.file.pk) {
+                    await EntityManager.update(Document, { pk: data.file.pk }, { type: data.type });
+
+                    const document = await EntityManager.query('insert into document_application_relation (document_pk, application_pk) values ($1 ,$2);', [data.file.pk, application_pk]);
+                    return {
+                        status: document ? true : false
+                    };
+                }
+                else {
+                    return {
+                        status: false,
+                        code: 500,
+                        message: 'Document/Application not found',
+                    };
+                }
+                // const type = await EntityManager.findOne(Type, {
+                //     where: {
+                //         pk: typePk,
+                //     },
+                // });
+
+                // if (type && applicationPk) {
+                //     await EntityManager.query(
+                //         'insert into type_application_relation (type_pk, application_pk) values ($1 ,$2);',
+                //         [type.pk, applicationPk],
+                //     );
+
+                //     return {
+                //         status: true,
+                //         data: {
+                //             ...type,
+                //             application_pk: applicationPk,
+                //         },
+                //     };
+                // } else {
+                //     return {
+                //         status: false,
+                //         code: 500,
+                //         message: 'Type/Application not found',
+                //     };
+                // }
             });
         } catch (err) {
             this.saveError({});

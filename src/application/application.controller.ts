@@ -4,7 +4,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('application')
 export class ApplicationController {
-    constructor(private readonly applicationService: ApplicationService) {}
+    constructor(private readonly applicationService: ApplicationService) { }
 
     @UseGuards(JwtAuthGuard)
     @Post('generate')
@@ -102,5 +102,11 @@ export class ApplicationController {
     @Post('type')
     saveType(@Body() body: any) {
         return this.applicationService.saveType(body);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('attachment')
+    saveAttachment(@Body() body: any, @Request() req: any) {
+        return this.applicationService.saveAttachment(body, req.user);
     }
 }
