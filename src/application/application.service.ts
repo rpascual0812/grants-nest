@@ -28,6 +28,7 @@ import { ProjectLocation } from 'src/projects/entities/project-location.entity';
 import { Review } from 'src/review/entities/review.entity';
 import { Type } from 'src/type/entities/type.entity';
 import { Document } from 'src/document/entities/document.entity';
+import { ApplicationRecommendation } from './entities/application-recommendation.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -156,12 +157,14 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('reviews.user', 'users')
                 .leftJoinAndSelect("reviews.documents", "documents as review_documents")
                 .leftJoinAndSelect('applications.types', 'types')
+                .leftJoinAndSelect('applications.recommendations', 'application_recommendations')
                 .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere(filter.hasOwnProperty('uuid') ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
                 .andWhere(filter.hasOwnProperty('number') ? 'applications.number = :number' : '1=1', {
                     number: filter.number,
                 })
                 .andWhere('applications.archived = :archived', { archived: false })
+                .andWhere('reviews.archived = false')
                 .orderBy("reviews.pk", "ASC")
                 .getOne();
             return {
@@ -851,7 +854,6 @@ export class ApplicationService extends GlobalService {
     }
 
     async saveReview(data: any, user: any) {
-        console.log('review', data);
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
@@ -888,6 +890,36 @@ export class ApplicationService extends GlobalService {
                     };
                 }
             });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async deleteReview(pk: number, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const review = await EntityManager.update(Review, { pk }, { archived: true });
+
+                // save logs
+                const model = {
+                    pk,
+                    name: 'reviews',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return {
+                    status: review ? true : false
+                };
+            });
+
         } catch (err) {
             this.saveError({});
             console.log(err);
@@ -961,35 +993,68 @@ export class ApplicationService extends GlobalService {
                     return {
                         status: false,
                         code: 500,
+                        message: 'Application not found',
+                    };
+                }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveRecommendation(data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const application_pk = data?.application_pk;
+
+                if (application_pk) {
+                    const exists = await ApplicationRecommendation.findOneBy({
+                        application_pk: data.application_pk,
+                        type: data.type
+                    });
+
+                    let newRecommendation = null;
+                    if (exists) {
+                        newRecommendation = await EntityManager.update(ApplicationRecommendation, { application_pk: data.application_pk, type: data.type }, { recommendation: data.recommendation });
+                    }
+                    else {
+                        const recommendation = new ApplicationRecommendation();
+                        recommendation.application_pk = data.application_pk;
+                        recommendation.recommendation = data.recommendation;
+                        recommendation.type = data.type;
+                        recommendation.created_by = user.pk;
+                        newRecommendation = await dataSource.manager.save(recommendation);
+                    }
+
+                    // save logs
+                    const model = {
+                        pk: data.application_pk,
+                        name: 'application_recommendations',
+                        recommendation: data.recommendation,
+                        type: data.type,
+                        status: exists ? 'update' : 'insert',
+                    };
+                    await this.saveLog({ model, user });
+
+                    return {
+                        status: newRecommendation ? true : false,
+                        data: newRecommendation
+                    };
+                }
+                else {
+                    return {
+                        status: false,
+                        code: 500,
                         message: 'Document/Application not found',
                     };
                 }
-                // const type = await EntityManager.findOne(Type, {
-                //     where: {
-                //         pk: typePk,
-                //     },
-                // });
-
-                // if (type && applicationPk) {
-                //     await EntityManager.query(
-                //         'insert into type_application_relation (type_pk, application_pk) values ($1 ,$2);',
-                //         [type.pk, applicationPk],
-                //     );
-
-                //     return {
-                //         status: true,
-                //         data: {
-                //             ...type,
-                //             application_pk: applicationPk,
-                //         },
-                //     };
-                // } else {
-                //     return {
-                //         status: false,
-                //         code: 500,
-                //         message: 'Type/Application not found',
-                //     };
-                // }
             });
         } catch (err) {
             this.saveError({});
