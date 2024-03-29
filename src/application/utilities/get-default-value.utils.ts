@@ -3,5 +3,9 @@ export const getDefaultValue = <T>(newValue?: T, defaultValue?: T) => {
         return newValue;
     }
 
-    return newValue ? newValue : defaultValue;
+    if (typeof newValue === 'number' && newValue === 0) {
+        return newValue;
+    }
+
+    return newValue === undefined || newValue === null ? defaultValue : newValue;
 };
