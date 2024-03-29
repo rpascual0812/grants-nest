@@ -99,6 +99,12 @@ export class ApplicationController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @Delete('review/:pk')
+    deleteReview(@Param('pk') pk: number, @Request() req: any) {
+        return this.applicationService.deleteReview(pk, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Post('type')
     saveType(@Body() body: any) {
         return this.applicationService.saveType(body);
@@ -108,5 +114,11 @@ export class ApplicationController {
     @Post('attachment')
     saveAttachment(@Body() body: any, @Request() req: any) {
         return this.applicationService.saveAttachment(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('recommendation')
+    saveRecommendation(@Body() body: any, @Request() req: any) {
+        return this.applicationService.saveRecommendation(body, req.user);
     }
 }

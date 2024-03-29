@@ -22,6 +22,7 @@ import { Project } from 'src/projects/entities/project.entity';
 import { Review } from 'src/review/entities/review.entity';
 import { Type } from 'src/type/entities/type.entity';
 import { Document } from 'src/document/entities/document.entity';
+import { ApplicationRecommendation } from './application-recommendation.entity';
 
 @Entity({ name: 'applications' })
 @Unique(['uuid'])
@@ -41,6 +42,9 @@ export class Application extends BaseEntity {
 
     @Column({ default: false })
     approved: boolean;
+
+    @Column({ type: 'text', nullable: true })
+    donor: string;
 
     @Column({ name: 'created_by', nullable: false })
     created_by: number;
@@ -96,6 +100,10 @@ export class Application extends BaseEntity {
     @OneToMany('ApplicationReference', (ApplicationReference: ApplicationReference) => ApplicationReference.application)
     @JoinColumn({ name: 'pk' })
     application_reference: Array<ApplicationReference>;
+
+    @OneToMany('ApplicationRecommendation', (applicationRecommendation: ApplicationRecommendation) => applicationRecommendation.application)
+    @JoinColumn({ name: 'pk' })
+    recommendations: Array<ApplicationRecommendation>;
 
     // @ManyToOne(type => ApplicationStatus, application_status => application_status.application, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     // @JoinColumn({ name: 'application_status_pk' })
