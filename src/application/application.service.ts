@@ -157,7 +157,7 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('applications.documents', 'documents')
                 .leftJoinAndSelect('applications.reviews', 'reviews')
                 .leftJoinAndSelect('reviews.user', 'users')
-                .leftJoinAndSelect("reviews.documents", "documents as review_documents")
+                .leftJoinAndSelect('reviews.documents', 'documents as review_documents')
                 .leftJoinAndSelect('applications.types', 'types')
                 .leftJoinAndSelect('applications.recommendations', 'application_recommendations')
                 .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
@@ -167,7 +167,7 @@ export class ApplicationService extends GlobalService {
                 })
                 .andWhere('applications.archived = :archived', { archived: false })
                 .andWhere('reviews.archived = false')
-                .orderBy("reviews.pk", "ASC")
+                .orderBy('reviews.pk', 'ASC')
                 .getOne();
             return {
                 status: true,
@@ -1118,10 +1118,9 @@ export class ApplicationService extends GlobalService {
                 await this.saveLog({ model, user });
 
                 return {
-                    status: review ? true : false
+                    status: review ? true : false,
                 };
             });
-
         } catch (err) {
             this.saveError({});
             console.log(err);
@@ -1186,12 +1185,14 @@ export class ApplicationService extends GlobalService {
                 if (application_pk && data.file.pk) {
                     await EntityManager.update(Document, { pk: data.file.pk }, { type: data.type });
 
-                    const document = await EntityManager.query('insert into document_application_relation (document_pk, application_pk) values ($1 ,$2);', [data.file.pk, application_pk]);
+                    const document = await EntityManager.query(
+                        'insert into document_application_relation (document_pk, application_pk) values ($1 ,$2);',
+                        [data.file.pk, application_pk],
+                    );
                     return {
-                        status: document ? true : false
+                        status: document ? true : false,
                     };
-                }
-                else {
+                } else {
                     return {
                         status: false,
                         code: 500,
@@ -1219,14 +1220,17 @@ export class ApplicationService extends GlobalService {
                 if (application_pk) {
                     const exists = await ApplicationRecommendation.findOneBy({
                         application_pk: data.application_pk,
-                        type: data.type
+                        type: data.type,
                     });
 
                     let newRecommendation = null;
                     if (exists) {
-                        newRecommendation = await EntityManager.update(ApplicationRecommendation, { application_pk: data.application_pk, type: data.type }, { recommendation: data.recommendation });
-                    }
-                    else {
+                        newRecommendation = await EntityManager.update(
+                            ApplicationRecommendation,
+                            { application_pk: data.application_pk, type: data.type },
+                            { recommendation: data.recommendation },
+                        );
+                    } else {
                         const recommendation = new ApplicationRecommendation();
                         recommendation.application_pk = data.application_pk;
                         recommendation.recommendation = data.recommendation;
@@ -1247,10 +1251,9 @@ export class ApplicationService extends GlobalService {
 
                     return {
                         status: newRecommendation ? true : false,
-                        data: newRecommendation
+                        data: newRecommendation,
                     };
-                }
-                else {
+                } else {
                     return {
                         status: false,
                         code: 500,
