@@ -5,7 +5,7 @@ import { DateTime } from 'luxon';
 import dataSource from 'db/data-source';
 import { Application } from './entities/application.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager, Equal } from 'typeorm';
 import { ApplicationProponent } from './entities/application-proponent.entity';
 import { ApplicationOrganizationProfile } from './entities/application-organization-profile.entity';
 import { GlobalService } from 'src/utilities/global.service';
@@ -29,6 +29,7 @@ import { Review } from 'src/review/entities/review.entity';
 import { Type } from 'src/type/entities/type.entity';
 import { Document } from 'src/document/entities/document.entity';
 import { ApplicationRecommendation } from './entities/application-recommendation.entity';
+import { getParsedPk } from './utilities/get-parsed-pk.utils';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -37,7 +38,7 @@ export class ApplicationService extends GlobalService {
     constructor(
         @InjectRepository(Application)
         private applicationRepository: Repository<Application>,
-        private emailService: EmailService
+        private emailService: EmailService,
     ) {
         super();
     }
@@ -67,6 +68,7 @@ export class ApplicationService extends GlobalService {
                     'partners.pk=partner_contacts.partner_pk',
                 )
                 .leftJoinAndSelect('applications.project', 'projects')
+                .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
                 .leftJoinAndSelect('applications.application_proposal', 'application_proposal')
                 .leftJoinAndSelect(
@@ -252,181 +254,6 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    // async save(data: any, user: any) {
-    //     const queryRunner = dataSource.createQueryRunner();
-    //     await queryRunner.connect();
-
-    //     try {
-    //         return await queryRunner.manager.transaction(async (EntityManager) => {
-    //             const application = await EntityManager.findOne(Application, {
-    //                 where: { uuid: data.uuid },
-    //                 relations: {
-    //                     partner: true,
-    //                 },
-    //             });
-
-    //             if (application) {
-    //                 // Project Information
-    //                 const applicationProjectInfo = new Project();
-    //                 applicationProjectInfo.application_pk = application.pk;
-    //                 applicationProjectInfo.title = data.project.title;
-    //                 applicationProjectInfo.duration = data.project.duration;
-    //                 applicationProjectInfo.background = data.project.background;
-    //                 applicationProjectInfo.objective = data.project.objective;
-    //                 applicationProjectInfo.expected_output = data.project.expected_output;
-    //                 applicationProjectInfo.how_will_affect = data.project.how_will_affect;
-    //                 const newProjectInfo = await EntityManager.save(applicationProjectInfo);
-
-    //                 const womenType = data?.project?.beneficiary_women ?? [];
-    //                 const tempWomenType = womenType.map(async (data) => {
-    //                     const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
-    //                     applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
-    //                     applicationProjInfoBeneficiaries.type = data.type;
-    //                     applicationProjInfoBeneficiaries.name = data.name;
-    //                     applicationProjInfoBeneficiaries.count = data.count;
-    //                     const newApplicationProjInfoBeneficiaries = await EntityManager.save(
-    //                         applicationProjInfoBeneficiaries,
-    //                     );
-    //                     return { ...newApplicationProjInfoBeneficiaries };
-    //                 });
-    //                 const savedWomenBeneficiary = await Promise.all(tempWomenType);
-
-    //                 const youngWomenType = data?.project?.beneficiary_young_women ?? [];
-    //                 const tempYoungWomenType = youngWomenType.map(async (data) => {
-    //                     const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
-    //                     applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
-    //                     applicationProjInfoBeneficiaries.type = data.type;
-    //                     applicationProjInfoBeneficiaries.name = data.name;
-    //                     applicationProjInfoBeneficiaries.count = data.count;
-    //                     const newApplicationProjInfoBeneficiaries = await EntityManager.save(
-    //                         applicationProjInfoBeneficiaries,
-    //                     );
-    //                     return { ...newApplicationProjInfoBeneficiaries };
-    //                 });
-    //                 const savedYoungWomenBeneficiary = await Promise.all(tempYoungWomenType);
-
-    //                 const menType = data?.project?.beneficiary_men ?? [];
-    //                 const tempMenType = menType.map(async (data) => {
-    //                     const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
-    //                     applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
-    //                     applicationProjInfoBeneficiaries.type = data.type;
-    //                     applicationProjInfoBeneficiaries.name = data.name;
-    //                     applicationProjInfoBeneficiaries.count = data.count;
-    //                     const newApplicationProjInfoBeneficiaries = await EntityManager.save(
-    //                         applicationProjInfoBeneficiaries,
-    //                     );
-    //                     return { ...newApplicationProjInfoBeneficiaries };
-    //                 });
-    //                 const savedMenBeneficiary = await Promise.all(tempMenType);
-
-    //                 const youngMenType = data?.project?.beneficiary_young_men ?? [];
-    //                 const tempYoungMenType = youngMenType.map(async (data) => {
-    //                     const applicationProjInfoBeneficiaries = new ProjectBeneficiary();
-    //                     applicationProjInfoBeneficiaries.project_pk = newProjectInfo.pk;
-    //                     applicationProjInfoBeneficiaries.type = data.type;
-    //                     applicationProjInfoBeneficiaries.name = data.name;
-    //                     applicationProjInfoBeneficiaries.count = data.count;
-    //                     const newApplicationProjInfoBeneficiaries = await EntityManager.save(
-    //                         applicationProjInfoBeneficiaries,
-    //                     );
-    //                     return { ...newApplicationProjInfoBeneficiaries };
-    //                 });
-    //                 const savedYoungMenBeneficiary = await Promise.all(tempYoungMenType);
-
-    //                 const projectLocations = data?.project?.project_locations ?? [];
-    //                 const tempProjLoc = await projectLocations.map(async (data) => {
-    //                     const applicationProjInfoProjLoc = new ProjectLocation();
-    //                     applicationProjInfoProjLoc.project_pk = newProjectInfo.pk;
-    //                     applicationProjInfoProjLoc.country_pk = data?.country_pk;
-    //                     applicationProjInfoProjLoc.province_code = data?.province_code;
-    //                     const newApplicationProjInfoProjLoc = await EntityManager.save(applicationProjInfoProjLoc);
-    //                     return { ...newApplicationProjInfoProjLoc };
-    //                 });
-    //                 const savedProjLoc = await Promise.all(tempProjLoc);
-
-    //                 // Proposed activities and timeline
-    //                 const applicationProposal = new ApplicationProposal();
-    //                 applicationProposal.application_pk = application.pk;
-    //                 applicationProposal.monitor = data.proposal.monitor;
-    //                 applicationProposal.budget_request_usd = data.proposal.budget_request_usd;
-    //                 applicationProposal.budget_request_other = data.proposal.budget_request_other;
-    //                 applicationProposal.budget_request_other_currency = data.proposal.budget_request_other_currency;
-    //                 const saveProposal = await EntityManager.save(applicationProposal);
-
-    //                 const activities = data?.proposal?.activities ?? [];
-    //                 const tempActivities = await activities.map(async (data) => {
-    //                     const proposalActivities = new ApplicationProposalActivity();
-    //                     proposalActivities.application_proposal_pk = saveProposal.pk;
-    //                     proposalActivities.name = data?.name;
-    //                     proposalActivities.duration = data?.duration;
-    //                     const newActivities = await EntityManager.save(proposalActivities);
-    //                     return { ...newActivities };
-    //                 });
-    //                 const savedProposalActivities = await Promise.all(tempActivities);
-
-    //                 // References
-    //                 const references = data?.references ?? [];
-    //                 const tempReferences = await references.map(async (data) => {
-    //                     const applicationReference = new ApplicationReference();
-    //                     applicationReference.application_pk = application.pk;
-    //                     applicationReference.name = data?.name;
-    //                     applicationReference.email_address = data?.email_address;
-    //                     applicationReference.contact_number = data?.contact_number;
-    //                     applicationReference.organization_name = data?.organization_name;
-    //                     const newApplicationReferences = await EntityManager.save(applicationReference);
-    //                     return { ...newApplicationReferences };
-    //                 });
-    //                 const savedReferences = await Promise.all(tempReferences);
-
-    //                 this.emailService.uuid = uuidv4();
-    //                 // if application, get created_by from applications table
-    //                 // as application has no logged user
-    //                 this.emailService.user_pk = application.created_by;
-    //                 this.emailService.from = process.env.SEND_FROM;
-    //                 this.emailService.from_name = process.env.SENDER;
-    //                 this.emailService.to = application?.partner?.email_address;
-    //                 this.emailService.to_name = '';
-    //                 this.emailService.subject = 'We Have Received Your Application!';
-    //                 this.emailService.body = 'RECEIVED'; // MODIFY: must be a template from the database
-
-    //                 await this.emailService.create();
-
-    //                 return {
-    //                     status: true,
-    //                     data: {
-    //                         application,
-    //                         project: {
-    //                             ...newProjectInfo,
-    //                             project_locations: [...savedProjLoc],
-    //                             women_beneficiary: [...savedWomenBeneficiary],
-    //                             young_women_beneficiary: [...savedYoungWomenBeneficiary],
-    //                             men_beneficiary: [...savedMenBeneficiary],
-    //                             young_men_beneficiary: [...savedYoungMenBeneficiary],
-    //                         },
-    //                         proposal: {
-    //                             ...saveProposal,
-    //                             activities: [...savedProposalActivities],
-    //                         },
-    //                         references: [...savedReferences],
-    //                     },
-    //                 };
-    //             } else {
-    //                 return {
-    //                     status: false,
-    //                     code: 500,
-    //                     message: 'Application not found',
-    //                 };
-    //             }
-    //         });
-    //     } catch (err) {
-    //         this.saveError({});
-    //         console.log(err);
-    //         return { status: false, code: err.code };
-    //     } finally {
-    //         await queryRunner.release();
-    //     }
-    // }
-
     async save(data: any, user: any) {
         console.log(data, user);
         const queryRunner = dataSource.createQueryRunner();
@@ -438,7 +265,18 @@ export class ApplicationService extends GlobalService {
                     await EntityManager.update(Application, { pk: data.application_pk }, data.application);
                 }
                 if (data.hasOwnProperty('project')) {
-                    await EntityManager.update(Project, { application_pk: data.application_pk }, data.project);
+                    await EntityManager.update(
+                        Project,
+                        { application_pk: data.application_pk },
+                        {
+                            duration: data?.project?.duration,
+                            title: data?.project?.title,
+                            background: data?.project?.background,
+                            expected_output: data?.project?.expected_output,
+                            how_will_affect: data?.project?.how_will_affect,
+                            objective: data?.project?.objective,
+                        },
+                    );
                 }
 
                 return { status: true, code: 200 };
@@ -591,11 +429,11 @@ export class ApplicationService extends GlobalService {
         await queryRunner.connect();
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const appFiscalSponsorPk = data?.pk;
+                const appFiscalSponsorPk = getParsedPk(data?.pk);
                 const applicationPk = data?.application_pk;
                 const existingFiscalSponsor = await EntityManager.findOne(ApplicationFiscalSponsor, {
                     where: {
-                        pk: appFiscalSponsorPk,
+                        pk: Equal(appFiscalSponsorPk),
                     },
                 });
 
@@ -648,18 +486,318 @@ export class ApplicationService extends GlobalService {
         }
     }
 
+    async saveProject(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const appProjectPk = getParsedPk(data?.pk);
+                console.log(
+                    '🚀 ~ ApplicationService ~ returnawaitqueryRunner.manager.transaction ~ data?.pk:',
+                    data?.pk,
+                );
+                console.log(
+                    '🚀 ~ ApplicationService ~ returnawaitqueryRunner.manager.transaction ~ appProjectPk:',
+                    appProjectPk,
+                );
+                const applicationPk = data?.application_pk;
+                const existingProject = await EntityManager.findOne(Project, {
+                    where: {
+                        pk: Equal(appProjectPk),
+                    },
+                });
+
+                const project = existingProject ? existingProject : new Project();
+                project.application_pk = applicationPk;
+                project.title = getDefaultValue(data?.title, existingProject?.title);
+                project.duration = getDefaultValue(data?.duration, existingProject?.duration);
+                project.background = getDefaultValue(data?.background, existingProject?.background);
+                project.objective = getDefaultValue(data?.objective, existingProject?.objective);
+                project.expected_output = getDefaultValue(data?.expected_output, existingProject?.expected_output);
+                project.how_will_affect = getDefaultValue(data?.how_will_affect, existingProject?.how_will_affect);
+                project.status_pk = getDefaultValue(data?.status_pk, existingProject?.status_pk);
+                project.type_pk = getDefaultValue(data?.type_pk, existingProject?.type_pk);
+
+                const savedProject = await EntityManager.save(Project, {
+                    ...project,
+                });
+
+                let savedProjLoc = [];
+                const projLoc = data?.project_location ?? [];
+
+                const resProj: any = await this.saveProjLocation({
+                    project_pk: appProjectPk ?? savedProject?.pk,
+                    project_location: projLoc,
+                });
+                savedProjLoc = resProj?.data?.project_location;
+
+                let savedProjBeneficiary = [];
+                const projBeneficiary = data?.project_beneficiary ?? [];
+                const resBeneficiary: any = await this.saveProjBeneficiary({
+                    project_pk: appProjectPk ?? savedProject?.pk,
+                    project_beneficiary: projBeneficiary,
+                });
+                savedProjBeneficiary = resBeneficiary?.data?.project_beneficiary;
+
+                return {
+                    status: true,
+                    data: {
+                        ...savedProject,
+                        project_location: savedProjLoc,
+                        project_beneficiary: savedProjBeneficiary,
+                    },
+                };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveProjLocation(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectPk = data?.project_pk;
+
+                const projLocs = data?.project_location ?? [];
+
+                const tmpProjLoc = projLocs.map(async (item) => {
+                    const projPk = getParsedPk(item?.pk);
+                    const existingProjLoc = await EntityManager.findOneBy(ProjectLocation, {
+                        pk: Equal(projPk),
+                        project_pk: Equal(projectPk),
+                    });
+
+                    const projLoc = existingProjLoc ? existingProjLoc : new ProjectLocation();
+                    projLoc.project_pk = projectPk;
+                    projLoc.country_pk = getDefaultValue(item?.country_pk, existingProjLoc?.country_pk);
+                    projLoc.province_code = getDefaultValue(item?.province_code, existingProjLoc?.province_code);
+
+                    const savedItem = await EntityManager.save(ProjectLocation, {
+                        ...projLoc,
+                    });
+
+                    return {
+                        ...savedItem,
+                    };
+                });
+
+                await Promise.all(tmpProjLoc);
+
+                const existingProjLoc =
+                    (await EntityManager.findBy(ProjectLocation, {
+                        project_pk: Equal(projectPk),
+                    })) ?? [];
+
+                const allProj = [...existingProjLoc];
+
+                return {
+                    status: true,
+                    data: {
+                        project_location: allProj,
+                    },
+                };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveProjBeneficiary(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectPk = data?.project_pk;
+
+                const projBeneficiary = data?.project_beneficiary ?? [];
+
+                const tmpProjBeneficiary = projBeneficiary.map(async (item) => {
+                    const beneficiaryPk = getParsedPk(item?.pk);
+                    const existingProjBeneficiary = await EntityManager.findOneBy(ProjectBeneficiary, {
+                        pk: Equal(beneficiaryPk),
+                        project_pk: Equal(projectPk),
+                    });
+
+                    const beneficiary = existingProjBeneficiary ? existingProjBeneficiary : new ProjectBeneficiary();
+                    beneficiary.project_pk = projectPk;
+                    beneficiary.type = getDefaultValue(item?.type, existingProjBeneficiary?.type);
+                    beneficiary.name = getDefaultValue(item?.name, existingProjBeneficiary?.name);
+                    beneficiary.count = getDefaultValue(item?.count, existingProjBeneficiary?.count);
+
+                    const savedItem = await EntityManager.save(ProjectBeneficiary, {
+                        ...beneficiary,
+                    });
+
+                    return {
+                        ...savedItem,
+                    };
+                });
+
+                await Promise.all(tmpProjBeneficiary);
+
+                const existingProjLoc =
+                    (await EntityManager.findBy(ProjectBeneficiary, {
+                        project_pk: Equal(projectPk),
+                    })) ?? [];
+
+                const allProj = [...existingProjLoc];
+
+                return {
+                    status: true,
+                    data: {
+                        project_beneficiary: allProj,
+                    },
+                };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveProposal(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const appProposalPk = getParsedPk(data?.pk);
+                const applicationPk = data?.application_pk;
+                const existingProposal = await EntityManager.findOne(ApplicationProposal, {
+                    where: {
+                        pk: Equal(appProposalPk),
+                    },
+                });
+
+                const proposal = existingProposal ? existingProposal : new ApplicationProposal();
+                proposal.application_pk = applicationPk;
+                proposal.monitor = getDefaultValue(data?.monitor, existingProposal?.monitor);
+                proposal.budget_request_other_currency = getDefaultValue(
+                    data?.budget_request_other_currency,
+                    existingProposal?.budget_request_other_currency,
+                );
+                proposal.budget_request_usd = getDefaultValue(
+                    data?.budget_request_usd,
+                    +existingProposal?.budget_request_usd,
+                );
+                proposal.budget_request_other = getDefaultValue(
+                    data?.budget_request_other,
+                    +existingProposal?.budget_request_other,
+                );
+
+                const savedProposal = await EntityManager.save(ApplicationProposal, {
+                    ...proposal,
+                });
+
+                let savedProposalAct = [];
+                const proposalActivity = data?.application_proposal_activity ?? [];
+                const resProposalAct: any = await this.saveProposalActivity({
+                    application_proposal_pk: appProposalPk ?? savedProposal?.pk,
+                    application_proposal_activity: proposalActivity,
+                });
+                savedProposalAct = resProposalAct?.data?.application_proposal_activity;
+
+                return {
+                    status: true,
+                    data: {
+                        ...savedProposal,
+                        application_proposal_activity: savedProposalAct,
+                    },
+                };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveProposalActivity(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const appProposalPk = data?.application_proposal_pk;
+                const proposalActivity = data?.application_proposal_activity ?? [];
+
+                const tmpProposalAct = proposalActivity?.map(async (item) => {
+                    const proposalPk = getParsedPk(item?.pk);
+                    const existingProposalActivity = await EntityManager.findOneBy(ApplicationProposalActivity, {
+                        pk: Equal(proposalPk),
+                        application_proposal_pk: Equal(appProposalPk),
+                    });
+
+                    const activity = existingProposalActivity
+                        ? existingProposalActivity
+                        : new ApplicationProposalActivity();
+
+                    activity.application_proposal_pk = appProposalPk;
+                    activity.name = item.name;
+                    activity.duration = item.duration;
+
+                    const savedItem = await EntityManager.save(ApplicationProposalActivity, {
+                        ...activity,
+                    });
+
+                    return {
+                        ...savedItem,
+                    };
+                });
+
+                await Promise.all(tmpProposalAct);
+
+                const existingAppProposalAct =
+                    (await EntityManager.findBy(ApplicationProposalActivity, {
+                        application_proposal_pk: Equal(appProposalPk),
+                    })) ?? [];
+
+                const allItem = [...existingAppProposalAct];
+
+                return {
+                    status: true,
+                    data: {
+                        application_proposal_activity: allItem,
+                    },
+                };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
     async saveNonProfitEquivalencyDetermination(data: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const appNonProfitEquivalencyDeterminationPk = data?.pk;
+                const appNonProfitEquivalencyDeterminationPk = getParsedPk(data?.pk);
                 const applicationPk = data?.application_pk;
                 const existingNonProfitEquivalencyDetermination = await EntityManager.findOne(
                     ApplicationNonprofitEquivalencyDetermination,
                     {
                         where: {
-                            pk: appNonProfitEquivalencyDeterminationPk,
+                            pk: Equal(appNonProfitEquivalencyDeterminationPk),
                         },
                     },
                 );
@@ -769,6 +907,65 @@ export class ApplicationService extends GlobalService {
         }
     }
 
+    async saveReference(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const appPk = data?.application_pk;
+                const appReference = data?.application_reference ?? [];
+
+                const tmpReference = appReference?.map(async (item) => {
+                    const referencePk = getParsedPk(item?.pk);
+                    const existingReference = await EntityManager.findOneBy(ApplicationReference, {
+                        pk: Equal(referencePk),
+                        application_pk: Equal(appPk),
+                    });
+
+                    const reference = existingReference ? existingReference : new ApplicationReference();
+
+                    reference.application_pk = appPk;
+                    reference.name = getDefaultValue(item?.name, existingReference?.name);
+                    reference.contact_number = getDefaultValue(item?.contact_number, existingReference?.contact_number);
+                    reference.email_address = getDefaultValue(item?.email_address, existingReference?.email_address);
+                    reference.organization_name = getDefaultValue(
+                        item?.organization_name,
+                        existingReference?.organization_name,
+                    );
+                    const savedItem = await EntityManager.save(ApplicationReference, {
+                        ...reference,
+                    });
+
+                    return {
+                        ...savedItem,
+                    };
+                });
+
+                await Promise.all(tmpReference);
+
+                const existingAppReference =
+                    (await EntityManager.findBy(ApplicationReference, {
+                        application_pk: Equal(appPk),
+                    })) ?? [];
+
+                const allItem = [...existingAppReference];
+
+                return {
+                    status: true,
+                    data: {
+                        application_reference: allItem,
+                    },
+                };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
     async remove(pk: number, user: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
@@ -791,30 +988,31 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    async removeProjectLocation(pk: number, project_pk: number, location_pk: number, user: any) {
+    async removeProjectLocation(project_pk: number, location_pk: number, user: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const location = await ProjectLocation.findOneBy({
-                    pk: location_pk,
+                const location = await EntityManager.findOneBy(ProjectLocation, {
+                    pk: Equal(location_pk),
                 });
-                await location.remove();
 
+                await location.remove();
                 // save logs
-                const model = {
-                    application_pk: pk,
-                    project_pk,
-                    location_pk,
-                    name: 'project_locations',
-                    status: 'deleted',
-                };
-                await this.saveLog({ model, user });
+                // const model = {
+                //     project_pk,
+                //     location_pk,
+                //     name: 'project_locations',
+                //     status: 'deleted',
+                // };
+
+                // await this.saveLog({ model, user });
 
                 return { status: true };
             });
         } catch (err) {
+            console.log(err);
             this.saveError({});
             return { status: false, code: err.code };
         } finally {
@@ -822,30 +1020,31 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    async removeProposalActivity(pk: number, proposal_pk: number, activity_pk: number, user: any) {
+    async removeProposalActivity(proposal_pk: number, activity_pk: number, user: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
-            return await queryRunner.manager.transaction(async (EntityManager) => {
-                const location = await ApplicationProposalActivity.findOneBy({
-                    pk: activity_pk,
+            return await queryRunner.manager.transaction(async (_EntityManager) => {
+                const activity = await ApplicationProposalActivity.findOneBy({
+                    pk: Equal(activity_pk),
                 });
-                await location.remove();
+                await activity.remove();
 
                 // save logs
-                const model = {
-                    application_pk: pk,
-                    proposal_pk,
-                    activity_pk,
-                    name: 'application_proposal_activities',
-                    status: 'deleted',
-                };
-                await this.saveLog({ model, user });
+                // const model = {
+                //     application_pk: pk,
+                //     proposal_pk,
+                //     activity_pk,
+                //     name: 'application_proposal_activities',
+                //     status: 'deleted',
+                // };
+                // await this.saveLog({ model, user });
 
                 return { status: true };
             });
         } catch (err) {
+            console.log(err);
             this.saveError({});
             return { status: false, code: err.code };
         } finally {
@@ -876,7 +1075,10 @@ export class ApplicationService extends GlobalService {
                     // application.reviews = [review];
                     // application.save();
 
-                    await EntityManager.query('insert into review_application_relation (review_pk, application_pk) values ($1 ,$2);', [newReview.pk, data.application_pk]);
+                    await EntityManager.query(
+                        'insert into review_application_relation (review_pk, application_pk) values ($1 ,$2);',
+                        [newReview.pk, data.application_pk],
+                    );
 
                     return {
                         status: true,

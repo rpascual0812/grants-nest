@@ -18,24 +18,46 @@ export class ApplicationController {
         return this.applicationService.save(body, req.user);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Post('partner')
-    savePartner(@Body() body: any, @Request() req: any) {
+    savePartner(@Body() body: any) {
         return this.applicationService.savePartner(body);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Post('partner_organization')
-    savePartnerOrg(@Body() body: any, @Request() req: any) {
+    savePartnerOrg(@Body() body: any) {
         return this.applicationService.savePartnerOrg(body);
     }
 
+    @UseGuards(JwtAuthGuard)
+    @Post('project')
+    saveProject(@Body() body: any) {
+        return this.applicationService.saveProject(body);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('proposal')
+    saveProposal(@Body() body: any) {
+        return this.applicationService.saveProposal(body);
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Post('fiscal_sponsor')
-    saveFiscalSponsor(@Body() body: any, @Request() req: any) {
+    saveFiscalSponsor(@Body() body: any) {
         return this.applicationService.saveFiscalSponsor(body);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Post('nonprofit_equivalency_determination')
-    saveNonProfitEquivalencyDetermination(@Body() body: any, @Request() req: any) {
+    saveNonProfitEquivalencyDetermination(@Body() body: any) {
         return this.applicationService.saveNonProfitEquivalencyDetermination(body);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('reference')
+    saveReference(@Body() body: any) {
+        return this.applicationService.saveReference(body);
     }
 
     @UseGuards(JwtAuthGuard)
@@ -69,27 +91,23 @@ export class ApplicationController {
     }
 
     @UseGuards(JwtAuthGuard)
-    @Delete(':pk/project/:project_pk/location/:location_pk')
+    @Delete('project/:project_pk/location/:location_pk')
     removeProjectLocation(
-        @Param('pk') pk: number,
         @Param('project_pk') project_pk: number,
         @Param('location_pk') location_pk: number,
         @Request() req: any,
     ) {
-        console.log('deleting', pk, project_pk, location_pk);
-        return this.applicationService.removeProjectLocation(+pk, +project_pk, +location_pk, req.user);
+        return this.applicationService.removeProjectLocation(+project_pk, +location_pk, req.user);
     }
 
     @UseGuards(JwtAuthGuard)
-    @Delete(':pk/proposal/:proposal_pk/activity/:activity_pk')
+    @Delete('proposal/:proposal_pk/activity/:activity_pk')
     removeProposalActivity(
-        @Param('pk') pk: number,
         @Param('proposal_pk') proposal_pk: number,
         @Param('activity_pk') activity_pk: number,
         @Request() req: any,
     ) {
-        console.log('deleting', pk, proposal_pk, activity_pk);
-        return this.applicationService.removeProposalActivity(+pk, +proposal_pk, +activity_pk, req.user);
+        return this.applicationService.removeProposalActivity(+proposal_pk, +activity_pk, req.user);
     }
 
     @UseGuards(JwtAuthGuard)
