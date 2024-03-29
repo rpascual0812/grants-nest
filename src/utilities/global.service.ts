@@ -2,17 +2,17 @@ import { Injectable, UsePipes, ValidationPipe } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import dataSource from 'db/data-source';
 import { Log } from 'src/log/entities/log.entity';
-import { DateTime } from "luxon";
+import { DateTime } from 'luxon';
 import { Partner } from 'src/partner/entities/partner.entity';
 import { Application } from 'src/application/entities/application.entity';
 
 @Injectable()
 export class GlobalService {
-    constructor(
-    ) { }
+    constructor() {}
 
     async saveLog(data: any): Promise<any> {
-        return dataSource.getRepository(Log)
+        return dataSource
+            .getRepository(Log)
             .createQueryBuilder('logs')
             .insert()
             .into(Log)
@@ -24,13 +24,12 @@ export class GlobalService {
                         pk: data.model.pk,
                         user_pk: data.user.pk,
                         status: data.model.status,
-                        date_created: DateTime.now
+                        date_created: DateTime.now,
                     }),
-                    user_pk: data.user.pk
-                }
+                    user_pk: data.user.pk,
+                },
             ])
-            .execute()
-            ;
+            .execute();
     }
 
     async saveError(data: any): Promise<any> {
@@ -62,14 +61,13 @@ export class GlobalService {
         const date = DateTime.now();
         const year = date.toFormat('yyyy');
 
-        const lastPartner = await dataSource.manager.getRepository(Partner)
+        const lastPartner = await dataSource.manager
+            .getRepository(Partner)
             .createQueryBuilder('partners')
             .where('partner_id like :partner_id', { partner_id: `${year}%` })
             .orderBy('partner_id', 'DESC')
             .limit(1)
-            .getOne()
-            ;
-
+            .getOne();
         const newPartnerId = lastPartner ? parseInt(lastPartner.partner_id.slice(4)) + 1 : 1;
         return year + newPartnerId.toString().padStart(5, '0');
     }
