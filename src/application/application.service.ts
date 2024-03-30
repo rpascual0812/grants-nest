@@ -255,7 +255,6 @@ export class ApplicationService extends GlobalService {
     }
 
     async save(data: any, user: any) {
-        console.log(data, user);
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
@@ -1261,6 +1260,37 @@ export class ApplicationService extends GlobalService {
                     };
                 }
             });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async findReviews(pk: number, query: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            const data = await dataSource
+                .getRepository(Application)
+                .createQueryBuilder('applications')
+                .leftJoinAndSelect('applications.reviews', 'reviews')
+                .leftJoinAndSelect('reviews.user', 'users')
+                .leftJoinAndSelect('reviews.documents', 'documents as review_documents')
+                .andWhere('applications.pk = :pk', { pk })
+                .andWhere('reviews.type = :type', { type: query.type })
+                .andWhere('reviews.archived = false')
+                .orderBy('reviews.pk', 'ASC')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: data[0],
+                total: data[1],
+            };
         } catch (err) {
             this.saveError({});
             console.log(err);
