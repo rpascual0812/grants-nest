@@ -41,7 +41,7 @@ export class PartnerService {
                     'partners.pk=applications.partner_pk',
                 )
                 .leftJoinAndSelect('applications.project', 'projects')
-                .leftJoinAndSelect('applications.application_proposal', 'application_proposal')
+                .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('applications.application_statuses', 'application_statuses')
                 .leftJoinAndSelect('application_statuses.status', 'statuses')
                 .leftJoinAndSelect('applications.types', 'type_application_relation')

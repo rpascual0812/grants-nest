@@ -1,14 +1,14 @@
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
-import { Application } from './application.entity';
+import { PartnerOrganization } from './partner-organization.entity';
 
-@Entity({ name: 'application_references' })
-@Unique(['application_pk', 'name', 'contact_number'])
-export class ApplicationReference extends BaseEntity {
+@Entity({ name: 'partner_organization_references' })
+@Unique(['partner_organization_pk', 'name', 'contact_number'])
+export class PartnerOrganizationReference extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
 
-    @Column({ name: 'application_pk', nullable: false })
-    application_pk: number;
+    @Column({ name: 'partner_organization_pk', nullable: false })
+    partner_organization_pk: number;
 
     @Column({ type: 'text', nullable: false })
     name: string;
@@ -28,7 +28,7 @@ export class ApplicationReference extends BaseEntity {
     /**
      * Relationship
      */
-    @ManyToOne(type => Application, application => application.application_reference, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'application_pk' })
-    application: Application;
+    @ManyToOne(type => PartnerOrganization, partner_organization => partner_organization.partner_organization_reference, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'partner_organization_pk' })
+    partner_organization: PartnerOrganization;
 }

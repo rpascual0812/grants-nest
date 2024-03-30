@@ -6,14 +6,10 @@ import dataSource from 'db/data-source';
 import { Application } from './entities/application.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, Equal, Brackets } from 'typeorm';
-import { ApplicationProponent } from './entities/application-proponent.entity';
-import { ApplicationOrganizationProfile } from './entities/application-organization-profile.entity';
 import { GlobalService } from 'src/utilities/global.service';
 import { Log } from 'src/log/entities/log.entity';
-import { ApplicationReference } from './entities/application-references.entity';
-import { ApplicationProposal } from './entities/application-proposal.entity';
-import { ApplicationProposalActivity } from './entities/application-proposal-activity.entity';
-import { ApplicationFiscalSponsor } from './entities/application-fiscal-sponsor.entity';
+// import { ProjectProposal } from './entities/application-proposal.entity';
+// import { ProjectProposalActivity } from './entities/application-proposal-activity.entity';
 import { ApplicationNonprofitEquivalencyDetermination } from './entities/application-nonprofit-equivalency-determination.entity';
 import { EmailService } from 'src/email/email.service';
 import { Partner } from 'src/partner/entities/partner.entity';
@@ -29,6 +25,10 @@ import { Type } from 'src/type/entities/type.entity';
 import { Document } from 'src/document/entities/document.entity';
 import { ApplicationRecommendation } from './entities/application-recommendation.entity';
 import { getParsedPk } from './utilities/get-parsed-pk.utils';
+import { PartnerFiscalSponsor } from 'src/partner/entities/partner-fiscal-sponsor.entity';
+import { ProjectProposal } from 'src/projects/entities/project-proposal.entity';
+import { ProjectProposalActivity } from 'src/projects/entities/project-proposal-activity.entity';
+import { PartnerOrganizationReference } from 'src/partner/entities/partner-organization-references.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -127,6 +127,13 @@ export class ApplicationService extends GlobalService {
                     'partners.pk=partner_organizations.partner_pk',
                 )
                 .leftJoinAndMapOne(
+                    'partner_organizations.partner_organization_reference',
+                    PartnerOrganizationReference,
+                    'partner_organization_references',
+                    'partner_organizations.pk=partner_organization_references.partner_organization_pk',
+                )
+                // .leftJoinAndSelect('applications.application_reference', 'application_reference')
+                .leftJoinAndMapOne(
                     'partner_organizations.country',
                     Country,
                     'countries',
@@ -141,17 +148,17 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
                 .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
-                .leftJoinAndSelect('applications.application_proposal', 'application_proposal')
+                .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect(
-                    'application_proposal.application_proposal_activity',
-                    'application_proposal_activity',
+                    'project_proposals.project_proposal_activity',
+                    'project_proposal_activity',
                 )
-                .leftJoinAndSelect('applications.application_fiscal_sponsor', 'application_fiscal_sponsor')
+                .leftJoinAndSelect('partners.partner_fiscal_sponsor', 'partner_fiscal_sponsors')
                 .leftJoinAndSelect(
                     'applications.application_nonprofit_equivalency_determination',
                     'application_nonprofit_equivalency_determination',
                 )
-                .leftJoinAndSelect('applications.application_reference', 'application_reference')
+
 
                 .leftJoinAndSelect('applications.documents', 'documents')
                 .leftJoinAndSelect('applications.reviews', 'reviews')
@@ -429,14 +436,14 @@ export class ApplicationService extends GlobalService {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const appFiscalSponsorPk = getParsedPk(data?.pk);
                 const applicationPk = data?.application_pk;
-                const existingFiscalSponsor = await EntityManager.findOne(ApplicationFiscalSponsor, {
+                const existingFiscalSponsor = await EntityManager.findOne(PartnerFiscalSponsor, {
                     where: {
                         pk: Equal(appFiscalSponsorPk),
                     },
                 });
 
-                const fiscalSponsor = existingFiscalSponsor ? existingFiscalSponsor : new ApplicationFiscalSponsor();
-                fiscalSponsor.application_pk = applicationPk;
+                const fiscalSponsor = existingFiscalSponsor ? existingFiscalSponsor : new PartnerFiscalSponsor();
+                fiscalSponsor.partner_pk = data?.partner.pk;
                 fiscalSponsor.name = getDefaultValue(data?.name, existingFiscalSponsor?.name);
                 fiscalSponsor.address = getDefaultValue(data?.address, existingFiscalSponsor?.address);
                 fiscalSponsor.head = getDefaultValue(data?.head, existingFiscalSponsor?.head);
@@ -464,7 +471,7 @@ export class ApplicationService extends GlobalService {
                 fiscalSponsor.bank_branch = getDefaultValue(data?.bank_branch, existingFiscalSponsor?.bank_branch);
                 fiscalSponsor.bank_address = getDefaultValue(data?.bank_address, existingFiscalSponsor?.bank_address);
 
-                const savedFiscalSponsor = await EntityManager.save(ApplicationFiscalSponsor, {
+                const savedFiscalSponsor = await EntityManager.save(PartnerFiscalSponsor, {
                     ...fiscalSponsor,
                 });
 
@@ -667,14 +674,14 @@ export class ApplicationService extends GlobalService {
             const savedProposal = await queryRunner.manager.transaction(async (EntityManager) => {
                 const appProposalPk = getParsedPk(data?.pk);
                 const applicationPk = data?.application_pk;
-                const existingProposal = await EntityManager.findOne(ApplicationProposal, {
+                const existingProposal = await EntityManager.findOne(ProjectProposal, {
                     where: {
                         pk: Equal(appProposalPk),
                     },
                 });
 
-                const proposal = existingProposal ? existingProposal : new ApplicationProposal();
-                proposal.application_pk = applicationPk;
+                const proposal = existingProposal ? existingProposal : new ProjectProposal();
+                proposal.project_pk = applicationPk;
                 proposal.monitor = getDefaultValue(data?.monitor, existingProposal?.monitor);
                 proposal.budget_request_other_currency = getDefaultValue(
                     data?.budget_request_other_currency,
@@ -689,7 +696,7 @@ export class ApplicationService extends GlobalService {
                     +existingProposal?.budget_request_other,
                 );
 
-                const savedProposal = await EntityManager.save(ApplicationProposal, {
+                const savedProposal = await EntityManager.save(ProjectProposal, {
                     ...proposal,
                 });
 
@@ -732,20 +739,20 @@ export class ApplicationService extends GlobalService {
 
                 const tmpProposalAct = proposalActivity?.map(async (item) => {
                     const proposalPk = getParsedPk(item?.pk);
-                    const existingProposalActivity = await EntityManager.findOneBy(ApplicationProposalActivity, {
+                    const existingProposalActivity = await EntityManager.findOneBy(ProjectProposalActivity, {
                         pk: Equal(proposalPk),
-                        application_proposal_pk: Equal(appProposalPk),
+                        project_proposal_pk: Equal(appProposalPk),
                     });
 
                     const activity = existingProposalActivity
                         ? existingProposalActivity
-                        : new ApplicationProposalActivity();
+                        : new ProjectProposalActivity();
 
-                    activity.application_proposal_pk = appProposalPk;
+                    activity.project_proposal_pk = appProposalPk;
                     activity.name = item.name;
                     activity.duration = item.duration;
 
-                    const savedItem = await EntityManager.save(ApplicationProposalActivity, {
+                    const savedItem = await EntityManager.save(ProjectProposalActivity, {
                         ...activity,
                     });
 
@@ -757,8 +764,8 @@ export class ApplicationService extends GlobalService {
                 await Promise.all(tmpProposalAct);
 
                 const existingAppProposalAct =
-                    (await EntityManager.findBy(ApplicationProposalActivity, {
-                        application_proposal_pk: Equal(appProposalPk),
+                    (await EntityManager.findBy(ProjectProposalActivity, {
+                        project_proposal_pk: Equal(appProposalPk),
                     })) ?? [];
 
                 const allItem = [...existingAppProposalAct];
@@ -766,7 +773,7 @@ export class ApplicationService extends GlobalService {
                 return {
                     status: true,
                     data: {
-                        application_proposal_activity: allItem,
+                        project_proposal_activity: allItem,
                     },
                 };
             });
@@ -910,14 +917,13 @@ export class ApplicationService extends GlobalService {
 
                 const tmpReference = appReference?.map(async (item) => {
                     const referencePk = getParsedPk(item?.pk);
-                    const existingReference = await EntityManager.findOneBy(ApplicationReference, {
-                        pk: Equal(referencePk),
-                        application_pk: Equal(appPk),
+                    const existingReference = await EntityManager.findOneBy(PartnerOrganizationReference, {
+                        pk: Equal(referencePk)
                     });
 
-                    const reference = existingReference ? existingReference : new ApplicationReference();
+                    const reference = existingReference ? existingReference : new PartnerOrganizationReference();
 
-                    reference.application_pk = appPk;
+                    reference.partner_organization_pk = data?.partner?.organization?.partner_organization_reference.pk;
                     reference.name = getDefaultValue(item?.name, existingReference?.name);
                     reference.contact_number = getDefaultValue(item?.contact_number, existingReference?.contact_number);
                     reference.email_address = getDefaultValue(item?.email_address, existingReference?.email_address);
@@ -925,7 +931,7 @@ export class ApplicationService extends GlobalService {
                         item?.organization_name,
                         existingReference?.organization_name,
                     );
-                    const savedItem = await EntityManager.save(ApplicationReference, {
+                    const savedItem = await EntityManager.save(PartnerOrganizationReference, {
                         ...reference,
                     });
 
@@ -937,8 +943,8 @@ export class ApplicationService extends GlobalService {
                 await Promise.all(tmpReference);
 
                 const existingAppReference =
-                    (await EntityManager.findBy(ApplicationReference, {
-                        application_pk: Equal(appPk),
+                    (await EntityManager.findBy(PartnerOrganizationReference, {
+                        partner_organization_pk: Equal(appPk),
                     })) ?? [];
 
                 const allItem = [...existingAppReference];
@@ -946,7 +952,7 @@ export class ApplicationService extends GlobalService {
                 return {
                     status: true,
                     data: {
-                        application_reference: allItem,
+                        partner_organization_reference: allItem,
                     },
                 };
             });
@@ -1019,7 +1025,7 @@ export class ApplicationService extends GlobalService {
 
         try {
             return await queryRunner.manager.transaction(async (_EntityManager) => {
-                const activity = await ApplicationProposalActivity.findOneBy({
+                const activity = await ProjectProposalActivity.findOneBy({
                     pk: Equal(activity_pk),
                 });
                 await activity.remove();

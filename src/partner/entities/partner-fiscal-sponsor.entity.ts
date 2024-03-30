@@ -1,14 +1,13 @@
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
-import { User } from 'src/user/entities/user.entity';
-import { Application } from './application.entity';
+import { Partner } from './partner.entity';
 
-@Entity({ name: 'application_fiscal_sponsors' })
-export class ApplicationFiscalSponsor extends BaseEntity {
+@Entity({ name: 'partner_fiscal_sponsors' })
+export class PartnerFiscalSponsor extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
 
-    @Column({ name: 'application_pk', nullable: false })
-    application_pk: number;
+    @Column({ name: 'partner_pk', nullable: false })
+    partner_pk: number;
 
     @Column({ type: 'text', nullable: false })
     name: string;
@@ -49,7 +48,7 @@ export class ApplicationFiscalSponsor extends BaseEntity {
     /**
      * Relationship
      */
-    @OneToOne(type => Application, application => application.application_fiscal_sponsor, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'application_pk' })
-    application: Application;
+    @OneToOne(type => Partner, partner => partner.partner_fiscal_sponsor, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'partner_pk' })
+    partner: Partner;
 }
