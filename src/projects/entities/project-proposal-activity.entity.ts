@@ -9,15 +9,16 @@ import {
     BaseEntity,
     OneToMany,
 } from 'typeorm';
-import { ApplicationProposal } from './application-proposal.entity';
+import { ProjectProposal } from './project-proposal.entity';
 
-@Entity({ name: 'application_proposal_activities' })
-export class ApplicationProposalActivity extends BaseEntity {
+
+@Entity({ name: 'project_proposal_activities' })
+export class ProjectProposalActivity extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
 
-    @Column({ name: 'application_proposal_pk', nullable: false })
-    application_proposal_pk: number;
+    @Column({ name: 'project_proposal_pk', nullable: false })
+    project_proposal_pk: number;
 
     @Column({ type: 'text', nullable: false })
     name: string;
@@ -32,10 +33,10 @@ export class ApplicationProposalActivity extends BaseEntity {
      * Relationship
      */
     @ManyToOne(
-        (type) => ApplicationProposal,
-        (application_proposal) => application_proposal.application_proposal_activity,
+        (type) => ProjectProposal,
+        (project_proposal) => project_proposal.project_proposal_activity,
         { onDelete: 'CASCADE', onUpdate: 'CASCADE' },
     )
-    @JoinColumn({ name: 'application_proposal_pk' })
-    application_proposal: ApplicationProposal;
+    @JoinColumn({ name: 'project_proposal_pk' })
+    project_proposal: ProjectProposal;
 }

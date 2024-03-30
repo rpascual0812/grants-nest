@@ -9,16 +9,16 @@ import {
     BaseEntity,
     OneToMany,
 } from 'typeorm';
-import { Application } from './application.entity';
-import { ApplicationProposalActivity } from './application-proposal-activity.entity';
+import { Project } from './project.entity';
+import { ProjectProposalActivity } from './project-proposal-activity.entity';
 
-@Entity({ name: 'application_proposal' })
-export class ApplicationProposal extends BaseEntity {
+@Entity({ name: 'project_proposals' })
+export class ProjectProposal extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
 
-    @Column({ name: 'application_pk', nullable: false })
-    application_pk: number;
+    @Column({ name: 'project_pk', nullable: false })
+    project_pk: number;
 
     @Column({ type: 'text', nullable: false })
     monitor: string;
@@ -39,15 +39,15 @@ export class ApplicationProposal extends BaseEntity {
      * Relationship
      */
 
-    @OneToOne((type) => Application, (application) => application.application_proposal, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'application_pk' })
-    application: Application;
+    @OneToOne((type) => Project, (project) => project.project_proposal, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'project_pk' })
+    project: Project;
 
     @OneToMany(
-        'ApplicationProposalActivity',
-        (applicationProposalActivity: ApplicationProposalActivity) => applicationProposalActivity.application_proposal,
+        'ProjectProposalActivity',
+        (projectProposalActivity: ProjectProposalActivity) => projectProposalActivity.project_proposal,
         { onDelete: 'CASCADE', onUpdate: 'CASCADE' },
     )
     @JoinColumn({ name: 'pk' })
-    application_proposal_activity: ApplicationProposalActivity;
+    project_proposal_activity: ProjectProposalActivity;
 }
