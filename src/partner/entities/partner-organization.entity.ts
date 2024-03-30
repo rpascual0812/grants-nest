@@ -12,6 +12,7 @@ import {
     OneToMany,
 } from 'typeorm';
 import { Partner } from './partner.entity';
+import { PartnerOrganizationReference } from './partner-organization-references.entity';
 
 @Entity({ name: 'partner_organizations' })
 export class PartnerOrganization extends BaseEntity {
@@ -77,4 +78,8 @@ export class PartnerOrganization extends BaseEntity {
     @OneToOne((type) => Partner, (partner) => partner.partner_organization, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'partner_pk' })
     partner: Partner;
+
+    @OneToMany('PartnerOrganizationReference', (partnerOrganizationReference: PartnerOrganizationReference) => partnerOrganizationReference.partner_organization)
+    @JoinColumn({ name: 'pk' })
+    partner_organization_reference: Array<PartnerOrganizationReference>;
 }

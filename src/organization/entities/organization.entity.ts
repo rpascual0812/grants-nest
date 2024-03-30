@@ -1,5 +1,4 @@
 import { Application } from 'src/application/entities/application.entity';
-import { ApplicationOrganizationProfile } from 'src/application/entities/application-organization-profile.entity';
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
 import { PartnerOrganization } from 'src/partner/entities/partner-organization.entity';
 

@@ -21,7 +21,7 @@ import { PartnerService } from './partner.service';
 
 @Controller('partner')
 export class PartnerController {
-    constructor(private readonly partnerService: PartnerService) {}
+    constructor(private readonly partnerService: PartnerService) { }
 
     @Get()
     async fetch(@Query() query: { organization_pk?: number; type_pk?: number }) {
@@ -40,9 +40,9 @@ export class PartnerController {
                         const count = application.application_statuses.length;
                         application['application_status'] = application.application_statuses[count - 1];
                     }
-                    if (application.application_proposal) {
+                    if (application.project && application.project.project_proposal) {
                         partner['grand_total_amount'] += parseInt(
-                            application.application_proposal.budget_request_usd.toString(),
+                            application.project.project_proposal.budget_request_usd.toString(),
                         );
                     }
                     delete application.application_statuses;

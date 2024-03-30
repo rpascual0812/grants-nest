@@ -2,6 +2,7 @@ import { Application } from 'src/application/entities/application.entity';
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
 import { PartnerContact } from './partner-contacts.entity';
 import { PartnerOrganization } from './partner-organization.entity';
+import { PartnerFiscalSponsor } from './partner-fiscal-sponsor.entity';
 
 @Entity({ name: 'partners' })
 @Unique(['partner_id'])
@@ -46,4 +47,11 @@ export class Partner extends BaseEntity {
 
     @OneToOne(type => PartnerOrganization, partner_organization => partner_organization.partner, { cascade: true })
     partner_organization: PartnerOrganization;
+
+    @OneToOne(
+        (type) => PartnerFiscalSponsor,
+        (partner_fiscal_sponsor) => partner_fiscal_sponsor.partner,
+        { cascade: true },
+    )
+    partner_fiscal_sponsor: PartnerFiscalSponsor;
 }
