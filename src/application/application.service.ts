@@ -5,7 +5,9 @@ import { DateTime } from 'luxon';
 import dataSource from 'db/data-source';
 import { Application } from './entities/application.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Equal, Brackets } from 'typeorm';
+import { Repository, EntityManager, Equal, Brackets } from 'typeorm';
+import { ApplicationProponent } from './entities/application-proponent.entity';
+import { ApplicationOrganizationProfile } from './entities/application-organization-profile.entity';
 import { GlobalService } from 'src/utilities/global.service';
 import { Log } from 'src/log/entities/log.entity';
 import { ApplicationReference } from './entities/application-references.entity';
@@ -112,7 +114,7 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    async find(filter: any) {
+    async find(filter: any, reviews?: any) {
         try {
             const data = await dataSource
                 .getRepository(Application)
@@ -163,7 +165,7 @@ export class ApplicationService extends GlobalService {
                     number: filter.number,
                 })
                 .andWhere('applications.archived = :archived', { archived: false })
-                .andWhere('reviews.archived = false')
+                .andWhere(filter.hasOwnProperty('reviews') ? 'reviews.archived = false' : '1=1')
                 .orderBy('reviews.pk', 'ASC')
                 .getOne();
             return {
