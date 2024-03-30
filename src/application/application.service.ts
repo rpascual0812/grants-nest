@@ -5,9 +5,7 @@ import { DateTime } from 'luxon';
 import dataSource from 'db/data-source';
 import { Application } from './entities/application.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager, Equal } from 'typeorm';
-import { ApplicationProponent } from './entities/application-proponent.entity';
-import { ApplicationOrganizationProfile } from './entities/application-organization-profile.entity';
+import { Repository, Equal, Brackets } from 'typeorm';
 import { GlobalService } from 'src/utilities/global.service';
 import { Log } from 'src/log/entities/log.entity';
 import { ApplicationReference } from './entities/application-references.entity';
@@ -15,7 +13,6 @@ import { ApplicationProposal } from './entities/application-proposal.entity';
 import { ApplicationProposalActivity } from './entities/application-proposal-activity.entity';
 import { ApplicationFiscalSponsor } from './entities/application-fiscal-sponsor.entity';
 import { ApplicationNonprofitEquivalencyDetermination } from './entities/application-nonprofit-equivalency-determination.entity';
-import { ApplicationProponentContact } from './entities/application-proponent-contact.entity';
 import { EmailService } from 'src/email/email.service';
 import { Partner } from 'src/partner/entities/partner.entity';
 import { PartnerContact } from 'src/partner/entities/partner-contacts.entity';
@@ -490,16 +487,8 @@ export class ApplicationService extends GlobalService {
         await queryRunner.connect();
 
         try {
-            return await queryRunner.manager.transaction(async (EntityManager) => {
+            const savedProject = await queryRunner.manager.transaction(async (EntityManager) => {
                 const appProjectPk = getParsedPk(data?.pk);
-                console.log(
-                    '🚀 ~ ApplicationService ~ returnawaitqueryRunner.manager.transaction ~ data?.pk:',
-                    data?.pk,
-                );
-                console.log(
-                    '🚀 ~ ApplicationService ~ returnawaitqueryRunner.manager.transaction ~ appProjectPk:',
-                    appProjectPk,
-                );
                 const applicationPk = data?.application_pk;
                 const existingProject = await EntityManager.findOne(Project, {
                     where: {
@@ -521,33 +510,35 @@ export class ApplicationService extends GlobalService {
                 const savedProject = await EntityManager.save(Project, {
                     ...project,
                 });
-
-                let savedProjLoc = [];
-                const projLoc = data?.project_location ?? [];
-
-                const resProj: any = await this.saveProjLocation({
-                    project_pk: appProjectPk ?? savedProject?.pk,
-                    project_location: projLoc,
-                });
-                savedProjLoc = resProj?.data?.project_location;
-
-                let savedProjBeneficiary = [];
-                const projBeneficiary = data?.project_beneficiary ?? [];
-                const resBeneficiary: any = await this.saveProjBeneficiary({
-                    project_pk: appProjectPk ?? savedProject?.pk,
-                    project_beneficiary: projBeneficiary,
-                });
-                savedProjBeneficiary = resBeneficiary?.data?.project_beneficiary;
-
-                return {
-                    status: true,
-                    data: {
-                        ...savedProject,
-                        project_location: savedProjLoc,
-                        project_beneficiary: savedProjBeneficiary,
-                    },
-                };
+                return savedProject;
             });
+
+            const projPk = savedProject?.pk;
+
+            let savedProjLoc = [];
+            const projLoc = data?.project_location ?? [];
+            const resProj: any = await this.saveProjLocation({
+                project_pk: projPk,
+                project_location: projLoc,
+            });
+            savedProjLoc = resProj?.data?.project_location;
+
+            let savedProjBeneficiary = [];
+            const projBeneficiary = data?.project_beneficiary ?? [];
+            const resBeneficiary: any = await this.saveProjBeneficiary({
+                project_pk: projPk,
+                project_beneficiary: projBeneficiary,
+            });
+            savedProjBeneficiary = resBeneficiary?.data?.project_beneficiary;
+
+            return {
+                status: true,
+                data: {
+                    ...savedProject,
+                    project_location: savedProjLoc,
+                    project_beneficiary: savedProjBeneficiary,
+                },
+            };
         } catch (err) {
             console.log(err);
             this.saveError({});
@@ -564,7 +555,6 @@ export class ApplicationService extends GlobalService {
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const projectPk = data?.project_pk;
-
                 const projLocs = data?.project_location ?? [];
 
                 const tmpProjLoc = projLocs.map(async (item) => {
@@ -620,9 +610,7 @@ export class ApplicationService extends GlobalService {
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const projectPk = data?.project_pk;
-
                 const projBeneficiary = data?.project_beneficiary ?? [];
-
                 const tmpProjBeneficiary = projBeneficiary.map(async (item) => {
                     const beneficiaryPk = getParsedPk(item?.pk);
                     const existingProjBeneficiary = await EntityManager.findOneBy(ProjectBeneficiary, {
@@ -674,7 +662,7 @@ export class ApplicationService extends GlobalService {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
-            return await queryRunner.manager.transaction(async (EntityManager) => {
+            const savedProposal = await queryRunner.manager.transaction(async (EntityManager) => {
                 const appProposalPk = getParsedPk(data?.pk);
                 const applicationPk = data?.application_pk;
                 const existingProposal = await EntityManager.findOne(ApplicationProposal, {
@@ -703,22 +691,26 @@ export class ApplicationService extends GlobalService {
                     ...proposal,
                 });
 
-                let savedProposalAct = [];
-                const proposalActivity = data?.application_proposal_activity ?? [];
-                const resProposalAct: any = await this.saveProposalActivity({
-                    application_proposal_pk: appProposalPk ?? savedProposal?.pk,
-                    application_proposal_activity: proposalActivity,
-                });
-                savedProposalAct = resProposalAct?.data?.application_proposal_activity;
-
-                return {
-                    status: true,
-                    data: {
-                        ...savedProposal,
-                        application_proposal_activity: savedProposalAct,
-                    },
-                };
+                return savedProposal;
             });
+
+            const appProposalPk = savedProposal?.pk;
+
+            let savedProposalAct = [];
+            const proposalActivity = data?.application_proposal_activity ?? [];
+            const resProposalAct: any = await this.saveProposalActivity({
+                application_proposal_pk: appProposalPk ?? savedProposal?.pk,
+                application_proposal_activity: proposalActivity,
+            });
+            savedProposalAct = resProposalAct?.data?.application_proposal_activity;
+
+            return {
+                status: true,
+                data: {
+                    ...savedProposal,
+                    application_proposal_activity: savedProposalAct,
+                },
+            };
         } catch (err) {
             console.log(err);
             this.saveError({});
