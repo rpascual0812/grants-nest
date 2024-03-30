@@ -79,8 +79,8 @@ export class ApplicationController {
 
     @UseGuards(JwtAuthGuard)
     @Get(':number/review')
-    review(@Param('number') number: string) {
-        return this.applicationService.find({ number });
+    review(@Param('number') number: string, @Request() req: any) {
+        return this.applicationService.find({ number, reviews: req.query.reviews });
     }
 
     @UseGuards(JwtAuthGuard)
