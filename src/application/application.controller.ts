@@ -84,6 +84,12 @@ export class ApplicationController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @Get(':pk/reviews')
+    reviews(@Param('pk') pk: number, @Request() req: any) {
+        return this.applicationService.findReviews(pk, req.query, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Delete(':pk')
     remove(@Param('pk') pk: number, @Request() req: any) {
         console.log('deleting', pk);
