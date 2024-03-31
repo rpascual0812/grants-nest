@@ -60,6 +60,11 @@ export class ApplicationController {
         return this.applicationService.saveReference(body);
     }
 
+    @Post(':pk/success/email')
+    sendSuccessEmail(@Param('pk') pk: number) {
+        return this.applicationService.sendSuccessEmail(pk);
+    }
+
     @UseGuards(JwtAuthGuard)
     @Get()
     fetch(@Request() req: any) {
