@@ -145,4 +145,10 @@ export class ApplicationController {
     saveRecommendation(@Body() body: any, @Request() req: any) {
         return this.applicationService.saveRecommendation(body, req.user);
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/review/:review_pk/resolve')
+    resolveReview(@Param('pk') application_pk: number, @Param('review_pk') review_pk: number, @Request() req: any) {
+        return this.applicationService.resolveReview(application_pk, review_pk, req.user);
+    }
 }
