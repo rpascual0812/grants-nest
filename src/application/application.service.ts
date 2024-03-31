@@ -1331,4 +1331,74 @@ export class ApplicationService extends GlobalService {
             await queryRunner.release();
         }
     }
+
+    async deleteApplicationAttachment(pk: number, document_pk: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                await EntityManager.query(
+                    'delete from document_application_relation where document_pk = $1 and application_pk = $2;',
+                    [document_pk, pk],
+                );
+
+                const review = await EntityManager.update(Document, { pk: document_pk }, { archived: true });
+
+                // save logs
+                const model = {
+                    pk: document_pk,
+                    name: 'documents',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return {
+                    status: review ? true : false,
+                };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async deleteReviewAttachment(pk: number, review_pk: any, document_pk: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                await EntityManager.query(
+                    'delete from document_review_relation where document_pk = $1 and review_pk = $2;',
+                    [document_pk, review_pk],
+                );
+
+                const review = await EntityManager.update(Document, { pk: document_pk }, { archived: true });
+
+                // save logs
+                const model = {
+                    pk: pk,
+                    review_pk: review_pk,
+                    document_pk: document_pk,
+                    name: 'reviews',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return {
+                    status: review ? true : false,
+                };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
 }

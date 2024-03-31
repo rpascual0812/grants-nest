@@ -151,4 +151,16 @@ export class ApplicationController {
     resolveReview(@Param('pk') application_pk: number, @Param('review_pk') review_pk: number, @Request() req: any) {
         return this.applicationService.resolveReview(application_pk, review_pk, req.user);
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk/document/:document_pk')
+    deleteApplicationAttachment(@Param('pk') application_pk: number, @Param('document_pk') document_pk: number, @Request() req: any) {
+        return this.applicationService.deleteApplicationAttachment(application_pk, document_pk, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk/review/:review_pk/document/:document_pk')
+    deleteReviewAttachment(@Param('pk') application_pk: number, @Param('review_pk') review_pk: number, @Param('document_pk') document_pk: number, @Request() req: any) {
+        return this.applicationService.deleteReviewAttachment(application_pk, review_pk, document_pk, req.user);
+    }
 }
