@@ -37,20 +37,24 @@ export class DocumentService {
             ;
     }
 
-    async saveDocumentable(data: any) {
+    async save(data: any, user: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
             return await queryRunner.manager.transaction(
                 async (EntityManager) => {
-                    // const document = new Documentable();
-                    // document.table_name = data.table_name;
-                    // document.table_pk = data.table_pk;
-                    // document.document_pk = data.document_pk;
-                    // const documentable = await EntityManager.save(document);
+                    let output = null;
+                    if (data.table_name == 'applications') {
+                        await EntityManager.query(
+                            'insert into document_application_relation (document_pk, application_pk) values ($1 ,$2);',
+                            [data.document_pk, data.table_pk],
+                        );
 
-                    // return { status: true, data: documentable };
+                        output = await EntityManager.update(Document, { pk: data.document_pk }, { type: data.type });
+                    }
+
+                    return { status: output ? true : false, data: output };
                 }
             );
         } catch (err) {
