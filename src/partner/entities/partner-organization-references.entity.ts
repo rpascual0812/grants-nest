@@ -2,7 +2,6 @@ import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, Jo
 import { PartnerOrganization } from './partner-organization.entity';
 
 @Entity({ name: 'partner_organization_references' })
-@Unique(['partner_organization_pk', 'name', 'contact_number'])
 export class PartnerOrganizationReference extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
