@@ -58,10 +58,7 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
-                .leftJoinAndSelect(
-                    'project_proposals.project_proposal_activity',
-                    'project_proposal_activities',
-                )
+                .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activities')
                 .leftJoinAndSelect('partners.partner_fiscal_sponsor', 'partner_fiscal_sponsors')
                 .leftJoinAndSelect(
                     'applications.application_nonprofit_equivalency_determination',
@@ -155,16 +152,12 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('projects.project_location', 'project_location')
                 .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
-                .leftJoinAndSelect(
-                    'project_proposals.project_proposal_activity',
-                    'project_proposal_activity',
-                )
+                .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
                 .leftJoinAndSelect('partners.partner_fiscal_sponsor', 'partner_fiscal_sponsors')
                 .leftJoinAndSelect(
                     'applications.application_nonprofit_equivalency_determination',
                     'application_nonprofit_equivalency_determination',
                 )
-
 
                 .leftJoinAndSelect('applications.documents', 'documents')
                 .leftJoinAndSelect('applications.reviews', 'reviews')
@@ -440,16 +433,17 @@ export class ApplicationService extends GlobalService {
         await queryRunner.connect();
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const appFiscalSponsorPk = getParsedPk(data?.pk);
-                const applicationPk = data?.application_pk;
+                const partnerFiscalSponsor = getParsedPk(data?.pk);
+                const appPartnerPk = getParsedPk(data?.partner_pk);
                 const existingFiscalSponsor = await EntityManager.findOne(PartnerFiscalSponsor, {
                     where: {
-                        pk: Equal(appFiscalSponsorPk),
+                        pk: Equal(partnerFiscalSponsor),
+                        partner_pk: Equal(appPartnerPk),
                     },
                 });
 
                 const fiscalSponsor = existingFiscalSponsor ? existingFiscalSponsor : new PartnerFiscalSponsor();
-                fiscalSponsor.partner_pk = data?.partner.pk;
+                fiscalSponsor.partner_pk = appPartnerPk;
                 fiscalSponsor.name = getDefaultValue(data?.name, existingFiscalSponsor?.name);
                 fiscalSponsor.address = getDefaultValue(data?.address, existingFiscalSponsor?.address);
                 fiscalSponsor.head = getDefaultValue(data?.head, existingFiscalSponsor?.head);
@@ -679,15 +673,16 @@ export class ApplicationService extends GlobalService {
         try {
             const savedProposal = await queryRunner.manager.transaction(async (EntityManager) => {
                 const appProposalPk = getParsedPk(data?.pk);
-                const applicationPk = data?.application_pk;
+                const projectPk = getParsedPk(data?.project_pk);
                 const existingProposal = await EntityManager.findOne(ProjectProposal, {
                     where: {
                         pk: Equal(appProposalPk),
+                        project_pk: Equal(projectPk),
                     },
                 });
 
                 const proposal = existingProposal ? existingProposal : new ProjectProposal();
-                proposal.project_pk = applicationPk;
+                proposal.project_pk = projectPk;
                 proposal.monitor = getDefaultValue(data?.monitor, existingProposal?.monitor);
                 proposal.budget_request_other_currency = getDefaultValue(
                     data?.budget_request_other_currency,
@@ -714,16 +709,16 @@ export class ApplicationService extends GlobalService {
             let savedProposalAct = [];
             const proposalActivity = data?.application_proposal_activity ?? [];
             const resProposalAct: any = await this.saveProposalActivity({
-                application_proposal_pk: appProposalPk ?? savedProposal?.pk,
-                application_proposal_activity: proposalActivity,
+                project_proposal_pk: appProposalPk ?? savedProposal?.pk,
+                project_proposal_activity: proposalActivity,
             });
-            savedProposalAct = resProposalAct?.data?.application_proposal_activity;
+            savedProposalAct = resProposalAct?.data?.project_proposal_activity;
 
             return {
                 status: true,
                 data: {
                     ...savedProposal,
-                    application_proposal_activity: savedProposalAct,
+                    project_proposal_activity: savedProposalAct,
                 },
             };
         } catch (err) {
@@ -740,8 +735,8 @@ export class ApplicationService extends GlobalService {
         await queryRunner.connect();
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const appProposalPk = data?.application_proposal_pk;
-                const proposalActivity = data?.application_proposal_activity ?? [];
+                const appProposalPk = data?.project_proposal_pk;
+                const proposalActivity = data?.project_proposal_activity ?? [];
 
                 const tmpProposalAct = proposalActivity?.map(async (item) => {
                     const proposalPk = getParsedPk(item?.pk);
@@ -918,18 +913,19 @@ export class ApplicationService extends GlobalService {
         await queryRunner.connect();
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const appPk = data?.application_pk;
-                const appReference = data?.application_reference ?? [];
+                const partnerOrganizationPk = getParsedPk(data?.partner_organization_pk);
+                const appReference = data?.partner_organization_reference ?? [];
 
                 const tmpReference = appReference?.map(async (item) => {
                     const referencePk = getParsedPk(item?.pk);
                     const existingReference = await EntityManager.findOneBy(PartnerOrganizationReference, {
-                        pk: Equal(referencePk)
+                        pk: Equal(referencePk),
+                        partner_organization_pk: Equal(partnerOrganizationPk),
                     });
 
                     const reference = existingReference ? existingReference : new PartnerOrganizationReference();
 
-                    reference.partner_organization_pk = data?.partner?.organization?.partner_organization_reference.pk;
+                    reference.partner_organization_pk = partnerOrganizationPk;
                     reference.name = getDefaultValue(item?.name, existingReference?.name);
                     reference.contact_number = getDefaultValue(item?.contact_number, existingReference?.contact_number);
                     reference.email_address = getDefaultValue(item?.email_address, existingReference?.email_address);
@@ -937,6 +933,7 @@ export class ApplicationService extends GlobalService {
                         item?.organization_name,
                         existingReference?.organization_name,
                     );
+
                     const savedItem = await EntityManager.save(PartnerOrganizationReference, {
                         ...reference,
                     });
@@ -950,7 +947,7 @@ export class ApplicationService extends GlobalService {
 
                 const existingAppReference =
                     (await EntityManager.findBy(PartnerOrganizationReference, {
-                        partner_organization_pk: Equal(appPk),
+                        partner_organization_pk: Equal(partnerOrganizationPk),
                     })) ?? [];
 
                 const allItem = [...existingAppReference];
