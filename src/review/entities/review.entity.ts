@@ -20,6 +20,9 @@ export class Review extends BaseEntity {
     @Column({ type: 'text', nullable: true })
     type: string;
 
+    @Column({ default: false })
+    resolved: boolean;
+
     @Column({ name: 'created_by', nullable: false })
     created_by: number;
 

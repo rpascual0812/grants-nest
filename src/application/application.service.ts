@@ -48,18 +48,6 @@ export class ApplicationService extends GlobalService {
                 .getRepository(Application)
                 .createQueryBuilder('applications')
                 .leftJoinAndSelect('applications.partner', 'partners')
-                .leftJoinAndMapOne(
-                    'partners.organization',
-                    PartnerOrganization,
-                    'partner_organizations',
-                    'partners.pk=partner_organizations.partner_pk',
-                )
-                .leftJoinAndMapOne(
-                    'partner_organizations.country',
-                    Country,
-                    'countries',
-                    'partner_organizations.country_pk=countries.pk',
-                )
                 .leftJoinAndMapMany(
                     'partners.contacts',
                     PartnerContact,
@@ -69,17 +57,35 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
-                .leftJoinAndSelect('applications.application_proposal', 'application_proposal')
+                .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect(
-                    'application_proposal.application_proposal_activity',
-                    'application_proposal_activity',
+                    'project_proposals.project_proposal_activity',
+                    'project_proposal_activities',
                 )
-                .leftJoinAndSelect('applications.application_fiscal_sponsor', 'application_fiscal_sponsor')
+                .leftJoinAndSelect('partners.partner_fiscal_sponsor', 'partner_fiscal_sponsors')
                 .leftJoinAndSelect(
                     'applications.application_nonprofit_equivalency_determination',
                     'application_nonprofit_equivalency_determination',
                 )
-                .leftJoinAndSelect('applications.application_reference', 'application_reference')
+                .leftJoinAndMapOne(
+                    'partners.organization',
+                    PartnerOrganization,
+                    'partner_organizations',
+                    'partners.pk=partner_organizations.partner_pk',
+                )
+                .leftJoinAndMapMany(
+                    'partner_organizations.partner_organization_reference',
+                    PartnerOrganizationReference,
+                    'partner_organization_references',
+                    'partner_organizations.pk=partner_organization_references.partner_organization_pk',
+                )
+                .leftJoinAndMapOne(
+                    'partner_organizations.country',
+                    Country,
+                    'countries',
+                    'partner_organizations.country_pk=countries.pk',
+                )
+                // .leftJoinAndSelect('applications.application_reference', 'application_reference')
                 .leftJoinAndSelect('applications.reviews', 'review_application_relation')
                 .leftJoinAndSelect('applications.types', 'type_application_relation')
                 .where('applications.archived = false')
@@ -126,7 +132,7 @@ export class ApplicationService extends GlobalService {
                     'partner_organizations',
                     'partners.pk=partner_organizations.partner_pk',
                 )
-                .leftJoinAndMapOne(
+                .leftJoinAndMapMany(
                     'partner_organizations.partner_organization_reference',
                     PartnerOrganizationReference,
                     'partner_organization_references',
@@ -1291,6 +1297,35 @@ export class ApplicationService extends GlobalService {
                 data: data[0],
                 total: data[1],
             };
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async resolveReview(pk: number, review_pk: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const review = await EntityManager.update(Review, { pk: review_pk }, { resolved: true });
+
+                // save logs
+                const model = {
+                    pk: review_pk,
+                    name: 'reviews',
+                    status: 'resolved',
+                };
+                await this.saveLog({ model, user });
+
+                return {
+                    status: review ? true : false,
+                };
+            });
         } catch (err) {
             this.saveError({});
             console.log(err);
