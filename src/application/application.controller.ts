@@ -18,43 +18,43 @@ export class ApplicationController {
         return this.applicationService.save(body, req.user);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Post('partner')
     savePartner(@Body() body: any) {
         return this.applicationService.savePartner(body);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Post('partner_organization')
     savePartnerOrg(@Body() body: any) {
         return this.applicationService.savePartnerOrg(body);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Post('project')
     saveProject(@Body() body: any) {
         return this.applicationService.saveProject(body);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Post('proposal')
     saveProposal(@Body() body: any) {
         return this.applicationService.saveProposal(body);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Post('fiscal_sponsor')
     saveFiscalSponsor(@Body() body: any) {
         return this.applicationService.saveFiscalSponsor(body);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Post('nonprofit_equivalency_determination')
     saveNonProfitEquivalencyDetermination(@Body() body: any) {
         return this.applicationService.saveNonProfitEquivalencyDetermination(body);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Post('reference')
     saveReference(@Body() body: any) {
         return this.applicationService.saveReference(body);
@@ -66,7 +66,7 @@ export class ApplicationController {
         return this.applicationService.findAll(req.query);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Get(':pk')
     fetchOne(@Param('pk') pk: string) {
         return this.applicationService.find({ pk });
