@@ -78,8 +78,6 @@ export class UserController {
     )
     async create(@UploadedFile() file: Express.Multer.File, @Request() req: any, @Response() res: any) {
         const result = await this.userService.uploadPhoto(req.user, file);
-        // console.log("🚀 ~ file: users.controller.ts ~ line 46 ~ UsersController ~ create ~ result", result.affected)
-
         return res.status(result.affected == 1 ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR).json({
             status: result.affected == 1 ? true : false,
             file: file,
