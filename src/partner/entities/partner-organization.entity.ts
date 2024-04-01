@@ -13,6 +13,7 @@ import {
 } from 'typeorm';
 import { Partner } from './partner.entity';
 import { PartnerOrganizationReference } from './partner-organization-references.entity';
+import { PartnerOrganizationBank } from './partner-organization-bank.entity';
 
 @Entity({ name: 'partner_organizations' })
 export class PartnerOrganization extends BaseEntity {
@@ -64,6 +65,9 @@ export class PartnerOrganization extends BaseEntity {
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
 
+    @Column({ default: false })
+    archived: boolean;
+
     /**
      * Relationship
      */
@@ -82,4 +86,8 @@ export class PartnerOrganization extends BaseEntity {
     @OneToMany('PartnerOrganizationReference', (partnerOrganizationReference: PartnerOrganizationReference) => partnerOrganizationReference.partner_organization)
     @JoinColumn({ name: 'pk' })
     partner_organization_reference: Array<PartnerOrganizationReference>;
+
+    @OneToMany('PartnerOrganizationBank', (partner_organization_bank: PartnerOrganizationBank) => partner_organization_bank.partner_organization)
+    @JoinColumn({ name: 'pk' })
+    partner_organization_bank: Array<PartnerOrganizationBank>;
 }
