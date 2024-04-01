@@ -42,8 +42,14 @@ export class PartnerFiscalSponsor extends BaseEntity {
     @Column({ type: 'text', nullable: false })
     bank_address: string;
 
+    @Column({ type: 'text', nullable: false })
+    swift_code: string;
+
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
+
+    @Column({ default: false })
+    archived: boolean;
 
     /**
      * Relationship
