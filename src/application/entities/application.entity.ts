@@ -12,7 +12,6 @@ import {
 } from 'typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { Partner } from 'src/partner/entities/partner.entity';
-import { ApplicationNonprofitEquivalencyDetermination } from './application-nonprofit-equivalency-determination.entity';
 import { ApplicationStatus } from './application-statuses.entity';
 import { Project } from 'src/projects/entities/project.entity';
 import { Review } from 'src/review/entities/review.entity';
@@ -65,14 +64,6 @@ export class Application extends BaseEntity {
 
     @OneToOne((type) => Project, (project) => project.application, { cascade: true })
     project: Project;
-
-    @OneToOne(
-        (type) => ApplicationNonprofitEquivalencyDetermination,
-        (application_nonprofit_equivalency_determination) =>
-            application_nonprofit_equivalency_determination.application,
-        { cascade: true },
-    )
-    application_nonprofit_equivalency_determination: ApplicationNonprofitEquivalencyDetermination;
 
     @OneToMany('ApplicationRecommendation', (applicationRecommendation: ApplicationRecommendation) => applicationRecommendation.application)
     @JoinColumn({ name: 'pk' })
