@@ -340,6 +340,15 @@ export class ApplicationService extends GlobalService {
                     });
                 }
 
+                if (existingContact || data?.documents?.length > 0) {
+                    data?.documents.forEach((doc) => {
+                        EntityManager.query(
+                            'insert into document_partner_relation (document_pk, partner_pk) values ($1 ,$2);',
+                            [doc.pk, savedPartner.pk],
+                        );
+                    });
+                }
+
                 return {
                     status: true,
                     data: {
