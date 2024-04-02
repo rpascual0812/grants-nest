@@ -6,6 +6,8 @@ import { PartnerContact } from './entities/partner-contacts.entity';
 import { Country } from 'src/country/entities/country.entity';
 import { Application } from 'src/application/entities/application.entity';
 import { PartnerOrganizationReference } from './entities/partner-organization-references.entity';
+import { PartnerOrganizationBank } from './entities/partner-organization-bank.entity';
+import { PartnerOrganizationOtherInformation } from './entities/partner-organization-other-information.entity';
 
 @Injectable()
 export class PartnerService {
@@ -86,6 +88,18 @@ export class PartnerService {
                     PartnerOrganizationReference,
                     'partner_organization_references',
                     'partner_organizations.pk=partner_organization_references.partner_organization_pk',
+                )
+                .leftJoinAndMapOne(
+                    'partner_organizations.partner_organization_bank',
+                    PartnerOrganizationBank,
+                    'partner_organization_banks',
+                    'partner_organizations.pk=partner_organization_banks.partner_organization_pk',
+                )
+                .leftJoinAndMapOne(
+                    'partner_organizations.partner_organization_other_information',
+                    PartnerOrganizationOtherInformation,
+                    'partner_organization_other_informations',
+                    'partner_organizations.pk=partner_organization_other_informations.partner_organization_pk',
                 )
                 .leftJoinAndMapOne(
                     'partner_organizations.country',

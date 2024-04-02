@@ -23,6 +23,9 @@ export class PartnerOrganizationBank extends BaseEntity {
     bank_branch: string;
 
     @Column({ type: 'text', nullable: false })
+    bank_address: string;
+
+    @Column({ type: 'text', nullable: false })
     swift_code: string;
 
     @Column({ name: 'created_by', nullable: false })
