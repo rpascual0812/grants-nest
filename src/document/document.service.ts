@@ -4,13 +4,17 @@ import { Repository } from 'typeorm';
 
 import dataSource from 'db/data-source';
 import { Document } from './entities/document.entity';
+import { GlobalService } from 'src/utilities/global.service';
 
 @Injectable()
-export class DocumentService {
+export class DocumentService extends GlobalService {
+
     constructor(
         @InjectRepository(Document)
         private documentRepository: Repository<Document>,
-    ) { }
+    ) {
+        super();
+    }
 
     create(file: any) {
         const obj = {
@@ -55,6 +59,48 @@ export class DocumentService {
                     }
 
                     return { status: output ? true : false, data: output };
+                }
+            );
+        } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async destroy(pk: number, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(
+                async (EntityManager) => {
+
+                    // delete file from all relations
+                    await EntityManager.query(
+                        'delete from document_application_relation where document_pk = $1;',
+                        [pk],
+                    );
+                    await EntityManager.query(
+                        'delete from document_review_relation where document_pk = $1;',
+                        [pk],
+                    );
+
+                    const doc = await EntityManager.update(Document, { pk }, { archived: true });
+
+                    // save logs
+                    const model = {
+                        pk: pk,
+                        document_pk: pk,
+                        name: 'documents',
+                        status: 'deleted',
+                    };
+                    await this.saveLog({ model, user });
+
+                    return {
+                        status: doc ? true : false,
+                    };
                 }
             );
         } catch (err) {
