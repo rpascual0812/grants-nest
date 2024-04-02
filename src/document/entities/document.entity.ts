@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, Unique, JoinColumn, ManyToOne, OneToMany, ManyToMany, OneToOne, JoinTable } from 'typeorm';
 import { Application } from 'src/application/entities/application.entity';
 import { Review } from 'src/review/entities/review.entity';
+import { Partner } from 'src/partner/entities/partner.entity';
 
 @Entity({ name: 'documents' })
 @Unique(['filename'])
@@ -62,4 +63,18 @@ export class Document {
         }
     })
     reviews: Review[];
+
+    @ManyToMany(() => Partner, partner => partner.documents)
+    @JoinTable({
+        name: 'document_partner_relation',
+        joinColumn: {
+            name: 'document_pk',
+            referencedColumnName: 'pk',
+        },
+        inverseJoinColumn: {
+            name: 'partner_pk',
+            referencedColumnName: 'pk',
+        }
+    })
+    partners: Partner[];
 }

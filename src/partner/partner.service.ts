@@ -6,6 +6,7 @@ import { PartnerContact } from './entities/partner-contacts.entity';
 import { Country } from 'src/country/entities/country.entity';
 import { Application } from 'src/application/entities/application.entity';
 import { PartnerOrganizationReference } from './entities/partner-organization-references.entity';
+import { Project } from 'src/projects/entities/project.entity';
 import { PartnerOrganizationBank } from './entities/partner-organization-bank.entity';
 import { PartnerOrganizationOtherInformation } from './entities/partner-organization-other-information.entity';
 
@@ -38,12 +39,23 @@ export class PartnerService {
                     'partners.pk=partner_contacts.partner_pk',
                 )
                 .leftJoinAndMapMany(
-                    'partners.application',
+                    'partners.applications',
                     Application,
                     'applications',
                     'partners.pk=applications.partner_pk',
                 )
-                .leftJoinAndSelect('applications.project', 'projects')
+                .leftJoinAndMapMany(
+                    'partners.projects',
+                    Project,
+                    'projects',
+                    'partners.pk=projects.partner_pk',
+                )
+                .leftJoinAndMapOne(
+                    'projects.application',
+                    Application,
+                    'applications as project_applications',
+                    'projects.application_pk=applications.pk',
+                )
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('applications.application_statuses', 'application_statuses')
                 .leftJoinAndSelect('application_statuses.status', 'statuses')
@@ -77,6 +89,7 @@ export class PartnerService {
             const data = await dataSource.manager
                 .getRepository(Partner)
                 .createQueryBuilder('partners')
+                .leftJoinAndSelect('partners.documents', 'documents')
                 .leftJoinAndMapOne(
                     'partners.organization',
                     PartnerOrganization,

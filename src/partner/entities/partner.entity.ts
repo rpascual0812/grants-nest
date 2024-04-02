@@ -1,9 +1,10 @@
 import { Application } from 'src/application/entities/application.entity';
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany, ManyToMany } from 'typeorm';
 import { PartnerContact } from './partner-contacts.entity';
 import { PartnerOrganization } from './partner-organization.entity';
 import { PartnerFiscalSponsor } from './partner-fiscal-sponsor.entity';
 import { Project } from 'src/projects/entities/project.entity';
+import { Document } from 'src/document/entities/document.entity';
 
 @Entity({ name: 'partners' })
 @Unique(['partner_id'])
@@ -59,4 +60,7 @@ export class Partner extends BaseEntity {
         { cascade: true },
     )
     partner_fiscal_sponsor: PartnerFiscalSponsor;
+
+    @ManyToMany(() => Document, (document) => document.partners, { cascade: ['insert', 'update'] })
+    documents: Document[];
 }
