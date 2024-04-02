@@ -60,6 +60,18 @@ export class ApplicationController {
         return this.applicationService.saveReference(body);
     }
 
+    @UseGuards(JwtAuthGuard)
+    @Post('organization_bank_account')
+    saveOrganizationBankAccount(@Body() body: any, @Request() req: any) {
+        return this.applicationService.saveOrganizationBankAccount(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('organization_other_information')
+    saveOrganizationOtherInfo(@Body() body: any, @Request() req: any) {
+        return this.applicationService.saveOrganizationOtherInfo(body, req.user);
+    }
+
     @Post(':pk/success/email')
     sendSuccessEmail(@Param('pk') pk: number) {
         return this.applicationService.sendSuccessEmail(pk);
