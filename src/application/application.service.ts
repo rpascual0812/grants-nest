@@ -1410,68 +1410,67 @@ export class ApplicationService extends GlobalService {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const data = await this.find({ pk });
                 const application = data.data;
-                // console.log('pk', pk, application.partner['organization']['country']['name']);
-                // console.log(application);
 
-                // send email
-                this.emailService.uuid = uuidv4();
-                this.emailService.user_pk = application.created_by;
-                this.emailService.from = process.env.SEND_FROM;
-                this.emailService.from_name = process.env.SENDER;
-                this.emailService.to = application.partner.email_address;
-                this.emailService.to_name = '';
-                this.emailService.subject = 'Thank you for submitting your application';
-                // this.emailService.body = '<div class=row><div class=col-md-12><div class=row><div class=col-md-5><div><p>Proponent<h3>Organization Name 1</h3></div><div><p>ID Number<h3>2134234234</h3></div><div><p>Date of submission<h3>Date</h3></div></div><div class=col-md-7><div class=row><div class=col-md-6 style=text-align:left><div><p>Proponent<p>dsafasdf asdfa sdfasdf</div><div><p>Thematic Area<p>dsafasdf asdfa sdfasdf</div><div><p>Country<p>dsafasdf asdfa sdfasdf</div></div><div class=col-md-6 style=text-align:left><div><p>Duration<p>dsafasdf asdfa sdfasdf</div><div><p>Local Currency<p>dsafasdf asdfa sdfasdf</div><div><p>Amount Requested (USD)<p>dsafasdf asdfa sdfasdf</div></div></div></div></div></div></div>'; // MODIFY: must be a template from the database
-                this.emailService.body = `<div style="width: 100%;">\
-    <div style="width: 40%; float: left;">\
-        <div>\
-            <p>Proponent</p>\
-            <h3>${application.partner.name}</h3>\
-        </div>\
-        <div>\
-            <p>ID Number</p>\
-            <h3>${application.partner.partner_id}</h3>\
-        </div>\
-        <div>\
-            <p>Date of submission</p>\
-            <h3>${DateTime.fromISO(application.date_created.toLocaleString()).toFormat('y-LL-dd HH:mm:ss')}</h3>\
-        </div>\
-    </div>\
-    <div style="width: 60%; float: left; text-align: left;">\
-        <div style="width: 100%;">\
-            <div style="width: 50%; float: left;">\
-                <div>\
-                    <p>Grantee Project</p>\
-                    <p>${application.project.title}</p>\
-                </div>\
-                <div>\
-                    <p>Thematic Area</p>\
-                    <p></p>\
-                </div>\
-                <div>\
-                    <p>Country</p>\
-                    <p>${application.partner['organization']['country']['name']}</p>\
-                </div>\
+                if (!application.email_sent) {
+                    // send email
+                    this.emailService.uuid = uuidv4();
+                    this.emailService.user_pk = application.created_by;
+                    this.emailService.from = process.env.SEND_FROM;
+                    this.emailService.from_name = process.env.SENDER;
+                    this.emailService.to = application.partner.email_address;
+                    this.emailService.to_name = '';
+                    this.emailService.subject = 'Thank you for submitting your application';
+                    this.emailService.body = `<div style="width: 100%;">\
+        <div style="width: 40%; float: left;">\
+            <div>\
+                <p>Proponent</p>\
+                <h3>${application.partner.name}</h3>\
             </div>\
-            <div style="width: 50%; float: left;">\
-                <div>\
-                    <p>Duration</p>\
-                    <p>${application.project.duration}</p>\
-                </div>\
-                <div>\
-                    <p>Local Currency</p>\
-                    <p>${application.project.project_proposal.budget_request_other_currency}</p>\
-                </div>\
-                <div>\
-                    <p>Amount Requested (USD)</p>\
-                    <p>${application.project.project_proposal.budget_request_usd}</p>\
-                </div>\
+            <div>\
+                <p>ID Number</p>\
+                <h3>${application.partner.partner_id}</h3>\
+            </div>\
+            <div>\
+                <p>Date of submission</p>\
+                <h3>${DateTime.fromISO(application.date_created.toLocaleString()).toFormat('y-LL-dd HH:mm:ss')}</h3>\
             </div>\
         </div>\
-    </div>\
-</div>`; // MODIFY: must be a template from the database
+        <div style="width: 60%; float: left; text-align: left;">\
+            <div style="width: 100%;">\
+                <div style="width: 50%; float: left;">\
+                    <div>\
+                        <p>Grantee Project</p>\
+                        <p>${application.project.title}</p>\
+                    </div>\
+                    <div>\
+                        <p>Thematic Area</p>\
+                        <p></p>\
+                    </div>\
+                    <div>\
+                        <p>Country</p>\
+                        <p>${application.partner['organization']['country']['name']}</p>\
+                    </div>\
+                </div>\
+                <div style="width: 50%; float: left;">\
+                    <div>\
+                        <p>Duration</p>\
+                        <p>${application.project.duration}</p>\
+                    </div>\
+                    <div>\
+                        <p>Local Currency</p>\
+                        <p>${application.project.project_proposal.budget_request_other_currency}</p>\
+                    </div>\
+                    <div>\
+                        <p>Amount Requested (USD)</p>\
+                        <p>${application.project.project_proposal.budget_request_usd}</p>\
+                    </div>\
+                </div>\
+            </div>\
+        </div>\
+    </div>`; // MODIFY: must be a template from the database
 
-                await this.emailService.create();
+                    await this.emailService.create();
+                }
             });
         } catch (err) {
             this.saveError({});
