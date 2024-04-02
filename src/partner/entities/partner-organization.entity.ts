@@ -14,6 +14,7 @@ import {
 import { Partner } from './partner.entity';
 import { PartnerOrganizationReference } from './partner-organization-references.entity';
 import { PartnerOrganizationBank } from './partner-organization-bank.entity';
+import { PartnerOrganizationOtherInformation } from './partner-organization-other-information.entity';
 
 @Entity({ name: 'partner_organizations' })
 export class PartnerOrganization extends BaseEntity {
@@ -71,23 +72,47 @@ export class PartnerOrganization extends BaseEntity {
     /**
      * Relationship
      */
-    @ManyToOne('Organization', (organization: Organization) => organization.partner_organization, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne('Organization', (organization: Organization) => organization.partner_organization, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
     @JoinColumn({ name: 'organization_pk' })
     organization: Organization;
 
-    @ManyToOne('Country', (country: Country) => country.partner_organization, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne('Country', (country: Country) => country.partner_organization, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
     @JoinColumn({ name: 'country_pk' })
     country: Country;
 
-    @OneToOne((type) => Partner, (partner) => partner.partner_organization, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToOne((type) => Partner, (partner) => partner.partner_organization, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
     @JoinColumn({ name: 'partner_pk' })
     partner: Partner;
 
-    @OneToMany('PartnerOrganizationReference', (partnerOrganizationReference: PartnerOrganizationReference) => partnerOrganizationReference.partner_organization)
+    @OneToMany(
+        'PartnerOrganizationReference',
+        (partnerOrganizationReference: PartnerOrganizationReference) =>
+            partnerOrganizationReference.partner_organization,
+    )
     @JoinColumn({ name: 'pk' })
     partner_organization_reference: Array<PartnerOrganizationReference>;
 
-    @OneToMany('PartnerOrganizationBank', (partner_organization_bank: PartnerOrganizationBank) => partner_organization_bank.partner_organization)
+    @OneToMany(
+        'PartnerOrganizationBank',
+        (partner_organization_bank: PartnerOrganizationBank) => partner_organization_bank.partner_organization,
+    )
     @JoinColumn({ name: 'pk' })
     partner_organization_bank: Array<PartnerOrganizationBank>;
+
+    @OneToMany(
+        'PartnerOrganizationOtherInformation',
+        (partner_organization_other_information: PartnerOrganizationOtherInformation) =>
+            partner_organization_other_information.partner_organization,
+    )
+    @JoinColumn({ name: 'pk' })
+    partner_organization_other_information: Array<PartnerOrganizationOtherInformation>;
 }
