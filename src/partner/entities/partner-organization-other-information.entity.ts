@@ -1,4 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    Unique,
+    OneToOne,
+    ManyToOne,
+    JoinColumn,
+    BaseEntity,
+    OneToMany,
+} from 'typeorm';
 import { PartnerOrganization } from './partner-organization.entity';
 import { User } from 'src/user/entities/user.entity';
 
@@ -37,13 +47,20 @@ export class PartnerOrganizationOtherInformation extends BaseEntity {
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
 
+    @Column({ name: 'partner_organization_pk', nullable: false })
+    partner_organization_pk: number;
+
     @Column({ default: false })
     archived: boolean;
 
     /**
      * Relationship
      */
-    @ManyToOne(type => PartnerOrganization, partner_organization => partner_organization.partner_organization_bank, { onDelete: 'CASCADE' })
+    @ManyToOne(
+        (type) => PartnerOrganization,
+        (partner_organization) => partner_organization.partner_organization_other_information,
+        { onDelete: 'CASCADE' },
+    )
     @JoinColumn({ name: 'partner_organization_pk' })
     partner_organization: PartnerOrganization;
 
