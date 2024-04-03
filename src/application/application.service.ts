@@ -329,11 +329,11 @@ export class ApplicationService extends GlobalService {
                 partnerContact.partner_pk = savedPartner.pk;
                 partnerContact.name = getDefaultValue(data?.contacts?.at(0)?.name, existingContact?.name);
                 partnerContact.contact_number = getDefaultValue(
-                    data?.contacts?.at(0).contact_number,
+                    data?.contacts?.at(0)?.contact_number,
                     existingContact?.contact_number,
                 );
                 partnerContact.email_address = getDefaultValue(
-                    data?.contacts?.at(0).email_address,
+                    data?.contacts?.at(0)?.email_address,
                     existingContact?.email_address,
                 );
                 if (existingContact || data?.contacts?.length > 0) {
@@ -360,6 +360,7 @@ export class ApplicationService extends GlobalService {
                 };
             });
         } catch (err) {
+            console.log(err);
             this.saveError({});
             console.log(err);
             return { status: false, code: err?.code };
