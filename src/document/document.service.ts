@@ -58,6 +58,15 @@ export class DocumentService extends GlobalService {
                         output = await EntityManager.update(Document, { pk: data.document_pk }, { type: data.type });
                     }
 
+                    if (data.table_name == 'partners') {
+                        await EntityManager.query(
+                            'insert into document_partner_relation (document_pk, partner_pk) values ($1 ,$2);',
+                            [data.document_pk, data.table_pk],
+                        );
+
+                        output = await EntityManager.update(Document, { pk: data.document_pk }, { type: data.type });
+                    }
+
                     return { status: output ? true : false, data: output };
                 }
             );
@@ -86,7 +95,11 @@ export class DocumentService extends GlobalService {
                         'delete from document_review_relation where document_pk = $1;',
                         [pk],
                     );
-
+                    await EntityManager.query(
+                        'delete from document_partner_relation where document_pk = $1;',
+                        [pk],
+                    );
+                    console.log('deleting...', pk);
                     const doc = await EntityManager.update(Document, { pk }, { archived: true });
 
                     // save logs
