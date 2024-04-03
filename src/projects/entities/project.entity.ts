@@ -5,6 +5,7 @@ import { ProjectLocation } from './project-location.entity';
 import { ProjectStatus } from './project-statuses.entity';
 import { Type } from 'src/type/entities/type.entity';
 import { ProjectProposal } from './project-proposal.entity';
+import { Partner } from 'src/partner/entities/partner.entity';
 
 @Entity({ name: 'projects' })
 export class Project extends BaseEntity {
@@ -38,6 +39,9 @@ export class Project extends BaseEntity {
     @Column({ name: 'type_pk', nullable: true })
     type_pk: number;
 
+    @Column({ name: 'partner_pk', nullable: true })
+    partner_pk: number;
+
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
 
@@ -66,4 +70,8 @@ export class Project extends BaseEntity {
 
     @OneToOne((type) => ProjectProposal, (project_proposal) => project_proposal.project, { cascade: true })
     project_proposal: ProjectProposal;
+
+    @ManyToOne((type) => Partner, (partner) => partner.projects, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'partner_pk' })
+    partner: Partner;
 }

@@ -41,6 +41,9 @@ export class Application extends BaseEntity {
     @Column({ type: 'text', nullable: true })
     donor: string;
 
+    @Column({ default: false })
+    email_sent: boolean;
+
     @Column({ name: 'created_by', nullable: false })
     created_by: number;
 
@@ -58,7 +61,7 @@ export class Application extends BaseEntity {
     @JoinColumn({ name: 'created_by' })
     user: User;
 
-    @ManyToOne((type) => Partner, (partner) => partner.application, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne((type) => Partner, (partner) => partner.applications, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'partner_pk' })
     partner: Partner;
 

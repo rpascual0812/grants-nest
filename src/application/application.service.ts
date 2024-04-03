@@ -29,6 +29,8 @@ import { ProjectProposal } from 'src/projects/entities/project-proposal.entity';
 import { ProjectProposalActivity } from 'src/projects/entities/project-proposal-activity.entity';
 import { PartnerOrganizationReference } from 'src/partner/entities/partner-organization-references.entity';
 import { PartnerNonprofitEquivalencyDetermination } from 'src/partner/entities/partner-nonprofit-equivalency-determination.entity';
+import { PartnerOrganizationBank } from 'src/partner/entities/partner-organization-bank.entity';
+import { PartnerOrganizationOtherInformation } from 'src/partner/entities/partner-organization-other-information.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -171,7 +173,7 @@ export class ApplicationService extends GlobalService {
                     number: filter.number,
                 })
                 .andWhere('applications.archived = :archived', { archived: false })
-                .andWhere(filter.hasOwnProperty('reviews') ? 'reviews.archived = false' : '1=1')
+                // .andWhere(filter.hasOwnProperty('reviews') ? 'reviews.archived = false' : '1=1')
                 .orderBy('reviews.pk', 'ASC')
                 .getOne();
             return {
@@ -327,16 +329,25 @@ export class ApplicationService extends GlobalService {
                 partnerContact.partner_pk = savedPartner.pk;
                 partnerContact.name = getDefaultValue(data?.contacts?.at(0)?.name, existingContact?.name);
                 partnerContact.contact_number = getDefaultValue(
-                    data?.contacts?.at(0).contact_number,
+                    data?.contacts?.at(0)?.contact_number,
                     existingContact?.contact_number,
                 );
                 partnerContact.email_address = getDefaultValue(
-                    data?.contacts?.at(0).email_address,
+                    data?.contacts?.at(0)?.email_address,
                     existingContact?.email_address,
                 );
                 if (existingContact || data?.contacts?.length > 0) {
                     savedPartnerContacts = await EntityManager.save(PartnerContact, {
                         ...partnerContact,
+                    });
+                }
+
+                if (existingContact || data?.documents?.length > 0) {
+                    data?.documents?.forEach((doc) => {
+                        EntityManager.query(
+                            'insert into document_partner_relation (document_pk, partner_pk) values ($1 ,$2);',
+                            [doc.pk, savedPartner.pk],
+                        );
                     });
                 }
 
@@ -349,7 +360,9 @@ export class ApplicationService extends GlobalService {
                 };
             });
         } catch (err) {
+            console.log(err);
             this.saveError({});
+            console.log(err);
             return { status: false, code: err?.code };
         } finally {
             await queryRunner.release();
@@ -470,7 +483,7 @@ export class ApplicationService extends GlobalService {
                 fiscalSponsor.bank_name = getDefaultValue(data?.bank_name, existingFiscalSponsor?.bank_name);
                 fiscalSponsor.bank_branch = getDefaultValue(data?.bank_branch, existingFiscalSponsor?.bank_branch);
                 fiscalSponsor.bank_address = getDefaultValue(data?.bank_address, existingFiscalSponsor?.bank_address);
-
+                fiscalSponsor.swift_code = getDefaultValue(data?.swift_code, existingFiscalSponsor?.swift_code);
                 const savedFiscalSponsor = await EntityManager.save(PartnerFiscalSponsor, {
                     ...fiscalSponsor,
                 });
@@ -903,6 +916,125 @@ export class ApplicationService extends GlobalService {
             console.log(err);
             this.saveError({});
             return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveOrganizationBankAccount(data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const partnerOrgPk = getParsedPk(data?.partner_organization_pk);
+                const partnerOrgBankPk = getParsedPk(data?.pk);
+                const existingPartnerOrgBank = await EntityManager.findOne(PartnerOrganizationBank, {
+                    where: {
+                        partner_organization_pk: Equal(partnerOrgPk),
+                        pk: Equal(partnerOrgBankPk),
+                    },
+                });
+
+                const partnerOrgBank = existingPartnerOrgBank ? existingPartnerOrgBank : new PartnerOrganizationBank();
+                partnerOrgBank.partner_organization_pk = partnerOrgPk;
+                partnerOrgBank.account_name = getDefaultValue(data?.account_name, existingPartnerOrgBank?.account_name);
+                partnerOrgBank.account_number = getDefaultValue(
+                    data?.account_number,
+                    existingPartnerOrgBank?.account_number,
+                );
+                partnerOrgBank.bank_address = getDefaultValue(data?.bank_address, existingPartnerOrgBank?.bank_address);
+                partnerOrgBank.bank_branch = getDefaultValue(data?.bank_branch, existingPartnerOrgBank?.bank_branch);
+                partnerOrgBank.bank_name = getDefaultValue(data?.bank_name, existingPartnerOrgBank?.bank_name);
+                partnerOrgBank.swift_code = getDefaultValue(data?.swift_code, existingPartnerOrgBank?.swift_code);
+                partnerOrgBank.created_by = user?.pk;
+                const savedPartnerOrgBank = await EntityManager.save(PartnerOrganizationBank, {
+                    ...partnerOrgBank,
+                });
+                return {
+                    status: true,
+                    data: {
+                        ...savedPartnerOrgBank,
+                    },
+                };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveOrganizationOtherInfo(data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const partnerOrgPk = getParsedPk(data?.partner_organization_pk);
+                const partnerOrgOtherInfoPk = getParsedPk(data?.pk);
+                const existingPartnerOrgOtherInfo = await EntityManager.findOne(PartnerOrganizationOtherInformation, {
+                    where: {
+                        partner_organization_pk: Equal(partnerOrgPk),
+                        pk: Equal(partnerOrgOtherInfoPk),
+                    },
+                });
+
+                const partnerOrgOtherInfo = existingPartnerOrgOtherInfo
+                    ? existingPartnerOrgOtherInfo
+                    : new PartnerOrganizationOtherInformation();
+
+                partnerOrgOtherInfo.partner_organization_pk = partnerOrgPk;
+
+                partnerOrgOtherInfo.has_project = getDefaultValue(
+                    data?.has_project,
+                    existingPartnerOrgOtherInfo?.has_project,
+                );
+                partnerOrgOtherInfo.has_financial_policy = getDefaultValue(
+                    data?.has_financial_policy,
+                    existingPartnerOrgOtherInfo?.has_financial_policy,
+                );
+                partnerOrgOtherInfo.has_financial_policy_no_reason = getDefaultValue(
+                    data?.has_financial_policy_no_reason,
+                    existingPartnerOrgOtherInfo?.has_financial_policy_no_reason,
+                );
+                partnerOrgOtherInfo.has_financial_system = getDefaultValue(
+                    data?.has_financial_system,
+                    existingPartnerOrgOtherInfo?.has_financial_system,
+                );
+                partnerOrgOtherInfo.has_financial_system_no_reason = getDefaultValue(
+                    data?.has_financial_system_no_reason,
+                    existingPartnerOrgOtherInfo?.has_financial_system_no_reason,
+                );
+                partnerOrgOtherInfo.audit_financial_available = getDefaultValue(
+                    data?.audit_financial_available,
+                    existingPartnerOrgOtherInfo?.audit_financial_available,
+                );
+
+                partnerOrgOtherInfo.has_reviewed_financial_system = getDefaultValue(
+                    data?.has_reviewed_financial_system,
+                    existingPartnerOrgOtherInfo?.has_reviewed_financial_system,
+                );
+                partnerOrgOtherInfo.recommendation = getDefaultValue(
+                    data?.recommendation,
+                    existingPartnerOrgOtherInfo?.recommendation,
+                );
+                partnerOrgOtherInfo.created_by = user.pk;
+
+                const savedPartnerOrgOtherInfo = await EntityManager.save(PartnerOrganizationOtherInformation, {
+                    ...partnerOrgOtherInfo,
+                });
+                return {
+                    status: true,
+                    data: {
+                        ...savedPartnerOrgOtherInfo,
+                    },
+                };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
         } finally {
             await queryRunner.release();
         }
@@ -1410,68 +1542,67 @@ export class ApplicationService extends GlobalService {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const data = await this.find({ pk });
                 const application = data.data;
-                // console.log('pk', pk, application.partner['organization']['country']['name']);
-                // console.log(application);
 
-                // send email
-                this.emailService.uuid = uuidv4();
-                this.emailService.user_pk = application.created_by;
-                this.emailService.from = process.env.SEND_FROM;
-                this.emailService.from_name = process.env.SENDER;
-                this.emailService.to = application.partner.email_address;
-                this.emailService.to_name = '';
-                this.emailService.subject = 'Thank you for submitting your application';
-                // this.emailService.body = '<div class=row><div class=col-md-12><div class=row><div class=col-md-5><div><p>Proponent<h3>Organization Name 1</h3></div><div><p>ID Number<h3>2134234234</h3></div><div><p>Date of submission<h3>Date</h3></div></div><div class=col-md-7><div class=row><div class=col-md-6 style=text-align:left><div><p>Proponent<p>dsafasdf asdfa sdfasdf</div><div><p>Thematic Area<p>dsafasdf asdfa sdfasdf</div><div><p>Country<p>dsafasdf asdfa sdfasdf</div></div><div class=col-md-6 style=text-align:left><div><p>Duration<p>dsafasdf asdfa sdfasdf</div><div><p>Local Currency<p>dsafasdf asdfa sdfasdf</div><div><p>Amount Requested (USD)<p>dsafasdf asdfa sdfasdf</div></div></div></div></div></div></div>'; // MODIFY: must be a template from the database
-                this.emailService.body = `<div style="width: 100%;">\
-    <div style="width: 40%; float: left;">\
-        <div>\
-            <p>Proponent</p>\
-            <h3>${application.partner.name}</h3>\
-        </div>\
-        <div>\
-            <p>ID Number</p>\
-            <h3>${application.partner.partner_id}</h3>\
-        </div>\
-        <div>\
-            <p>Date of submission</p>\
-            <h3>${DateTime.fromISO(application.date_created.toLocaleString()).toFormat('y-LL-dd HH:mm:ss')}</h3>\
-        </div>\
-    </div>\
-    <div style="width: 60%; float: left; text-align: left;">\
-        <div style="width: 100%;">\
-            <div style="width: 50%; float: left;">\
-                <div>\
-                    <p>Grantee Project</p>\
-                    <p>${application.project.title}</p>\
-                </div>\
-                <div>\
-                    <p>Thematic Area</p>\
-                    <p></p>\
-                </div>\
-                <div>\
-                    <p>Country</p>\
-                    <p>${application.partner['organization']['country']['name']}</p>\
-                </div>\
+                if (!application.email_sent) {
+                    // send email
+                    this.emailService.uuid = uuidv4();
+                    this.emailService.user_pk = application.created_by;
+                    this.emailService.from = process.env.SEND_FROM;
+                    this.emailService.from_name = process.env.SENDER;
+                    this.emailService.to = application.partner.email_address;
+                    this.emailService.to_name = '';
+                    this.emailService.subject = 'Thank you for submitting your application';
+                    this.emailService.body = `<div style="width: 100%;">\
+        <div style="width: 40%; float: left;">\
+            <div>\
+                <p>Proponent</p>\
+                <h3>${application.partner.name}</h3>\
             </div>\
-            <div style="width: 50%; float: left;">\
-                <div>\
-                    <p>Duration</p>\
-                    <p>${application.project.duration}</p>\
-                </div>\
-                <div>\
-                    <p>Local Currency</p>\
-                    <p>${application.project.project_proposal.budget_request_other_currency}</p>\
-                </div>\
-                <div>\
-                    <p>Amount Requested (USD)</p>\
-                    <p>${application.project.project_proposal.budget_request_usd}</p>\
-                </div>\
+            <div>\
+                <p>ID Number</p>\
+                <h3>${application.partner.partner_id}</h3>\
+            </div>\
+            <div>\
+                <p>Date of submission</p>\
+                <h3>${DateTime.fromISO(application.date_created.toLocaleString()).toFormat('y-LL-dd HH:mm:ss')}</h3>\
             </div>\
         </div>\
-    </div>\
-</div>`; // MODIFY: must be a template from the database
+        <div style="width: 60%; float: left; text-align: left;">\
+            <div style="width: 100%;">\
+                <div style="width: 50%; float: left;">\
+                    <div>\
+                        <p>Grantee Project</p>\
+                        <p>${application.project.title}</p>\
+                    </div>\
+                    <div>\
+                        <p>Thematic Area</p>\
+                        <p></p>\
+                    </div>\
+                    <div>\
+                        <p>Country</p>\
+                        <p>${application.partner['organization']['country']['name']}</p>\
+                    </div>\
+                </div>\
+                <div style="width: 50%; float: left;">\
+                    <div>\
+                        <p>Duration</p>\
+                        <p>${application.project.duration}</p>\
+                    </div>\
+                    <div>\
+                        <p>Local Currency</p>\
+                        <p>${application.project.project_proposal.budget_request_other_currency}</p>\
+                    </div>\
+                    <div>\
+                        <p>Amount Requested (USD)</p>\
+                        <p>${application.project.project_proposal.budget_request_usd}</p>\
+                    </div>\
+                </div>\
+            </div>\
+        </div>\
+    </div>`; // MODIFY: must be a template from the database
 
-                await this.emailService.create();
+                    await this.emailService.create();
+                }
             });
         } catch (err) {
             this.saveError({});
