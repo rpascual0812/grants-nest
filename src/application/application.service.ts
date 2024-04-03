@@ -173,7 +173,7 @@ export class ApplicationService extends GlobalService {
                     number: filter.number,
                 })
                 .andWhere('applications.archived = :archived', { archived: false })
-                .andWhere(filter.hasOwnProperty('reviews') ? 'reviews.archived = false' : '1=1')
+                // .andWhere(filter.hasOwnProperty('reviews') ? 'reviews.archived = false' : '1=1')
                 .orderBy('reviews.pk', 'ASC')
                 .getOne();
             return {
