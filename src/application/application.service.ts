@@ -343,7 +343,7 @@ export class ApplicationService extends GlobalService {
                 }
 
                 if (existingContact || data?.documents?.length > 0) {
-                    data?.documents.forEach((doc) => {
+                    data?.documents?.forEach((doc) => {
                         EntityManager.query(
                             'insert into document_partner_relation (document_pk, partner_pk) values ($1 ,$2);',
                             [doc.pk, savedPartner.pk],
@@ -361,6 +361,7 @@ export class ApplicationService extends GlobalService {
             });
         } catch (err) {
             this.saveError({});
+            console.log(err);
             return { status: false, code: err?.code };
         } finally {
             await queryRunner.release();

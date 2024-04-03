@@ -44,18 +44,11 @@ export class PartnerService {
                     'applications',
                     'partners.pk=applications.partner_pk',
                 )
-                .leftJoinAndMapMany(
-                    'partners.projects',
-                    Project,
-                    'projects',
-                    'partners.pk=projects.partner_pk',
+                .leftJoinAndSelect(
+                    'applications.application_nonprofit_equivalency_determination',
+                    'application_nonprofit_equivalency_determination',
                 )
-                .leftJoinAndMapOne(
-                    'projects.application',
-                    Application,
-                    'applications as project_applications',
-                    'projects.application_pk=applications.pk',
-                )
+                .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('applications.application_statuses', 'application_statuses')
                 .leftJoinAndSelect('application_statuses.status', 'statuses')
