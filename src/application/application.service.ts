@@ -8,8 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, Equal, Brackets } from 'typeorm';
 import { GlobalService } from 'src/utilities/global.service';
 import { Log } from 'src/log/entities/log.entity';
-// import { ProjectProposal } from './entities/application-proposal.entity';
-// import { ProjectProposalActivity } from './entities/application-proposal-activity.entity';
 import { EmailService } from 'src/email/email.service';
 import { Partner } from 'src/partner/entities/partner.entity';
 import { PartnerContact } from 'src/partner/entities/partner-contacts.entity';
@@ -63,8 +61,8 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activities')
                 .leftJoinAndSelect('partners.partner_fiscal_sponsor', 'partner_fiscal_sponsors')
                 .leftJoinAndSelect(
-                    'applications.application_nonprofit_equivalency_determination',
-                    'application_nonprofit_equivalency_determination',
+                    'partners.partner_nonprofit_equivalency_determination',
+                    'partner_nonprofit_equivalency_determination',
                 )
                 .leftJoinAndMapOne(
                     'partners.organization',
@@ -84,7 +82,6 @@ export class ApplicationService extends GlobalService {
                     'countries',
                     'partner_organizations.country_pk=countries.pk',
                 )
-                // .leftJoinAndSelect('applications.application_reference', 'application_reference')
                 .leftJoinAndSelect('applications.reviews', 'review_application_relation')
                 .leftJoinAndSelect('applications.types', 'type_application_relation')
                 .where('applications.archived = false')
@@ -137,7 +134,6 @@ export class ApplicationService extends GlobalService {
                     'partner_organization_references',
                     'partner_organizations.pk=partner_organization_references.partner_organization_pk',
                 )
-                // .leftJoinAndSelect('applications.application_reference', 'application_reference')
                 .leftJoinAndMapOne(
                     'partner_organizations.country',
                     Country,
@@ -157,10 +153,9 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
                 .leftJoinAndSelect('partners.partner_fiscal_sponsor', 'partner_fiscal_sponsors')
                 .leftJoinAndSelect(
-                    'applications.application_nonprofit_equivalency_determination',
-                    'application_nonprofit_equivalency_determination',
+                    'partners.partner_nonprofit_equivalency_determination',
+                    'partner_nonprofit_equivalency_determination',
                 )
-
                 .leftJoinAndSelect('applications.documents', 'documents')
                 .leftJoinAndSelect('applications.reviews', 'reviews')
                 .leftJoinAndSelect('reviews.user', 'users')
@@ -806,11 +801,12 @@ export class ApplicationService extends GlobalService {
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const appNonProfitEquivalencyDeterminationPk = getParsedPk(data?.pk);
-                const applicationPk = data?.application_pk;
+                const partnerPk = getParsedPk(data?.partner_pk);
                 const existingNonProfitEquivalencyDetermination = await EntityManager.findOne(
                     PartnerNonprofitEquivalencyDetermination,
                     {
                         where: {
+                            partner_pk: Equal(partnerPk),
                             pk: Equal(appNonProfitEquivalencyDeterminationPk),
                         },
                     },
