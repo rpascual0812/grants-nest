@@ -3,6 +3,7 @@ import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, Jo
 import { PartnerContact } from './partner-contacts.entity';
 import { PartnerOrganization } from './partner-organization.entity';
 import { PartnerFiscalSponsor } from './partner-fiscal-sponsor.entity';
+import { PartnerNonprofitEquivalencyDetermination } from './partner-nonprofit-equivalency-determination.entity';
 import { Project } from 'src/projects/entities/project.entity';
 import { Document } from 'src/document/entities/document.entity';
 
@@ -60,6 +61,14 @@ export class Partner extends BaseEntity {
         { cascade: true },
     )
     partner_fiscal_sponsor: PartnerFiscalSponsor;
+
+    @OneToOne(
+        (type) => PartnerNonprofitEquivalencyDetermination,
+        (partner_nonprofit_equivalency_determination) =>
+            partner_nonprofit_equivalency_determination.partner,
+        { cascade: true },
+    )
+    partner_nonprofit_equivalency_determination: PartnerNonprofitEquivalencyDetermination;
 
     @ManyToMany(() => Document, (document) => document.partners, { cascade: ['insert', 'update'] })
     documents: Document[];
