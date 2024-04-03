@@ -146,6 +146,7 @@ export class ApplicationService extends GlobalService {
                     'partner_contacts',
                     'partners.pk=partner_contacts.partner_pk',
                 )
+                .leftJoinAndSelect('partners.documents', 'documents as partner_documents')
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
                 .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
