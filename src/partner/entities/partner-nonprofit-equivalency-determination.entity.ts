@@ -11,16 +11,16 @@ import {
     ManyToMany,
     JoinTable,
 } from 'typeorm';
-import { Application } from './application.entity';
 import { Document } from 'src/document/entities/document.entity';
+import { Partner } from './partner.entity';
 
-@Entity({ name: 'application_nonprofit_equivalency_determinations' })
-export class ApplicationNonprofitEquivalencyDetermination {
+@Entity({ name: 'partner_nonprofit_equivalency_determinations' })
+export class PartnerNonprofitEquivalencyDetermination {
     @PrimaryGeneratedColumn()
     pk: number;
 
-    @Column({ name: 'application_pk', nullable: false })
-    application_pk: number;
+    @Column({ name: 'partner_pk', nullable: false })
+    partner_pk: number;
 
     @Column({ type: 'date', nullable: false })
     year: Date;
@@ -85,9 +85,9 @@ export class ApplicationNonprofitEquivalencyDetermination {
     /**
      * Relationship
      */
-    @OneToOne((type) => Application, (application) => application.application_nonprofit_equivalency_determination, {
+    @OneToOne((type) => Partner, (partner) => partner.partner_nonprofit_equivalency_determination, {
         onDelete: 'CASCADE',
     })
-    @JoinColumn({ name: 'application_pk' })
-    application: Application;
+    @JoinColumn({ name: 'partner_pk' })
+    partner: Partner;
 }

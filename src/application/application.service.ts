@@ -10,7 +10,6 @@ import { GlobalService } from 'src/utilities/global.service';
 import { Log } from 'src/log/entities/log.entity';
 // import { ProjectProposal } from './entities/application-proposal.entity';
 // import { ProjectProposalActivity } from './entities/application-proposal-activity.entity';
-import { ApplicationNonprofitEquivalencyDetermination } from './entities/application-nonprofit-equivalency-determination.entity';
 import { EmailService } from 'src/email/email.service';
 import { Partner } from 'src/partner/entities/partner.entity';
 import { PartnerContact } from 'src/partner/entities/partner-contacts.entity';
@@ -29,6 +28,7 @@ import { PartnerFiscalSponsor } from 'src/partner/entities/partner-fiscal-sponso
 import { ProjectProposal } from 'src/projects/entities/project-proposal.entity';
 import { ProjectProposalActivity } from 'src/projects/entities/project-proposal-activity.entity';
 import { PartnerOrganizationReference } from 'src/partner/entities/partner-organization-references.entity';
+import { PartnerNonprofitEquivalencyDetermination } from 'src/partner/entities/partner-nonprofit-equivalency-determination.entity';
 import { PartnerOrganizationBank } from 'src/partner/entities/partner-organization-bank.entity';
 import { PartnerOrganizationOtherInformation } from 'src/partner/entities/partner-organization-other-information.entity';
 
@@ -808,7 +808,7 @@ export class ApplicationService extends GlobalService {
                 const appNonProfitEquivalencyDeterminationPk = getParsedPk(data?.pk);
                 const applicationPk = data?.application_pk;
                 const existingNonProfitEquivalencyDetermination = await EntityManager.findOne(
-                    ApplicationNonprofitEquivalencyDetermination,
+                    PartnerNonprofitEquivalencyDetermination,
                     {
                         where: {
                             pk: Equal(appNonProfitEquivalencyDeterminationPk),
@@ -818,9 +818,9 @@ export class ApplicationService extends GlobalService {
 
                 const nonProfitEquivalencyDetermination = existingNonProfitEquivalencyDetermination
                     ? existingNonProfitEquivalencyDetermination
-                    : new ApplicationNonprofitEquivalencyDetermination();
+                    : new PartnerNonprofitEquivalencyDetermination();
 
-                nonProfitEquivalencyDetermination.application_pk = applicationPk;
+                nonProfitEquivalencyDetermination.partner_pk = data.partner_pk;
                 nonProfitEquivalencyDetermination.year = getDefaultValue(
                     data?.year,
                     existingNonProfitEquivalencyDetermination?.year,
@@ -899,7 +899,7 @@ export class ApplicationService extends GlobalService {
                 );
 
                 const savedNonProfitEquivalencyDetermination = await EntityManager.save(
-                    ApplicationNonprofitEquivalencyDetermination,
+                    PartnerNonprofitEquivalencyDetermination,
                     {
                         ...nonProfitEquivalencyDetermination,
                     },
