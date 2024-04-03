@@ -21,7 +21,7 @@ import { PartnerService } from './partner.service';
 
 @Controller('partner')
 export class PartnerController {
-    constructor(private readonly partnerService: PartnerService) { }
+    constructor(private readonly partnerService: PartnerService) {}
 
     @Get()
     async fetch(@Query() query: { organization_pk?: number; type_pk?: number }) {
@@ -34,28 +34,30 @@ export class PartnerController {
         if (partners && partners.data) {
             partners.data.forEach((partner) => {
                 partner['grand_total_amount'] = 0;
-                partner.application.forEach((application) => {
-                    application['application_status'] = null;
-                    if (application.application_statuses.length > 0) {
-                        const count = application.application_statuses.length;
-                        application['application_status'] = application.application_statuses[count - 1];
-                    }
-                    if (application.project && application.project.project_proposal) {
-                        partner['grand_total_amount'] += parseInt(
-                            application.project.project_proposal.budget_request_usd.toString(),
-                        );
-                    }
-                    delete application.application_statuses;
-                });
+                if (partner.applications) {
+                    partner.applications.forEach((application) => {
+                        application['application_status'] = null;
+                        if (application.application_statuses.length > 0) {
+                            const count = application.application_statuses.length;
+                            application['application_status'] = application.application_statuses[count - 1];
+                        }
+                        if (application.project && application.project.project_proposal) {
+                            partner['grand_total_amount'] += parseInt(
+                                application.project.project_proposal.budget_request_usd.toString(),
+                            );
+                        }
+                        delete application.application_statuses;
+                    });
+                }
             });
         }
 
         return partners;
     }
 
-    @Get(':pk')
-    fetchOne(@Param('pk') pk: string) {
-        return this.partnerService.find(+pk);
+    @Get(':partner_id')
+    fetchOne(@Param('partner_id') partner_id: string) {
+        return this.partnerService.find({ partner_id: +partner_id });
     }
 
     @Post()

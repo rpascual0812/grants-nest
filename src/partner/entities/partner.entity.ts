@@ -1,9 +1,11 @@
 import { Application } from 'src/application/entities/application.entity';
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany, ManyToMany } from 'typeorm';
 import { PartnerContact } from './partner-contacts.entity';
 import { PartnerOrganization } from './partner-organization.entity';
 import { PartnerFiscalSponsor } from './partner-fiscal-sponsor.entity';
 import { PartnerNonprofitEquivalencyDetermination } from './partner-nonprofit-equivalency-determination.entity';
+import { Project } from 'src/projects/entities/project.entity';
+import { Document } from 'src/document/entities/document.entity';
 
 @Entity({ name: 'partners' })
 @Unique(['partner_id'])
@@ -40,7 +42,11 @@ export class Partner extends BaseEntity {
      */
     @OneToMany('Application', (application: Application) => application.partner)
     @JoinColumn({ name: 'pk' })
-    application: Array<Application>;
+    applications: Array<Application>;
+
+    @OneToMany('Project', (project: Project) => project.partner)
+    @JoinColumn({ name: 'pk' })
+    projects: Array<Project>;
 
     @OneToMany('PartnerContact', (partner_contact: PartnerContact) => partner_contact.partner, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'pk' })
@@ -63,4 +69,7 @@ export class Partner extends BaseEntity {
         { cascade: true },
     )
     partner_nonprofit_equivalency_determination: PartnerNonprofitEquivalencyDetermination;
+
+    @ManyToMany(() => Document, (document) => document.partners, { cascade: ['insert', 'update'] })
+    documents: Document[];
 }

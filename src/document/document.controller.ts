@@ -37,4 +37,10 @@ export class DocumentController {
     async save(@Body() body: any, @Request() req: any) {
         return this.documentService.save(body, req.user);
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk')
+    async destroy(@Param('pk') pk: number, @Request() req: any) {
+        return this.documentService.destroy(pk, req.user);
+    }
 }
