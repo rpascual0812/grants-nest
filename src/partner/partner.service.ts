@@ -45,8 +45,8 @@ export class PartnerService {
                     'partners.pk=applications.partner_pk',
                 )
                 .leftJoinAndSelect(
-                    'applications.application_nonprofit_equivalency_determination',
-                    'application_nonprofit_equivalency_determination',
+                    'partners.partner_nonprofit_equivalency_determination',
+                    'partner_nonprofit_equivalency_determination',
                 )
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
@@ -127,8 +127,8 @@ export class PartnerService {
                     'partners.pk=applications.partner_pk',
                 )
                 .leftJoinAndSelect(
-                    'applications.application_nonprofit_equivalency_determination',
-                    'application_nonprofit_equivalency_determination',
+                    'partners.partner_nonprofit_equivalency_determination',
+                    'partner_nonprofit_equivalency_determination',
                 )
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
