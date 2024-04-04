@@ -6,6 +6,7 @@ import { PartnerFiscalSponsor } from './partner-fiscal-sponsor.entity';
 import { PartnerNonprofitEquivalencyDetermination } from './partner-nonprofit-equivalency-determination.entity';
 import { Project } from 'src/projects/entities/project.entity';
 import { Document } from 'src/document/entities/document.entity';
+import { PartnerAssessment } from './partner-assessment.entity';
 
 @Entity({ name: 'partners' })
 @Unique(['partner_id'])
@@ -51,6 +52,10 @@ export class Partner extends BaseEntity {
     @OneToMany('PartnerContact', (partner_contact: PartnerContact) => partner_contact.partner, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'pk' })
     contacts: PartnerContact;
+
+    @OneToMany('PartnerAssessment', (partner_assessment: PartnerAssessment) => partner_assessment.partner, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'pk' })
+    assessments: PartnerAssessment;
 
     @OneToOne(type => PartnerOrganization, partner_organization => partner_organization.partner, { cascade: true })
     partner_organization: PartnerOrganization;
