@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, UpdateDateColumn } from 'typeorm';
 import { Partner } from './partner.entity';
 import { User } from 'src/user/entities/user.entity';
 
@@ -19,7 +19,7 @@ export class PartnerAssessment {
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
 
-    @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+    @UpdateDateColumn()
     date_updated: Date;
 
     @Column({ default: false })
