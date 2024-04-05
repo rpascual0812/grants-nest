@@ -1,3 +1,4 @@
+import { getParsedPk } from './../application/utilities/get-parsed-pk.utils';
 import { Injectable } from '@nestjs/common';
 import dataSource from 'db/data-source';
 import { Partner } from './entities/partner.entity';
@@ -9,9 +10,14 @@ import { PartnerOrganizationReference } from './entities/partner-organization-re
 import { Project } from 'src/projects/entities/project.entity';
 import { PartnerOrganizationBank } from './entities/partner-organization-bank.entity';
 import { PartnerOrganizationOtherInformation } from './entities/partner-organization-other-information.entity';
+import { PartnerAssessment } from './entities/partner-assessment.entity';
+import { User } from 'src/user/entities/user.entity';
+import { Equal } from 'typeorm';
+import { getDefaultValue } from 'src/application/utilities/get-default-value.utils';
+import { GlobalService } from 'src/utilities/global.service';
 
 @Injectable()
-export class PartnerService {
+export class PartnerService extends GlobalService {
     async findAll(filters?: { organization_pk: number; type_pk: number }) {
         try {
             const organizationPk = filters?.organization_pk ?? null;
@@ -152,6 +158,86 @@ export class PartnerService {
                 status: false,
                 code: 500,
             };
+        }
+    }
+
+    async findAssessments(partner_pk: number, query: any, users: Partial<User>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            const data = await dataSource
+                .getRepository(PartnerAssessment)
+                .createQueryBuilder('partner_assessments')
+                .leftJoinAndSelect('partner_assessments.user', 'users')
+                .andWhere('partner_assessments.partner_pk = :partner_pk', { partner_pk })
+                .andWhere('partner_assessments.archived = false')
+                .orderBy('partner_assessments.date_created', 'DESC')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: data[0],
+                total: data[1],
+            };
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveAssessment(data: Partial<PartnerAssessment>, user: Partial<User>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const partnerPk = getParsedPk(data?.partner_pk);
+                const partnerAssessmentPk = getParsedPk(data?.pk);
+                const userPk = getParsedPk(user?.pk);
+                const existingAssessment = await EntityManager.findOne(PartnerAssessment, {
+                    where: {
+                        pk: Equal(partnerAssessmentPk),
+                        partner_pk: Equal(partnerPk),
+                        created_by: Equal(userPk),
+                    },
+                });
+
+                const assessment = existingAssessment ? existingAssessment : new PartnerAssessment();
+                assessment.partner_pk = partnerPk;
+                assessment.created_by = userPk;
+                assessment.message = getDefaultValue(data?.message, existingAssessment?.message);
+
+                const savedAssessment = await EntityManager.save(PartnerAssessment, {
+                    ...assessment,
+                });
+
+                const model = {
+                    name: 'partner_assessments',
+                    pk: savedAssessment?.pk,
+                    status: existingAssessment ? 'update' : 'insert',
+                };
+                await this.saveLog({
+                    model,
+                    user: {
+                        pk: userPk,
+                    },
+                });
+
+                return {
+                    status: true,
+                    data: {
+                        ...savedAssessment,
+                    },
+                };
+            });
+        } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
         }
     }
 
