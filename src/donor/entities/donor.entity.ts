@@ -1,3 +1,4 @@
+import { User } from 'src/user/entities/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
 
 @Entity({ name: 'donors' })
@@ -12,8 +13,17 @@ export class Donor extends BaseEntity {
     @Column({ type: 'text', nullable: false })
     name: string;
 
+    @Column({ name: 'created_by', nullable: false })
+    created_by: number;
+
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
+
+    @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+    date_updated: Date;
+
+    @Column({ default: true })
+    active: boolean;
 
     @Column({ default: false })
     archived: boolean;
@@ -21,4 +31,8 @@ export class Donor extends BaseEntity {
     /**
      * Relationship
      */
+
+    @ManyToOne((type) => User, (user) => user.donor, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'created_by' })
+    user: User;
 }
