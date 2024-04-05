@@ -14,7 +14,7 @@ export class DonorService extends GlobalService {
                 .select()
                 .andWhere(
                     filters.hasOwnProperty('keyword') && filters.keyword != '' ?
-                        "donoes.name ILIKE :keyword" :
+                        "donors.name ILIKE :keyword" :
                         '1=1', { keyword: `%${filters.keyword}%` }
                 )
                 .andWhere("archived = false")
