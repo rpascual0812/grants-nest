@@ -12,10 +12,11 @@ import { PartnerOrganizationOtherInformation } from './entities/partner-organiza
 
 @Injectable()
 export class PartnerService {
-    async findAll(filters?: { organization_pk: number; type_pk: number }) {
+    async findAll(filters?: { organization_pk: number; type_pk: number; keyword: string }) {
         try {
             const organizationPk = filters?.organization_pk ?? null;
             const typePk = filters?.type_pk ?? null;
+            const keyword = filters?.keyword ?? null;
             const partners = await dataSource.manager
                 .getRepository(Partner)
                 .createQueryBuilder('partners')
@@ -59,6 +60,9 @@ export class PartnerService {
                 })
                 .andWhere(typePk ? 'type_application_relation.pk = :typePk' : '1=1', {
                     typePk,
+                })
+                .andWhere(keyword ? 'partners.name ILIKE :keyword' : '1=1', {
+                    keyword: `%${keyword}%`,
                 })
                 .orderBy('partners.name')
                 .getManyAndCount();
