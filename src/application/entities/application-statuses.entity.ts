@@ -3,7 +3,7 @@ import { Application } from './application.entity';
 import { Status } from 'src/status/entities/status.entity';
 
 @Entity({ name: 'application_statuses' })
-@Unique(['application_pk', 'status_pk'])
+@Unique(['application_pk', 'status'])
 export class ApplicationStatus extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
@@ -11,8 +11,8 @@ export class ApplicationStatus extends BaseEntity {
     @Column({ name: 'application_pk', nullable: false })
     application_pk: number;
 
-    @Column({ name: 'status_pk', nullable: false })
-    status_pk: number;
+    @Column({ type: 'text', nullable: true })
+    status: string;
 
     @Column({ default: false })
     archived: boolean;
@@ -21,11 +21,7 @@ export class ApplicationStatus extends BaseEntity {
      * Relationship
      */
 
-    @ManyToOne(type => Application, application => application.application_statuses, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne(type => Application, application => application.statuses, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'application_pk' })
     application: Application;
-
-    @ManyToOne(type => Status, status => status.application_status, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-    @JoinColumn({ name: 'status_pk' })
-    status: Status;
 }
