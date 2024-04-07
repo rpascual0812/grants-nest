@@ -18,6 +18,7 @@ import {
     Query,
 } from '@nestjs/common';
 import { PartnerService } from './partner.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('partner')
 export class PartnerController {
@@ -64,5 +65,17 @@ export class PartnerController {
     @Post()
     async save(@Request() req: any, @Body() body: any) {
         return await this.partnerService.save(body);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('assessment')
+    savePartner(@Body() body: any, @Request() req: any) {
+        return this.partnerService.saveAssessment(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':pk/assessment')
+    assessments(@Param('pk') pk: number, @Request() req: any) {
+        return this.partnerService.findAssessments(+pk, req.query, req.user);
     }
 }
