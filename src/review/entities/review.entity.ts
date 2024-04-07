@@ -14,8 +14,11 @@ export class Review extends BaseEntity {
     @Column({ type: 'text', nullable: false })
     message: string;
 
-    @Column({ type: 'text', nullable: true })
-    flag: string;
+    @Column({ default: false })
+    needs_resolution: boolean;
+
+    @Column({ default: false })
+    grantee: boolean;
 
     @Column({ type: 'text', nullable: true })
     type: string;
