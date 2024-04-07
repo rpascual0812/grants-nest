@@ -1091,6 +1091,8 @@ export class ApplicationService extends GlobalService {
                         existingReference?.organization_name,
                     );
 
+
+
                     const savedItem = await EntityManager.save(PartnerOrganizationReference, {
                         ...reference,
                     });
@@ -1412,16 +1414,16 @@ export class ApplicationService extends GlobalService {
                             pk: data.application_pk
                         });
 
-                        if (application.status == 'Grants Team Review' && data.recommendation == 'Approved for Next Stage') {
+                        if ((application.status == 'Received Proposals' || application.status == 'Grants Team Review') && data.recommendation == 'Approved for Next Stage') {
                             application.status = 'Advisers Review';
                             application.save();
                         }
                         else if (application.status == 'Advisers Review' && data.recommendation == 'Approved for Next Stage') {
-                            application.status = 'Budget Review and Finalization';
+                            application.status = 'Due Diligence Final Review';
                             application.save();
                         }
-                        else if (application.status == 'Budget Review and Finalization' && data.recommendation == 'Approved for Next Stage') {
-                            application.status = 'Financial Management Capacity';
+                        else if (application.status == 'Due Diligence Final Review' && data.recommendation == 'Approved for Next Stage') {
+                            application.status = 'Budget Review and Finalization';
                             application.save();
                         }
                     }
@@ -1596,6 +1598,14 @@ export class ApplicationService extends GlobalService {
                 const data = await this.find({ pk });
                 const application = data.data;
 
+                if (!application.status) {
+                    const query = await Application.findOneBy({
+                        pk: application.pk
+                    });
+                    query.status = 'Received Proposals';
+                    query.save();
+                }
+
                 if (!application.email_sent) {
                     // send email
                     this.emailService.uuid = uuidv4();
@@ -1654,7 +1664,7 @@ export class ApplicationService extends GlobalService {
         </div>\
     </div>`; // MODIFY: must be a template from the database
 
-                    await this.emailService.create();
+                    // await this.emailService.create();
                 }
             });
         } catch (err) {
