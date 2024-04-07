@@ -322,7 +322,7 @@ export class ApplicationService extends GlobalService {
                 });
 
                 const model = {
-                    pk: partner?.pk,
+                    pk: savedPartner?.pk,
                     name: 'partner',
                     status: existingPartner ? 'update' : 'insert',
                 };
@@ -355,7 +355,7 @@ export class ApplicationService extends GlobalService {
                 }
 
                 const modelPartnerContact = {
-                    pk: partnerContact?.pk,
+                    pk: savedPartnerContacts?.pk,
                     name: 'partner_contacts',
                     status: existingContact ? 'update' : 'insert',
                 };
