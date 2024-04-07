@@ -18,10 +18,10 @@ export class ApplicationController {
         return this.applicationService.save(body, req.user);
     }
 
-    // @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard)
     @Post('partner')
-    savePartner(@Body() body: any) {
-        return this.applicationService.savePartner(body);
+    savePartner(@Body() body: any, @Request() req: any) {
+        return this.applicationService.savePartner(body, req.user);
     }
 
     // @UseGuards(JwtAuthGuard)

@@ -292,7 +292,7 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    async savePartner(data: any) {
+    async savePartner(data: any, user: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
@@ -319,6 +319,14 @@ export class ApplicationService extends GlobalService {
                     ...partner,
                 });
 
+                const model = {
+                    pk: partner?.pk,
+                    name: 'partner',
+                    status: existingPartner ? 'update' : 'insert',
+                };
+
+                await this.saveLog({ model, user });
+
                 let savedPartnerContacts = undefined;
                 const existingContact = await EntityManager.findOne(PartnerContact, {
                     where: {
@@ -337,11 +345,23 @@ export class ApplicationService extends GlobalService {
                     data?.contacts?.at(0)?.email_address,
                     existingContact?.email_address,
                 );
+
                 if (existingContact || data?.contacts?.length > 0) {
                     savedPartnerContacts = await EntityManager.save(PartnerContact, {
                         ...partnerContact,
                     });
                 }
+
+                const modelPartnerContact = {
+                    pk: partnerContact?.pk,
+                    name: 'partner_contacts',
+                    status: existingContact ? 'update' : 'insert',
+                };
+
+                await this.saveLog({
+                    model: modelPartnerContact,
+                    user,
+                });
 
                 const dataDocuments = Array.isArray(data?.documents) ? data?.documents ?? [] : [];
                 if (existingContact || dataDocuments?.length > 0) {
@@ -1136,15 +1156,14 @@ export class ApplicationService extends GlobalService {
                 });
 
                 await location.remove();
-                // save logs
-                // const model = {
-                //     project_pk,
-                //     location_pk,
-                //     name: 'project_locations',
-                //     status: 'deleted',
-                // };
 
-                // await this.saveLog({ model, user });
+                // save logs
+                const model = {
+                    pk: location_pk,
+                    name: 'project_locations',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
 
                 return { status: true };
             });
@@ -1169,14 +1188,12 @@ export class ApplicationService extends GlobalService {
                 await activity.remove();
 
                 // save logs
-                // const model = {
-                //     application_pk: pk,
-                //     proposal_pk,
-                //     activity_pk,
-                //     name: 'application_proposal_activities',
-                //     status: 'deleted',
-                // };
-                // await this.saveLog({ model, user });
+                const model = {
+                    pk: activity_pk,
+                    name: 'project_proposal_activity',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
 
                 return { status: true };
             });
