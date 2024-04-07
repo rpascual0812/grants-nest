@@ -84,6 +84,7 @@ export class ApplicationService extends GlobalService {
                 )
                 .leftJoinAndSelect('applications.reviews', 'review_application_relation')
                 .leftJoinAndSelect('applications.types', 'type_application_relation')
+                .leftJoinAndSelect('applications.statuses', 'application_statuses')
                 .where('applications.archived = false')
                 .andWhere(
                     filters.hasOwnProperty('keyword') && filters.keyword != ''
@@ -161,7 +162,7 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('applications.reviews', 'reviews')
                 .leftJoinAndSelect('reviews.user', 'users')
                 .leftJoinAndSelect('reviews.documents', 'documents as review_documents')
-                .leftJoinAndSelect('applications.types', 'types')
+                .leftJoinAndSelect('projects.type', 'types')
                 .leftJoinAndSelect('applications.recommendations', 'application_recommendations')
                 .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere(filter.hasOwnProperty('uuid') ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
@@ -277,6 +278,7 @@ export class ApplicationService extends GlobalService {
                             expected_output: data?.project?.expected_output,
                             how_will_affect: data?.project?.how_will_affect,
                             objective: data?.project?.objective,
+                            type_pk: data?.project?.type_pk
                         },
                     );
                 }
@@ -1214,13 +1216,25 @@ export class ApplicationService extends GlobalService {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const review = new Review();
                 review.message = data.message;
-                review.flag = data.flag;
+                review.needs_resolution = data.needs_resolution;
+                review.grantee = data.grantee;
                 review.type = data.type;
                 review.created_by = user.pk;
                 review.documents = data.documents;
                 const newReview = await dataSource.manager.save(review);
 
+
+
                 if (newReview) {
+                    let application = await Application.findOneBy({
+                        pk: data.application_pk
+                    });
+
+                    if (application.status == 'Received Proposals' && data.type == 'grants_team_review') {
+                        application.status = 'Grants Team Review';
+                        application.save();
+                    }
+
                     // this is working but it only keeps one record per application
                     // let application = await Application.findOneBy({
                     //     pk: data.application_pk
@@ -1391,6 +1405,25 @@ export class ApplicationService extends GlobalService {
                         recommendation.type = data.type;
                         recommendation.created_by = user.pk;
                         newRecommendation = await dataSource.manager.save(recommendation);
+                    }
+
+                    if (newRecommendation) {
+                        let application = await Application.findOneBy({
+                            pk: data.application_pk
+                        });
+
+                        if (application.status == 'Grants Team Review' && data.recommendation == 'Approved for Next Stage') {
+                            application.status = 'Advisers Review';
+                            application.save();
+                        }
+                        else if (application.status == 'Advisers Review' && data.recommendation == 'Approved for Next Stage') {
+                            application.status = 'Budget Review and Finalization';
+                            application.save();
+                        }
+                        else if (application.status == 'Budget Review and Finalization' && data.recommendation == 'Approved for Next Stage') {
+                            application.status = 'Financial Management Capacity';
+                            application.save();
+                        }
                     }
 
                     // save logs

@@ -44,11 +44,17 @@ export class Application extends BaseEntity {
     @Column({ default: false })
     email_sent: boolean;
 
+    @Column({ type: 'text', nullable: true })
+    status: string;
+
     @Column({ name: 'created_by', nullable: false })
     created_by: number;
 
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
+
+    @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+    date_updated: Date;
 
     @Column({ default: false })
     archived: boolean;
@@ -74,7 +80,7 @@ export class Application extends BaseEntity {
 
     @OneToMany('ApplicationStatus', (application_statuses: ApplicationStatus) => application_statuses.application)
     @JoinColumn({ name: 'pk' })
-    application_statuses: Array<ApplicationStatus>;
+    statuses: Array<ApplicationStatus>;
 
     @ManyToMany(() => Review, (review) => review.applications, { cascade: ['insert', 'update'] })
     reviews: Review[];

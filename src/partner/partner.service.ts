@@ -17,7 +17,7 @@ import { getDefaultValue } from 'src/application/utilities/get-default-value.uti
 import { GlobalService } from 'src/utilities/global.service';
 
 @Injectable()
-export class PartnerService {
+export class PartnerService extends GlobalService {
     async findAll(filters?: { organization_pk: number; type_pk: number; keyword: string }) {
         try {
             const organizationPk = filters?.organization_pk ?? null;
@@ -57,7 +57,7 @@ export class PartnerService {
                 )
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
-                .leftJoinAndSelect('applications.application_statuses', 'application_statuses')
+                .leftJoinAndSelect('applications.statuses', 'application_statuses')
                 .leftJoinAndSelect('application_statuses.status', 'statuses')
                 .leftJoinAndSelect('applications.types', 'type_application_relation')
                 .where('partners.archived=false')
@@ -142,7 +142,7 @@ export class PartnerService {
                 )
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
-                .leftJoinAndSelect('applications.application_statuses', 'application_statuses')
+                .leftJoinAndSelect('applications.statuses', 'application_statuses')
                 .leftJoinAndSelect('application_statuses.status', 'statuses')
                 .leftJoinAndSelect('applications.types', 'type_application_relation')
                 .where('partners.archived = false')
