@@ -297,19 +297,24 @@ export class ApplicationService extends GlobalService {
         await queryRunner.connect();
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const partner_id = data?.partner_id;
+                const partnerPk = getParsedPk(data?.pk);
                 const existingPartner = await EntityManager.findOne(Partner, {
                     where: {
-                        partner_id,
+                        pk: Equal(partnerPk),
                     },
                 });
                 const partner = existingPartner ? existingPartner : new Partner();
-                partner.partner_id = getDefaultValue(partner_id, existingPartner?.partner_id);
+                const generatedPartnerId = existingPartner?.partner_id
+                    ? existingPartner?.partner_id
+                    : await this.setPartnerId();
+
+                partner.partner_id = getDefaultValue(generatedPartnerId, existingPartner?.partner_id);
                 partner.name = getDefaultValue(data?.name, existingPartner?.name);
                 partner.email_address = getDefaultValue(data?.email_address, existingPartner?.email_address);
                 partner.address = getDefaultValue(data?.address, existingPartner?.address);
                 partner.contact_number = getDefaultValue(data?.contact_number, existingPartner?.contact_number);
                 partner.website = getDefaultValue(data?.website, existingPartner?.website);
+
                 const savedPartner = await EntityManager.save(Partner, {
                     ...partner,
                 });
