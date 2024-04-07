@@ -58,7 +58,6 @@ export class PartnerService extends GlobalService {
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('applications.statuses', 'application_statuses')
-                .leftJoinAndSelect('application_statuses.status', 'statuses')
                 .leftJoinAndSelect('applications.types', 'type_application_relation')
                 .where('partners.archived=false')
                 .andWhere(organizationPk ? 'partner_organizations.organization_pk = :organizationPk' : '1=1', {
@@ -143,7 +142,6 @@ export class PartnerService extends GlobalService {
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('applications.statuses', 'application_statuses')
-                .leftJoinAndSelect('application_statuses.status', 'statuses')
                 .leftJoinAndSelect('applications.types', 'type_application_relation')
                 .where('partners.archived = false')
                 .andWhere(filter.hasOwnProperty('pk') ? 'partners.pk = :pk' : '1=1', { pk: filter.pk })
