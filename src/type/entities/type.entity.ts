@@ -42,7 +42,7 @@ export class Type extends BaseEntity {
      * Relationship
      */
 
-    @ManyToOne((type) => User, (user) => user.application, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne((type) => User, (user) => user.type, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'created_by' })
     user: User;
 

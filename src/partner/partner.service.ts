@@ -17,11 +17,12 @@ import { getDefaultValue } from 'src/application/utilities/get-default-value.uti
 import { GlobalService } from 'src/utilities/global.service';
 
 @Injectable()
-export class PartnerService extends GlobalService {
-    async findAll(filters?: { organization_pk: number; type_pk: number }) {
+export class PartnerService {
+    async findAll(filters?: { organization_pk: number; type_pk: number; keyword: string }) {
         try {
             const organizationPk = filters?.organization_pk ?? null;
             const typePk = filters?.type_pk ?? null;
+            const keyword = filters?.keyword ?? null;
             const partners = await dataSource.manager
                 .getRepository(Partner)
                 .createQueryBuilder('partners')
@@ -65,6 +66,9 @@ export class PartnerService extends GlobalService {
                 })
                 .andWhere(typePk ? 'type_application_relation.pk = :typePk' : '1=1', {
                     typePk,
+                })
+                .andWhere(keyword ? 'partners.name ILIKE :keyword' : '1=1', {
+                    keyword: `%${keyword}%`,
                 })
                 .orderBy('partners.name')
                 .getManyAndCount();
