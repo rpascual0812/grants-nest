@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import dataSource from 'db/data-source';
 import { Donor } from './entities/donor.entity';
 import { GlobalService } from 'src/utilities/global.service';
+import { DateTime } from 'luxon';
 
 @Injectable()
 export class DonorService extends GlobalService {
@@ -43,21 +44,28 @@ export class DonorService extends GlobalService {
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const donor = await dataSource.manager
-                    .getRepository(Donor)
-                    .createQueryBuilder('donors')
-                    .insert()
-                    .into(Donor)
-                    .values([
-                        {
-                            code: data.code,
-                            name: data.name,
-                        }
-                    ])
-                    .returning('pk')
-                    .execute();
+                let donor_pk = data.pk;
+                let donor = null;
+                if (data.pk) {
+                    donor = await EntityManager.update(Donor, { pk: data.pk }, { ...data, date_updated: DateTime.now() });
+                }
+                else {
+                    donor = await dataSource.manager
+                        .getRepository(Donor)
+                        .createQueryBuilder('donors')
+                        .insert()
+                        .into(Donor)
+                        .values([
+                            {
+                                ...data,
+                                created_by: user.pk
+                            }
+                        ])
+                        .returning('pk')
+                        .execute();
 
-                const donor_pk = donor.generatedMaps[0].pk;
+                    donor_pk = donor.generatedMaps[0].pk;
+                }
 
                 // save logs
                 const model = { pk: donor_pk, name: 'donors', status: 'created' };
