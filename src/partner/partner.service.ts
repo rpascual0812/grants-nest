@@ -148,6 +148,9 @@ export class PartnerService extends GlobalService {
                 .andWhere(filter.hasOwnProperty('partner_id') ? 'partners.partner_id = :partner_id' : '1=1', {
                     partner_id: filter.partner_id,
                 })
+                .orderBy({
+                    'partner_organization_references.pk': 'ASC',
+                })
                 .getOne();
 
             return {
