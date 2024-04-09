@@ -2,6 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn, Unique, JoinColumn, ManyToOne, 
 import { Application } from 'src/application/entities/application.entity';
 import { Review } from 'src/review/entities/review.entity';
 import { Partner } from 'src/partner/entities/partner.entity';
+import { PartnerFiscalSponsor } from 'src/partner/entities/partner-fiscal-sponsor.entity';
 
 @Entity({ name: 'documents' })
 @Unique(['filename'])
@@ -77,4 +78,18 @@ export class Document {
         }
     })
     partners: Partner[];
+
+    @ManyToMany(() => PartnerFiscalSponsor, partner_fiscal_sponsor => partner_fiscal_sponsor.documents)
+    @JoinTable({
+        name: 'document_partner_fiscal_sponsor_relation',
+        joinColumn: {
+            name: 'document_pk',
+            referencedColumnName: 'pk',
+        },
+        inverseJoinColumn: {
+            name: 'partner_fiscal_sponsor_pk',
+            referencedColumnName: 'pk',
+        }
+    })
+    partner_fiscal_sponsors: PartnerFiscalSponsor[];
 }

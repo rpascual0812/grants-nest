@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany, ManyToMany } from 'typeorm';
 import { Partner } from './partner.entity';
+import { Document } from 'src/document/entities/document.entity';
 
 @Entity({ name: 'partner_fiscal_sponsors' })
 export class PartnerFiscalSponsor extends BaseEntity {
@@ -57,4 +58,7 @@ export class PartnerFiscalSponsor extends BaseEntity {
     @OneToOne(type => Partner, partner => partner.partner_fiscal_sponsor, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'partner_pk' })
     partner: Partner;
+
+    @ManyToMany(() => Document, (document) => document.partner_fiscal_sponsors, { cascade: ['insert', 'update'] })
+    documents: Document[];
 }

@@ -129,6 +129,12 @@ export class ApplicationService extends GlobalService {
                     'partner_organizations',
                     'partners.pk=partner_organizations.partner_pk',
                 )
+                .leftJoinAndMapOne(
+                    'partner_organizations.partner_organization_bank',
+                    PartnerOrganizationBank,
+                    'partner_organization_banks',
+                    'partner_organizations.pk=partner_organization_banks.partner_organization_pk',
+                )
                 .leftJoinAndMapMany(
                     'partner_organizations.partner_organization_reference',
                     PartnerOrganizationReference,
@@ -159,6 +165,7 @@ export class ApplicationService extends GlobalService {
                     'partner_nonprofit_equivalency_determination',
                 )
                 .leftJoinAndSelect('applications.documents', 'documents')
+                .leftJoinAndSelect('partner_fiscal_sponsors.documents', 'documents as fiscal_sponsor_documents')
                 .leftJoinAndSelect('applications.reviews', 'reviews')
                 .leftJoinAndSelect('reviews.user', 'users')
                 .leftJoinAndSelect('reviews.documents', 'documents as review_documents')
@@ -513,6 +520,13 @@ export class ApplicationService extends GlobalService {
                 fiscalSponsor.swift_code = getDefaultValue(data?.swift_code, existingFiscalSponsor?.swift_code);
                 const savedFiscalSponsor = await EntityManager.save(PartnerFiscalSponsor, {
                     ...fiscalSponsor,
+                });
+
+                data?.documents.forEach((doc: any) => {
+                    EntityManager.query(
+                        'insert into document_partner_fiscal_sponsor_relation (document_pk, partner_fiscal_sponsor_pk) values ($1 ,$2);',
+                        [doc.pk, fiscalSponsor.pk],
+                    );
                 });
 
                 return {
