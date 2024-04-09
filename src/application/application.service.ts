@@ -172,6 +172,9 @@ export class ApplicationService extends GlobalService {
                 .andWhere('applications.archived = :archived', { archived: false })
                 // .andWhere(filter.hasOwnProperty('reviews') ? 'reviews.archived = false' : '1=1')
                 .orderBy('reviews.pk', 'ASC')
+                .orderBy({
+                    'partner_organization_references.pk': 'ASC',
+                })
                 .getOne();
             return {
                 status: true,
@@ -278,7 +281,7 @@ export class ApplicationService extends GlobalService {
                             expected_output: data?.project?.expected_output,
                             how_will_affect: data?.project?.how_will_affect,
                             objective: data?.project?.objective,
-                            type_pk: data?.project?.type_pk
+                            type_pk: data?.project?.type_pk,
                         },
                     );
                 }
@@ -1091,8 +1094,6 @@ export class ApplicationService extends GlobalService {
                         existingReference?.organization_name,
                     );
 
-
-
                     const savedItem = await EntityManager.save(PartnerOrganizationReference, {
                         ...reference,
                     });
@@ -1225,11 +1226,9 @@ export class ApplicationService extends GlobalService {
                 review.documents = data.documents;
                 const newReview = await dataSource.manager.save(review);
 
-
-
                 if (newReview) {
                     let application = await Application.findOneBy({
-                        pk: data.application_pk
+                        pk: data.application_pk,
                     });
 
                     if (application.status == 'Received Proposals' && data.type == 'grants_team_review') {
@@ -1411,18 +1410,26 @@ export class ApplicationService extends GlobalService {
 
                     if (newRecommendation) {
                         let application = await Application.findOneBy({
-                            pk: data.application_pk
+                            pk: data.application_pk,
                         });
 
-                        if ((application.status == 'Received Proposals' || application.status == 'Grants Team Review') && data.recommendation == 'Approved for Next Stage') {
+                        if (
+                            (application.status == 'Received Proposals' ||
+                                application.status == 'Grants Team Review') &&
+                            data.recommendation == 'Approved for Next Stage'
+                        ) {
                             application.status = 'Advisers Review';
                             application.save();
-                        }
-                        else if (application.status == 'Advisers Review' && data.recommendation == 'Approved for Next Stage') {
+                        } else if (
+                            application.status == 'Advisers Review' &&
+                            data.recommendation == 'Approved for Next Stage'
+                        ) {
                             application.status = 'Due Diligence Final Review';
                             application.save();
-                        }
-                        else if (application.status == 'Due Diligence Final Review' && data.recommendation == 'Approved for Next Stage') {
+                        } else if (
+                            application.status == 'Due Diligence Final Review' &&
+                            data.recommendation == 'Approved for Next Stage'
+                        ) {
                             application.status = 'Budget Review and Finalization';
                             application.save();
                         }
@@ -1600,7 +1607,7 @@ export class ApplicationService extends GlobalService {
 
                 if (!application.status) {
                     const query = await Application.findOneBy({
-                        pk: application.pk
+                        pk: application.pk,
                     });
                     query.status = 'Received Proposals';
                     query.save();
