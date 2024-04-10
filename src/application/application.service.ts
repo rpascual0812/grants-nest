@@ -135,6 +135,12 @@ export class ApplicationService extends GlobalService {
                     'partner_organization_banks',
                     'partner_organizations.pk=partner_organization_banks.partner_organization_pk',
                 )
+                .leftJoinAndMapOne(
+                    'partner_organizations.partner_organization_other_information',
+                    PartnerOrganizationOtherInformation,
+                    'partner_organization_other_informations',
+                    'partner_organizations.pk=partner_organization_other_informations.partner_organization_pk',
+                )
                 .leftJoinAndMapMany(
                     'partner_organizations.partner_organization_reference',
                     PartnerOrganizationReference,
