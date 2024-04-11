@@ -172,6 +172,7 @@ export class ApplicationService extends GlobalService {
                 )
                 .leftJoinAndSelect('applications.documents', 'documents')
                 .leftJoinAndSelect('partner_fiscal_sponsors.documents', 'documents as fiscal_sponsor_documents')
+                .leftJoinAndSelect('partner_organization_other_informations.documents', 'documents as partner_organization_other_information_documents')
                 .leftJoinAndSelect('applications.reviews', 'reviews')
                 .leftJoinAndSelect('reviews.user', 'users')
                 .leftJoinAndSelect('reviews.documents', 'documents as review_documents')
@@ -1072,6 +1073,14 @@ export class ApplicationService extends GlobalService {
                 const savedPartnerOrgOtherInfo = await EntityManager.save(PartnerOrganizationOtherInformation, {
                     ...partnerOrgOtherInfo,
                 });
+
+                data?.documents.forEach((doc: any) => {
+                    EntityManager.query(
+                        'insert into document_partner_organization_other_info_relation (document_pk, partner_organization_other_info_pk) values ($1 ,$2);',
+                        [doc.pk, existingPartnerOrgOtherInfo.pk],
+                    );
+                });
+
                 return {
                     status: true,
                     data: {
