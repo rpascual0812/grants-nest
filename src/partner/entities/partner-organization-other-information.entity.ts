@@ -8,9 +8,11 @@ import {
     JoinColumn,
     BaseEntity,
     OneToMany,
+    ManyToMany,
 } from 'typeorm';
 import { PartnerOrganization } from './partner-organization.entity';
 import { User } from 'src/user/entities/user.entity';
+import { Document } from 'src/document/entities/document.entity';
 
 @Entity({ name: 'partner_organization_other_information' })
 export class PartnerOrganizationOtherInformation extends BaseEntity {
@@ -67,4 +69,7 @@ export class PartnerOrganizationOtherInformation extends BaseEntity {
     @ManyToOne((type) => User, (user) => user.organization_bank, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'created_by' })
     user: User;
+
+    @ManyToMany(() => Document, (document) => document.partner_organization_other_infos, { cascade: ['insert', 'update'] })
+    documents: Document[];
 }
