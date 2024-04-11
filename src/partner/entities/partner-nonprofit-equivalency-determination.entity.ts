@@ -90,4 +90,7 @@ export class PartnerNonprofitEquivalencyDetermination {
     })
     @JoinColumn({ name: 'partner_pk' })
     partner: Partner;
+
+    @ManyToMany(() => Document, (document) => document.partner_nonprofit_equivalency_determinations, { cascade: ['insert', 'update'] })
+    documents: Document[];
 }
