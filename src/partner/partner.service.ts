@@ -137,12 +137,13 @@ export class PartnerService extends GlobalService {
                 )
                 .leftJoinAndSelect(
                     'partners.partner_nonprofit_equivalency_determination',
-                    'partner_nonprofit_equivalency_determination',
+                    'partner_nonprofit_equivalency_determinations',
                 )
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('applications.statuses', 'application_statuses')
                 .leftJoinAndSelect('applications.types', 'type_application_relation')
+                .leftJoinAndSelect('partner_nonprofit_equivalency_determinations.documents', 'documents as partner_nonprofit_equivalency_determination_documents')
                 .where('partners.archived = false')
                 .andWhere(filter.hasOwnProperty('pk') ? 'partners.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere(filter.hasOwnProperty('partner_id') ? 'partners.partner_id = :partner_id' : '1=1', {

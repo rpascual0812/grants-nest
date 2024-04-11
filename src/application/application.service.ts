@@ -316,12 +316,13 @@ export class ApplicationService extends GlobalService {
         await queryRunner.connect();
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const partnerPk = getParsedPk(data?.pk);
+                const partnerID = data?.partner_id;
                 const existingPartner = await EntityManager.findOne(Partner, {
                     where: {
-                        pk: Equal(partnerPk),
+                        partner_id: Equal(partnerID),
                     },
                 });
+
                 const partner = existingPartner ? existingPartner : new Partner();
                 const generatedPartnerId = existingPartner?.partner_id
                     ? existingPartner?.partner_id
@@ -386,8 +387,8 @@ export class ApplicationService extends GlobalService {
                 if (existingContact || dataDocuments?.length > 0) {
                     dataDocuments.forEach((doc) => {
                         EntityManager.query(
-                            'insert into document_partner_relation (document_pk, partner_pk) values ($1 ,$2);',
-                            [doc.pk, savedPartner.pk],
+                            'insert into document_partner_relation (document_pk, partner_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
+                            [doc.pk, existingPartner.pk],
                         );
                     });
                 }
@@ -953,6 +954,13 @@ export class ApplicationService extends GlobalService {
                         ...nonProfitEquivalencyDetermination,
                     },
                 );
+
+                data?.documents.forEach((doc: any) => {
+                    EntityManager.query(
+                        'insert into document_partner_nonprofit_equivalency_determination_relation (document_pk, partner_nonprofit_equivalency_determination_pk) values ($1 ,$2);',
+                        [doc.pk, data.pk],
+                    );
+                });
 
                 return {
                     status: true,
