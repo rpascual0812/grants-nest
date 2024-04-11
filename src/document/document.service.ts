@@ -107,6 +107,10 @@ export class DocumentService extends GlobalService {
                         'delete from document_partner_organization_other_info_relation where document_pk = $1;',
                         [pk],
                     );
+                    await EntityManager.query(
+                        'delete from document_partner_nonprofit_equivalency_determination_relation where document_pk = $1;',
+                        [pk],
+                    );
 
                     const doc = await EntityManager.update(Document, { pk }, { archived: true });
 

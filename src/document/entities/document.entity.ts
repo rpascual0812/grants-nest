@@ -4,6 +4,7 @@ import { Review } from 'src/review/entities/review.entity';
 import { Partner } from 'src/partner/entities/partner.entity';
 import { PartnerFiscalSponsor } from 'src/partner/entities/partner-fiscal-sponsor.entity';
 import { PartnerOrganizationOtherInformation } from 'src/partner/entities/partner-organization-other-information.entity';
+import { PartnerNonprofitEquivalencyDetermination } from 'src/partner/entities/partner-nonprofit-equivalency-determination.entity';
 
 @Entity({ name: 'documents' })
 @Unique(['filename'])
@@ -107,4 +108,18 @@ export class Document {
         }
     })
     partner_organization_other_infos: PartnerOrganizationOtherInformation[];
+
+    @ManyToMany(() => PartnerNonprofitEquivalencyDetermination, partner_nonprofit_equivalency_determination => partner_nonprofit_equivalency_determination.documents)
+    @JoinTable({
+        name: 'document_partner_nonprofit_equivalency_determination_relation',
+        joinColumn: {
+            name: 'document_pk',
+            referencedColumnName: 'pk',
+        },
+        inverseJoinColumn: {
+            name: 'partner_nonprofit_equivalency_determination_pk',
+            referencedColumnName: 'pk',
+        }
+    })
+    partner_nonprofit_equivalency_determinations: PartnerNonprofitEquivalencyDetermination[];
 }
