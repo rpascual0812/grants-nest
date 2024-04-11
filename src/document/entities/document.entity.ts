@@ -3,6 +3,7 @@ import { Application } from 'src/application/entities/application.entity';
 import { Review } from 'src/review/entities/review.entity';
 import { Partner } from 'src/partner/entities/partner.entity';
 import { PartnerFiscalSponsor } from 'src/partner/entities/partner-fiscal-sponsor.entity';
+import { PartnerOrganizationOtherInformation } from 'src/partner/entities/partner-organization-other-information.entity';
 
 @Entity({ name: 'documents' })
 @Unique(['filename'])
@@ -92,4 +93,18 @@ export class Document {
         }
     })
     partner_fiscal_sponsors: PartnerFiscalSponsor[];
+
+    @ManyToMany(() => PartnerOrganizationOtherInformation, partner_organization_other_info => partner_organization_other_info.documents)
+    @JoinTable({
+        name: 'document_partner_organization_other_info_relation',
+        joinColumn: {
+            name: 'document_pk',
+            referencedColumnName: 'pk',
+        },
+        inverseJoinColumn: {
+            name: 'partner_organization_other_info_pk',
+            referencedColumnName: 'pk',
+        }
+    })
+    partner_organization_other_infos: PartnerOrganizationOtherInformation[];
 }
