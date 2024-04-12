@@ -168,9 +168,10 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('partners.partner_fiscal_sponsor', 'partner_fiscal_sponsors')
                 .leftJoinAndSelect(
                     'partners.partner_nonprofit_equivalency_determination',
-                    'partner_nonprofit_equivalency_determination',
+                    'partner_nonprofit_equivalency_determinations',
                 )
                 .leftJoinAndSelect('applications.documents', 'documents')
+                .leftJoinAndSelect('partner_nonprofit_equivalency_determinations.documents', 'documents as partner_nonprofit_equivalency_determinations_documents')
                 .leftJoinAndSelect('partner_fiscal_sponsors.documents', 'documents as fiscal_sponsor_documents')
                 .leftJoinAndSelect('partner_organization_other_informations.documents', 'documents as partner_organization_other_information_documents')
                 .leftJoinAndSelect('applications.reviews', 'reviews')
@@ -530,12 +531,14 @@ export class ApplicationService extends GlobalService {
                     ...fiscalSponsor,
                 });
 
-                data?.documents.forEach((doc: any) => {
-                    EntityManager.query(
-                        'insert into document_partner_fiscal_sponsor_relation (document_pk, partner_fiscal_sponsor_pk) values ($1 ,$2);',
-                        [doc.pk, fiscalSponsor.pk],
-                    );
-                });
+                if (data?.documents) {
+                    data?.documents.forEach((doc: any) => {
+                        EntityManager.query(
+                            'insert into document_partner_fiscal_sponsor_relation (document_pk, partner_fiscal_sponsor_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
+                            [doc.pk, fiscalSponsor.pk],
+                        );
+                    });
+                }
 
                 return {
                     status: true,
@@ -955,12 +958,14 @@ export class ApplicationService extends GlobalService {
                     },
                 );
 
-                data?.documents.forEach((doc: any) => {
-                    EntityManager.query(
-                        'insert into document_partner_nonprofit_equivalency_determination_relation (document_pk, partner_nonprofit_equivalency_determination_pk) values ($1 ,$2);',
-                        [doc.pk, data.pk],
-                    );
-                });
+                if (data?.documents) {
+                    data?.documents.forEach((doc: any) => {
+                        EntityManager.query(
+                            'insert into document_partner_nonprofit_equivalency_determination_relation (document_pk, partner_nonprofit_equivalency_determination_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
+                            [doc.pk, data.pk],
+                        );
+                    });
+                }
 
                 return {
                     status: true,
@@ -1082,12 +1087,14 @@ export class ApplicationService extends GlobalService {
                     ...partnerOrgOtherInfo,
                 });
 
-                data?.documents.forEach((doc: any) => {
-                    EntityManager.query(
-                        'insert into document_partner_organization_other_info_relation (document_pk, partner_organization_other_info_pk) values ($1 ,$2);',
-                        [doc.pk, existingPartnerOrgOtherInfo.pk],
-                    );
-                });
+                if (data?.documents) {
+                    data?.documents.forEach((doc: any) => {
+                        EntityManager.query(
+                            'insert into document_partner_organization_other_info_relation (document_pk, partner_organization_other_info_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
+                            [doc.pk, existingPartnerOrgOtherInfo.pk],
+                        );
+                    });
+                }
 
                 return {
                     status: true,
@@ -1282,7 +1289,7 @@ export class ApplicationService extends GlobalService {
                     // application.save();
 
                     await EntityManager.query(
-                        'insert into review_application_relation (review_pk, application_pk) values ($1 ,$2);',
+                        'insert into review_application_relation (review_pk, application_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
                         [newReview.pk, data.application_pk],
                     );
 
@@ -1352,7 +1359,7 @@ export class ApplicationService extends GlobalService {
 
                 if (type && applicationPk) {
                     await EntityManager.query(
-                        'insert into type_application_relation (type_pk, application_pk) values ($1 ,$2);',
+                        'insert into type_application_relation (type_pk, application_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
                         [type.pk, applicationPk],
                     );
 
@@ -1392,7 +1399,7 @@ export class ApplicationService extends GlobalService {
                     await EntityManager.update(Document, { pk: data.file.pk }, { type: data.type });
 
                     const document = await EntityManager.query(
-                        'insert into document_application_relation (document_pk, application_pk) values ($1 ,$2);',
+                        'insert into document_application_relation (document_pk, application_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
                         [data.file.pk, application_pk],
                     );
                     return {
