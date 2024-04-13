@@ -252,7 +252,19 @@ export class ApplicationService extends GlobalService {
                     partner_pk: data.partner_pk,
                 };
 
-                const application = this.applicationRepository.create(obj);
+                // const application = this.applicationRepository.create(obj);
+                const new_application = await dataSource.manager
+                    .getRepository(Application)
+                    .createQueryBuilder('applications')
+                    .createQueryBuilder()
+                    .insert()
+                    .into(Application)
+                    .values([
+                        obj
+                    ])
+                    .returning('pk')
+                    .execute();
+                const new_application_pk = new_application.generatedMaps[0].pk;
 
                 // send email
                 this.emailService.uuid = uuidv4();
@@ -265,8 +277,7 @@ export class ApplicationService extends GlobalService {
                 this.emailService.body = '<a href="' + data.link + '">Please follow this link</a>'; // MODIFY: must be a template from the database
 
                 await this.emailService.create();
-
-                return this.applicationRepository.save(application);
+                return this.find({ pk: new_application_pk });
             });
         } catch (err) {
             this.saveError(err);
