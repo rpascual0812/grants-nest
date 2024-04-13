@@ -10,6 +10,7 @@ import { PartnerAssessment } from './partner-assessment.entity';
 
 @Entity({ name: 'partners' })
 @Unique(['partner_id'])
+@Unique(['name'])
 export class Partner extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
