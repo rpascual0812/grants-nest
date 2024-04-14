@@ -1479,13 +1479,25 @@ export class ApplicationService extends GlobalService {
                             application.status == 'Advisers Review' &&
                             data.recommendation == 'Approved for Next Stage'
                         ) {
+                            application.status = 'Budget Review and Finalization';
+                            application.save();
+                        } else if (
+                            application.status == 'Budget Review and Finalization' &&
+                            data.recommendation == 'Approved for Next Stage'
+                        ) {
+                            application.status = 'Financial Management Capacity';
+                            application.save();
+                        } else if (
+                            application.status == 'Financial Management Capacity' &&
+                            data.recommendation == 'Approved for Next Stage'
+                        ) {
                             application.status = 'Due Diligence Final Review';
                             application.save();
                         } else if (
                             application.status == 'Due Diligence Final Review' &&
                             data.recommendation == 'Approved for Next Stage'
                         ) {
-                            application.status = 'Budget Review and Finalization';
+                            application.status = 'Contract Preparation';
                             application.save();
                         }
                     }
