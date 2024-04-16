@@ -10,6 +10,7 @@ import { PartnerOrganizationBank } from 'src/partner/entities/partner-organizati
 import { PartnerAssessment } from 'src/partner/entities/partner-assessment.entity';
 import { Type } from 'src/type/entities/type.entity';
 import { Donor } from 'src/donor/entities/donor.entity';
+import { PartnerOrganizationOtherInformationFinancialHr } from 'src/partner/entities/partner-organization-other-information-financial-hr.entity';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
@@ -83,6 +84,10 @@ export class User extends BaseEntity {
     @OneToMany('PartnerOrganizationBank', (organization_bank: PartnerOrganizationBank) => organization_bank.user)
     @JoinColumn({ name: 'pk' })
     organization_bank: Array<PartnerOrganizationBank>;
+
+    @OneToMany('PartnerOrganizationOtherInformationFinancialHr', (organization_other_information_financial_human_resources: PartnerOrganizationOtherInformationFinancialHr) => organization_other_information_financial_human_resources.user)
+    @JoinColumn({ name: 'pk' })
+    organization_other_information_financial_human_resources: Array<PartnerOrganizationOtherInformationFinancialHr>;
 
     @OneToMany('PartnerAssessment', (partnerAssessment: PartnerAssessment) => partnerAssessment.user)
     @JoinColumn({ name: 'pk' })
