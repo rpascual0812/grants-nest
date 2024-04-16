@@ -29,6 +29,7 @@ import { PartnerOrganizationReference } from 'src/partner/entities/partner-organ
 import { PartnerNonprofitEquivalencyDetermination } from 'src/partner/entities/partner-nonprofit-equivalency-determination.entity';
 import { PartnerOrganizationBank } from 'src/partner/entities/partner-organization-bank.entity';
 import { PartnerOrganizationOtherInformation } from 'src/partner/entities/partner-organization-other-information.entity';
+import { PartnerOrganizationOtherInformationFinancialHr } from 'src/partner/entities/partner-organization-other-information-financial-hr.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -142,11 +143,18 @@ export class ApplicationService extends GlobalService {
                     'partner_organizations.pk=partner_organization_other_informations.partner_organization_pk',
                 )
                 .leftJoinAndMapMany(
+                    'partner_organization_other_informations.organization_other_information_financial_human_resources',
+                    PartnerOrganizationOtherInformationFinancialHr,
+                    'partner_organization_other_information_financial_human_resource',
+                    'partner_organization_other_informations.pk=partner_organization_other_information_financial_human_resource.partner_organization_other_information_pk',
+                )
+                .leftJoinAndMapMany(
                     'partner_organizations.partner_organization_reference',
                     PartnerOrganizationReference,
                     'partner_organization_references',
                     'partner_organizations.pk=partner_organization_references.partner_organization_pk',
                 )
+
                 .leftJoinAndMapOne(
                     'partner_organizations.country',
                     Country,
@@ -1104,6 +1112,29 @@ export class ApplicationService extends GlobalService {
                             'insert into document_partner_organization_other_info_relation (document_pk, partner_organization_other_info_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
                             [doc.pk, existingPartnerOrgOtherInfo.pk],
                         );
+                    });
+                }
+
+                if (data?.human_resources) {
+                    data?.human_resources.forEach((hr: any) => {
+
+                        if (hr.hasOwnProperty('pk')) {
+                            EntityManager.update(PartnerOrganizationOtherInformationFinancialHr, { pk: hr.pk }, hr);
+                        }
+                        else {
+                            dataSource
+                                .createQueryBuilder()
+                                .insert()
+                                .into(PartnerOrganizationOtherInformationFinancialHr)
+                                .values([{
+                                    partner_organization_other_information_pk: existingPartnerOrgOtherInfo.pk,
+                                    name: hr.name,
+                                    designation: hr.designation,
+                                    created_by: user.pk
+                                }])
+                                .returning('*')
+                                .execute();
+                        }
                     });
                 }
 
