@@ -123,12 +123,81 @@ export class ApplicationService extends GlobalService {
             const data = await dataSource
                 .getRepository(Application)
                 .createQueryBuilder('applications')
-                .leftJoinAndSelect('applications.partner', 'partners')
+                .leftJoinAndSelect('applications.documents', 'documents')
+                .leftJoinAndSelect('applications.recommendations', 'application_recommendations')
+
+                // .leftJoinAndSelect('applications.reviews', 'reviews')
+                // .leftJoinAndSelect('reviews.user', 'users')
+                // .leftJoinAndSelect('reviews.documents', 'documents as review_documents')
+
+                .leftJoinAndSelect('applications.project', 'projects')
+                .leftJoinAndSelect('projects.project_location', 'project_location')
+                .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
+                .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
+                .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
+                .leftJoinAndSelect('projects.type', 'types')
+
+                .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
+                .andWhere(filter.hasOwnProperty('uuid') ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
+                .andWhere(filter.hasOwnProperty('number') ? 'applications.number = :number' : '1=1', {
+                    number: filter.number,
+                })
+                .andWhere('applications.archived = :archived', { archived: false })
+                // .andWhere(filter.hasOwnProperty('reviews') ? 'reviews.archived = false' : '1=1')
+                // .orderBy('reviews.pk', 'ASC')
+                // .orderBy({
+                //     'partner_organization_references.pk': 'ASC',
+                // })
+                .getOne();
+            return {
+                status: true,
+                data,
+            };
+        } catch (err) {
+            console.log(err);
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
+
+    async getPartner(partner_pk: number) {
+        try {
+            return await dataSource
+                .getRepository(Partner)
+                .createQueryBuilder('partners')
+                .select('partners')
+                .leftJoinAndSelect('partners.documents', 'documents as partner_documents')
+                .where("partners.pk = :pk", { pk: partner_pk })
+                .getOne()
+                ;
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false
+            }
+        }
+    }
+
+    async getPartnerOrganization(partner_pk: number) {
+        try {
+            return await dataSource
+                .getRepository(PartnerOrganization)
+                .createQueryBuilder('partner_organizations')
+                .select('partner_organizations')
+                .leftJoinAndMapMany(
+                    'partner_organizations.partner_organization_reference',
+                    PartnerOrganizationReference,
+                    'partner_organization_references',
+                    'partner_organizations.pk=partner_organization_references.partner_organization_pk',
+                )
                 .leftJoinAndMapOne(
-                    'partners.organization',
-                    PartnerOrganization,
-                    'partner_organizations',
-                    'partners.pk=partner_organizations.partner_pk',
+                    'partner_organizations.country',
+                    Country,
+                    'countries',
+                    'partner_organizations.country_pk=countries.pk',
                 )
                 .leftJoinAndMapOne(
                     'partner_organizations.partner_organization_bank',
@@ -142,73 +211,101 @@ export class ApplicationService extends GlobalService {
                     'partner_organization_other_informations',
                     'partner_organizations.pk=partner_organization_other_informations.partner_organization_pk',
                 )
+                .leftJoinAndSelect('partner_organization_other_informations.documents', 'documents as partner_organization_other_information_documents')
                 .leftJoinAndMapMany(
                     'partner_organization_other_informations.organization_other_information_financial_human_resources',
                     PartnerOrganizationOtherInformationFinancialHr,
                     'partner_organization_other_information_financial_human_resource',
                     'partner_organization_other_informations.pk=partner_organization_other_information_financial_human_resource.partner_organization_other_information_pk',
                 )
-                .leftJoinAndMapMany(
-                    'partner_organizations.partner_organization_reference',
-                    PartnerOrganizationReference,
-                    'partner_organization_references',
-                    'partner_organizations.pk=partner_organization_references.partner_organization_pk',
-                )
+                .where("partner_organizations.partner_pk = :pk", { pk: partner_pk })
+                .getOne()
+                ;
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false
+            }
+        }
+    }
 
-                .leftJoinAndMapOne(
-                    'partner_organizations.country',
-                    Country,
-                    'countries',
-                    'partner_organizations.country_pk=countries.pk',
-                )
-                .leftJoinAndMapMany(
-                    'partners.contacts',
-                    PartnerContact,
-                    'partner_contacts',
-                    'partners.pk=partner_contacts.partner_pk',
-                )
-                .leftJoinAndSelect('partners.documents', 'documents as partner_documents')
-                .leftJoinAndSelect('applications.project', 'projects')
-                .leftJoinAndSelect('projects.project_location', 'project_location')
-                .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
-                .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
-                .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
-                .leftJoinAndSelect('partners.partner_fiscal_sponsor', 'partner_fiscal_sponsors')
-                .leftJoinAndSelect(
-                    'partners.partner_nonprofit_equivalency_determination',
-                    'partner_nonprofit_equivalency_determinations',
-                )
-                .leftJoinAndSelect('applications.documents', 'documents')
+    async getPartnerContacts(partner_pk: number) {
+        try {
+            return await dataSource
+                .getRepository(PartnerContact)
+                .createQueryBuilder('partner_contacts')
+                .select('partner_contacts')
+                .where("partner_contacts.partner_pk = :pk", { pk: partner_pk })
+                .getMany()
+                ;
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false
+            }
+        }
+    }
+
+    async getPartnerFiscalSponsor(partner_pk: number) {
+        try {
+            return await dataSource
+                .getRepository(PartnerFiscalSponsor)
+                .createQueryBuilder('partner_fiscal_sponsors')
+                .select('partner_fiscal_sponsors')
+                .leftJoinAndSelect('partner_fiscal_sponsors.documents', 'documents as partner_fiscal_sponsors_documents')
+                .where("partner_fiscal_sponsors.partner_pk = :pk", { pk: partner_pk })
+                .getOne()
+                ;
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false
+            }
+        }
+    }
+
+    async getPartnerNonprofitEquivalencyDetermination(partner_pk: number) {
+        try {
+            return await dataSource
+                .getRepository(PartnerNonprofitEquivalencyDetermination)
+                .createQueryBuilder('partner_nonprofit_equivalency_determinations')
+                .select('partner_nonprofit_equivalency_determinations')
                 .leftJoinAndSelect('partner_nonprofit_equivalency_determinations.documents', 'documents as partner_nonprofit_equivalency_determinations_documents')
-                .leftJoinAndSelect('partner_fiscal_sponsors.documents', 'documents as fiscal_sponsor_documents')
-                .leftJoinAndSelect('partner_organization_other_informations.documents', 'documents as partner_organization_other_information_documents')
+                .where("partner_nonprofit_equivalency_determinations.partner_pk = :pk", { pk: partner_pk })
+                .getOne()
+                ;
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false
+            }
+        }
+    }
+
+    async getReviews(pk: number) {
+        try {
+            return await dataSource
+                .getRepository(Application)
+                .createQueryBuilder('applications')
+                .select('applications')
                 .leftJoinAndSelect('applications.reviews', 'reviews')
                 .leftJoinAndSelect('reviews.user', 'users')
                 .leftJoinAndSelect('reviews.documents', 'documents as review_documents')
-                .leftJoinAndSelect('projects.type', 'types')
-                .leftJoinAndSelect('applications.recommendations', 'application_recommendations')
-                .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
-                .andWhere(filter.hasOwnProperty('uuid') ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
-                .andWhere(filter.hasOwnProperty('number') ? 'applications.number = :number' : '1=1', {
-                    number: filter.number,
-                })
-                .andWhere('applications.archived = :archived', { archived: false })
-                // .andWhere(filter.hasOwnProperty('reviews') ? 'reviews.archived = false' : '1=1')
-                .orderBy('reviews.pk', 'ASC')
-                .orderBy({
-                    'partner_organization_references.pk': 'ASC',
-                })
-                .getOne();
+                .where("applications.pk = :pk", { pk })
+                .andWhere('reviews.archived = false')
+                .orderBy('reviews.date_created', 'ASC')
+                .getOne()
+                ;
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
             return {
-                status: true,
-                data,
-            };
-        } catch (err) {
-            console.log(err);
-            return {
-                status: false,
-                code: 500,
-            };
+                status: false
+            }
         }
     }
 
@@ -512,7 +609,6 @@ export class ApplicationService extends GlobalService {
                 const appPartnerPk = getParsedPk(data?.partner_pk);
                 const existingFiscalSponsor = await EntityManager.findOne(PartnerFiscalSponsor, {
                     where: {
-                        pk: Equal(partnerFiscalSponsor),
                         partner_pk: Equal(appPartnerPk),
                     },
                 });
@@ -546,6 +642,7 @@ export class ApplicationService extends GlobalService {
                 fiscalSponsor.bank_branch = getDefaultValue(data?.bank_branch, existingFiscalSponsor?.bank_branch);
                 fiscalSponsor.bank_address = getDefaultValue(data?.bank_address, existingFiscalSponsor?.bank_address);
                 fiscalSponsor.swift_code = getDefaultValue(data?.swift_code, existingFiscalSponsor?.swift_code);
+                console.log('fiscalSponsor', fiscalSponsor);
                 const savedFiscalSponsor = await EntityManager.save(PartnerFiscalSponsor, {
                     ...fiscalSponsor,
                 });
@@ -1101,7 +1198,6 @@ export class ApplicationService extends GlobalService {
                     existingPartnerOrgOtherInfo?.recommendation,
                 );
                 partnerOrgOtherInfo.created_by = user.pk;
-
                 const savedPartnerOrgOtherInfo = await EntityManager.save(PartnerOrganizationOtherInformation, {
                     ...partnerOrgOtherInfo,
                 });
@@ -1110,7 +1206,7 @@ export class ApplicationService extends GlobalService {
                     data?.documents.forEach((doc: any) => {
                         EntityManager.query(
                             'insert into document_partner_organization_other_info_relation (document_pk, partner_organization_other_info_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
-                            [doc.pk, existingPartnerOrgOtherInfo.pk],
+                            [doc.pk, savedPartnerOrgOtherInfo.pk],
                         );
                     });
                 }
@@ -1127,7 +1223,7 @@ export class ApplicationService extends GlobalService {
                                 .insert()
                                 .into(PartnerOrganizationOtherInformationFinancialHr)
                                 .values([{
-                                    partner_organization_other_information_pk: existingPartnerOrgOtherInfo.pk,
+                                    partner_organization_other_information_pk: savedPartnerOrgOtherInfo.pk,
                                     name: hr.name,
                                     designation: hr.designation,
                                     created_by: user.pk
