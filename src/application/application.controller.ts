@@ -96,8 +96,47 @@ export class ApplicationController {
 
     @UseGuards(JwtAuthGuard)
     @Get(':number/review')
-    review(@Param('number') number: string, @Request() req: any) {
-        return this.applicationService.find({ number, reviews: req.query.reviews });
+    async review(@Param('number') number: string, @Request() req: any) {
+        let application: any = await this.applicationService.find({ number, reviews: req.query.reviews });
+
+        const partner = await this.applicationService.getPartner(application.data.partner_pk);
+        if (!application.data.hasOwnProperty('partner')) {
+            application.data['partner'] = {};
+        }
+        application.data['partner'] = partner;
+
+        // partner organization
+        const partner_organizations = await this.applicationService.getPartnerOrganization(application.data['partner'].pk);
+        if (!application.data['partner'].hasOwnProperty('organization')) {
+            application.data['partner']['organization'] = {};
+        }
+        application.data['partner']['organization'] = partner_organizations;
+
+        const partner_contacts = await this.applicationService.getPartnerContacts(application.data['partner'].pk);
+        if (!application.data['partner'].hasOwnProperty('partner_contacts')) {
+            application.data['partner']['partner_contacts'] = {};
+        }
+        application.data['partner']['partner_contacts'] = partner_contacts;
+
+        const partner_fiscal_sponsor = await this.applicationService.getPartnerFiscalSponsor(application.data['partner'].pk);
+        if (!application.data['partner'].hasOwnProperty('partner_fiscal_sponsor')) {
+            application.data['partner']['partner_fiscal_sponsor'] = {};
+        }
+        application.data['partner']['partner_fiscal_sponsor'] = partner_fiscal_sponsor;
+
+        const partner_nonprofit_equivalency_determination = await this.applicationService.getPartnerNonprofitEquivalencyDetermination(application.data['partner'].pk);
+        if (!application.data['partner'].hasOwnProperty('partner_nonprofit_equivalency_determination')) {
+            application.data['partner']['partner_nonprofit_equivalency_determination'] = {};
+        }
+        application.data['partner']['partner_nonprofit_equivalency_determination'] = partner_nonprofit_equivalency_determination;
+
+        const applicationReviews = await this.applicationService.getReviews(application.data.pk);
+        if (!application.data.hasOwnProperty('reviews')) {
+            application.data['reviews'] = {};
+        }
+        application.data['reviews'] = applicationReviews['reviews'];
+
+        return application;
     }
 
     @UseGuards(JwtAuthGuard)
