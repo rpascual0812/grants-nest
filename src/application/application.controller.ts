@@ -1,10 +1,14 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseGuards, Req } from '@nestjs/common';
 import { ApplicationService } from './application.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { ApplicationQueryHelpersService } from './utilities/lib/application-query-helpers/application-query-helpers.service';
 
 @Controller('application')
 export class ApplicationController {
-    constructor(private readonly applicationService: ApplicationService) { }
+    constructor(
+        private readonly applicationService: ApplicationService,
+        private readonly applicationQueryHelpersService: ApplicationQueryHelpersService,
+    ) {}
 
     @UseGuards(JwtAuthGuard)
     @Post('generate')
@@ -90,14 +94,37 @@ export class ApplicationController {
     }
 
     @Get(':uuid/generated')
-    generated(@Param('uuid') uuid: string) {
-        return this.applicationService.find({ uuid });
+    async generated(@Param('uuid') uuid: string) {
+        const application: any = await this.applicationService.find({ uuid });
+        // partner
+        const partner = await this.applicationQueryHelpersService.getPartner(application);
+        application.data['partner'] = partner;
+
+        // partner organization
+        const partnerOrganization = await this.applicationQueryHelpersService.getPartnerOrganization(application);
+        application.data['partner']['organization'] = partnerOrganization;
+
+        // partner contacts
+        const partnerContacts = await this.applicationQueryHelpersService.getPartnerContacts(application);
+        application.data['partner']['partner_contacts'] = partnerContacts;
+
+        // partner fiscal sponsor
+        const partnerFiscalSponsor = await this.applicationQueryHelpersService.getPartnerFiscalSponsor(application);
+        application.data['partner']['partner_fiscal_sponsor'] = partnerFiscalSponsor;
+
+        // partner non-profit equivalency determination
+        const partnerNonprofitEquivalencyDetermination =
+            await this.applicationQueryHelpersService.getPartnerNonProfitEquivalencyDetermination(application);
+        application.data['partner']['partner_nonprofit_equivalency_determination'] =
+            partnerNonprofitEquivalencyDetermination;
+
+        return application;
     }
 
     @UseGuards(JwtAuthGuard)
     @Get(':number/review')
     async review(@Param('number') number: string, @Request() req: any) {
-        let application: any = await this.applicationService.find({ number, reviews: req.query.reviews });
+        const application: any = await this.applicationService.find({ number, reviews: req.query.reviews });
 
         const partner = await this.applicationService.getPartner(application.data.partner_pk);
         if (!application.data.hasOwnProperty('partner')) {
@@ -106,7 +133,9 @@ export class ApplicationController {
         application.data['partner'] = partner;
 
         // partner organization
-        const partner_organizations = await this.applicationService.getPartnerOrganization(application.data['partner'].pk);
+        const partner_organizations = await this.applicationService.getPartnerOrganization(
+            application.data['partner'].pk,
+        );
         if (!application.data['partner'].hasOwnProperty('organization')) {
             application.data['partner']['organization'] = {};
         }
@@ -118,17 +147,21 @@ export class ApplicationController {
         }
         application.data['partner']['partner_contacts'] = partner_contacts;
 
-        const partner_fiscal_sponsor = await this.applicationService.getPartnerFiscalSponsor(application.data['partner'].pk);
+        const partner_fiscal_sponsor = await this.applicationService.getPartnerFiscalSponsor(
+            application.data['partner'].pk,
+        );
         if (!application.data['partner'].hasOwnProperty('partner_fiscal_sponsor')) {
             application.data['partner']['partner_fiscal_sponsor'] = {};
         }
         application.data['partner']['partner_fiscal_sponsor'] = partner_fiscal_sponsor;
 
-        const partner_nonprofit_equivalency_determination = await this.applicationService.getPartnerNonprofitEquivalencyDetermination(application.data['partner'].pk);
+        const partner_nonprofit_equivalency_determination =
+            await this.applicationService.getPartnerNonprofitEquivalencyDetermination(application.data['partner'].pk);
         if (!application.data['partner'].hasOwnProperty('partner_nonprofit_equivalency_determination')) {
             application.data['partner']['partner_nonprofit_equivalency_determination'] = {};
         }
-        application.data['partner']['partner_nonprofit_equivalency_determination'] = partner_nonprofit_equivalency_determination;
+        application.data['partner']['partner_nonprofit_equivalency_determination'] =
+            partner_nonprofit_equivalency_determination;
 
         const applicationReviews = await this.applicationService.getReviews(application.data.pk);
         if (!application.data.hasOwnProperty('reviews')) {
@@ -210,13 +243,22 @@ export class ApplicationController {
 
     @UseGuards(JwtAuthGuard)
     @Delete(':pk/document/:document_pk')
-    deleteApplicationAttachment(@Param('pk') application_pk: number, @Param('document_pk') document_pk: number, @Request() req: any) {
+    deleteApplicationAttachment(
+        @Param('pk') application_pk: number,
+        @Param('document_pk') document_pk: number,
+        @Request() req: any,
+    ) {
         return this.applicationService.deleteApplicationAttachment(application_pk, document_pk, req.user);
     }
 
     @UseGuards(JwtAuthGuard)
     @Delete(':pk/review/:review_pk/document/:document_pk')
-    deleteReviewAttachment(@Param('pk') application_pk: number, @Param('review_pk') review_pk: number, @Param('document_pk') document_pk: number, @Request() req: any) {
+    deleteReviewAttachment(
+        @Param('pk') application_pk: number,
+        @Param('review_pk') review_pk: number,
+        @Param('document_pk') document_pk: number,
+        @Request() req: any,
+    ) {
         return this.applicationService.deleteReviewAttachment(application_pk, review_pk, document_pk, req.user);
     }
 }
