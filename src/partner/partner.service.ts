@@ -144,8 +144,14 @@ export class PartnerService extends GlobalService {
                 .leftJoinAndSelect('applications.statuses', 'application_statuses')
                 .leftJoinAndSelect('applications.types', 'type_application_relation')
                 .leftJoinAndSelect('partner_fiscal_sponsors.documents', 'documents as fiscal_sponsor_documents')
-                .leftJoinAndSelect('partner_nonprofit_equivalency_determinations.documents', 'documents as partner_nonprofit_equivalency_determination_documents')
-                .leftJoinAndSelect('partner_organization_other_informations.documents', 'documents as partner_organization_other_information_documents')
+                .leftJoinAndSelect(
+                    'partner_nonprofit_equivalency_determinations.documents',
+                    'documents as partner_nonprofit_equivalency_determination_documents',
+                )
+                .leftJoinAndSelect(
+                    'partner_organization_other_informations.documents',
+                    'documents as partner_organization_other_information_documents',
+                )
                 .where('partners.archived = false')
                 .andWhere(filter.hasOwnProperty('pk') ? 'partners.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere(filter.hasOwnProperty('partner_id') ? 'partners.partner_id = :partner_id' : '1=1', {
