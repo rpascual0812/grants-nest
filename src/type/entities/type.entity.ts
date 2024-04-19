@@ -46,19 +46,19 @@ export class Type extends BaseEntity {
     @JoinColumn({ name: 'created_by' })
     user: User;
 
-    @ManyToMany(() => Application, (application) => application.types)
-    @JoinTable({
-        name: 'type_application_relation',
-        joinColumn: {
-            name: 'type_pk',
-            referencedColumnName: 'pk',
-        },
-        inverseJoinColumn: {
-            name: 'application_pk',
-            referencedColumnName: 'pk',
-        }
-    })
-    applications: Application[];
+    // @ManyToMany(() => Application, (application) => application.types)
+    // @JoinTable({
+    //     name: 'type_application_relation',
+    //     joinColumn: {
+    //         name: 'type_pk',
+    //         referencedColumnName: 'pk',
+    //     },
+    //     inverseJoinColumn: {
+    //         name: 'application_pk',
+    //         referencedColumnName: 'pk',
+    //     }
+    // })
+    // applications: Application[];
 
     @OneToMany('Project', (project: Project) => project.type)
     @JoinColumn({ name: 'pk' })

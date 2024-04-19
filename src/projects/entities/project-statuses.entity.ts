@@ -21,9 +21,9 @@ export class ProjectStatus extends BaseEntity {
      * Relationship
      */
 
-    @ManyToOne(type => Project, project => project.project_statuses, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-    @JoinColumn({ name: 'project_pk' })
-    project: Project;
+    // @ManyToOne(type => Project, project => project.project_statuses, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    // @JoinColumn({ name: 'project_pk' })
+    // project: Project;
 
     @ManyToOne(type => Status, status => status.project_status, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'status_pk' })
