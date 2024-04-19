@@ -38,17 +38,17 @@ export class PartnerController {
                 partner['grand_total_amount'] = 0;
                 if (partner.applications) {
                     partner.applications.forEach((application) => {
-                        application['application_status'] = null;
-                        if (application.statuses.length > 0) {
-                            const count = application.statuses.length;
-                            application['application_status'] = application.statuses[count - 1];
-                        }
+                        // application['application_status'] = null;
+                        // if (application.statuses.length > 0) {
+                        //     const count = application.statuses.length;
+                        //     application['application_status'] = application.statuses[count - 1];
+                        // }
                         if (application.project && application.project.project_proposal) {
                             partner['grand_total_amount'] += parseInt(
                                 application.project.project_proposal.budget_request_usd.toString(),
                             );
                         }
-                        delete application.statuses;
+                        // delete application.statuses;
                     });
                 }
             });
