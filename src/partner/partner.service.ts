@@ -57,13 +57,13 @@ export class PartnerService extends GlobalService {
                 )
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
-                .leftJoinAndSelect('applications.statuses', 'application_statuses')
-                .leftJoinAndSelect('applications.types', 'type_application_relation')
+                // .leftJoinAndSelect('applications.statuses', 'application_statuses')
+                // .leftJoinAndSelect('applications.types', 'type_application_relation')
                 .where('partners.archived=false')
                 .andWhere(organizationPk ? 'partner_organizations.organization_pk = :organizationPk' : '1=1', {
                     organizationPk,
                 })
-                .andWhere(typePk ? 'type_application_relation.pk = :typePk' : '1=1', {
+                .andWhere(typePk ? 'projects.type_pk = :typePk' : '1=1', {
                     typePk,
                 })
                 .andWhere(keyword ? 'partners.name ILIKE :keyword' : '1=1', {

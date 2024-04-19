@@ -13,7 +13,7 @@ import {
 import { PartnerOrganization } from './partner-organization.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Document } from 'src/document/entities/document.entity';
-import { PartnerOrganizationOtherInformationFinancialHr } from './partner-organization-other-information-financial-hr.entity';
+import { PartnerOrganizationOtherInformationFinancialHumanResources } from './partner-organization-other-information-financial-human-resources.entity';
 
 @Entity({ name: 'partner_organization_other_information' })
 export class PartnerOrganizationOtherInformation extends BaseEntity {
@@ -74,7 +74,7 @@ export class PartnerOrganizationOtherInformation extends BaseEntity {
     @ManyToMany(() => Document, (document) => document.partner_organization_other_infos, { cascade: ['insert', 'update'] })
     documents: Document[];
 
-    @OneToMany('PartnerOrganizationOtherInformationFinancialHr', (organization_other_information_financial_human_resources: PartnerOrganizationOtherInformationFinancialHr) => organization_other_information_financial_human_resources.partner_organization_other_information)
+    @OneToMany('PartnerOrganizationOtherInformationFinancialHumanResources', (organization_other_information_financial_human_resources: PartnerOrganizationOtherInformationFinancialHumanResources) => organization_other_information_financial_human_resources.partner_organization_other_information)
     @JoinColumn({ name: 'pk' })
-    organization_other_information_financial_human_resources: Array<PartnerOrganizationOtherInformationFinancialHr>;
+    organization_other_information_financial_human_resources: Array<PartnerOrganizationOtherInformationFinancialHumanResources>;
 }

@@ -3,8 +3,8 @@ import { PartnerOrganization } from './partner-organization.entity';
 import { User } from 'src/user/entities/user.entity';
 import { PartnerOrganizationOtherInformation } from './partner-organization-other-information.entity';
 
-@Entity({ name: 'partner_organization_other_information_financial_human_resources' })
-export class PartnerOrganizationOtherInformationFinancialHr extends BaseEntity {
+@Entity({ name: 'partner_organization_other_information_financial_human_resource' })
+export class PartnerOrganizationOtherInformationFinancialHumanResources extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
 

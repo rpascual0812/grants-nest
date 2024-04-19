@@ -83,8 +83,64 @@ export class ApplicationController {
 
     @UseGuards(JwtAuthGuard)
     @Get()
-    fetch(@Request() req: any) {
-        return this.applicationService.findAll(req.query);
+    async fetch(@Request() req: any) {
+        let applications: any = await this.applicationService.findAll(req.query);
+        if (applications.data.length > 0) {
+            const pks = applications.data.map((application) => application.pk);
+            const partner_pks = applications.data.map((application) => application.partner_pk);
+
+            // Partner
+            const partner = await this.applicationService.getPartner(pks);
+
+            // Partner Organization
+            const partner_organizations = await this.applicationService.getPartnerOrganization(partner_pks);
+
+            // Partner Contacts
+            const partner_contacts = await this.applicationService.getPartnerContacts(partner_pks);
+
+            // Partner Fiscal Sponsor
+            const partner_fiscal_sponsor = await this.applicationService.getPartnerFiscalSponsor(partner_pks);
+
+            // Partner Non-profit Equivalency Determination
+            const partner_nonprofit_equivalency_determination = await this.applicationService.getPartnerNonprofitEquivalencyDetermination(partner_pks);
+
+            // Reviews
+            const applicationReviews = await this.applicationService.getReviews(pks);
+
+            applications.data.forEach(application => {
+                if (!application.hasOwnProperty('partner')) {
+                    application['partner'] = {};
+                }
+                application['partner'] = partner;
+
+                if (!application['partner'].hasOwnProperty('organization')) {
+                    application['partner']['organization'] = {};
+                }
+                application['partner']['organization'] = partner_organizations;
+
+                if (!application['partner'].hasOwnProperty('contacts')) {
+                    application['partner']['contacts'] = {};
+                }
+                application['partner']['contacts'] = partner_contacts;
+
+                if (!application['partner'].hasOwnProperty('partner_fiscal_sponsor')) {
+                    application['partner']['partner_fiscal_sponsor'] = {};
+                }
+                application['partner']['partner_fiscal_sponsor'] = partner_fiscal_sponsor;
+
+                if (!application['partner'].hasOwnProperty('partner_nonprofit_equivalency_determination')) {
+                    application['partner']['partner_nonprofit_equivalency_determination'] = {};
+                }
+                application['partner']['partner_nonprofit_equivalency_determination'] = partner_nonprofit_equivalency_determination;
+
+                if (!application.hasOwnProperty('reviews')) {
+                    application['reviews'] = {};
+                }
+                application['reviews'] = applicationReviews['reviews'];
+            });
+        }
+
+        return applications;
     }
 
     // @UseGuards(JwtAuthGuard)
@@ -126,44 +182,44 @@ export class ApplicationController {
     async review(@Param('number') number: string, @Request() req: any) {
         const application: any = await this.applicationService.find({ number, reviews: req.query.reviews });
 
-        const partner = await this.applicationService.getPartner(application.data.partner_pk);
+        // Partner
+        const partner = await this.applicationService.getPartner([application.data.partner_pk]);
         if (!application.data.hasOwnProperty('partner')) {
             application.data['partner'] = {};
         }
         application.data['partner'] = partner;
 
-        // partner organization
-        const partner_organizations = await this.applicationService.getPartnerOrganization(
-            application.data['partner'].pk,
-        );
+        // Partner Organization
+        const partner_organizations = await this.applicationService.getPartnerOrganization([application.data['partner'].pk]);
         if (!application.data['partner'].hasOwnProperty('organization')) {
             application.data['partner']['organization'] = {};
         }
         application.data['partner']['organization'] = partner_organizations;
 
-        const partner_contacts = await this.applicationService.getPartnerContacts(application.data['partner'].pk);
-        if (!application.data['partner'].hasOwnProperty('partner_contacts')) {
-            application.data['partner']['partner_contacts'] = {};
+        // Partner Contacts
+        const partner_contacts = await this.applicationService.getPartnerContacts([application.data['partner'].pk]);
+        if (!application.data['partner'].hasOwnProperty('contacts')) {
+            application.data['partner']['contacts'] = {};
         }
-        application.data['partner']['partner_contacts'] = partner_contacts;
+        application.data['partner']['contacts'] = partner_contacts;
 
-        const partner_fiscal_sponsor = await this.applicationService.getPartnerFiscalSponsor(
-            application.data['partner'].pk,
-        );
+        // Partner Fiscal Sponsor
+        const partner_fiscal_sponsor = await this.applicationService.getPartnerFiscalSponsor([application.data['partner'].pk]);
         if (!application.data['partner'].hasOwnProperty('partner_fiscal_sponsor')) {
             application.data['partner']['partner_fiscal_sponsor'] = {};
         }
         application.data['partner']['partner_fiscal_sponsor'] = partner_fiscal_sponsor;
 
-        const partner_nonprofit_equivalency_determination =
-            await this.applicationService.getPartnerNonprofitEquivalencyDetermination(application.data['partner'].pk);
+        // Partner Non-profit Equivalency Determination
+        const partner_nonprofit_equivalency_determination = await this.applicationService.getPartnerNonprofitEquivalencyDetermination([application.data['partner'].pk]);
         if (!application.data['partner'].hasOwnProperty('partner_nonprofit_equivalency_determination')) {
             application.data['partner']['partner_nonprofit_equivalency_determination'] = {};
         }
         application.data['partner']['partner_nonprofit_equivalency_determination'] =
             partner_nonprofit_equivalency_determination;
 
-        const applicationReviews = await this.applicationService.getReviews(application.data.pk);
+        // Reviews
+        const applicationReviews = await this.applicationService.getReviews([application.data.pk]);
         if (!application.data.hasOwnProperty('reviews')) {
             application.data['reviews'] = {};
         }

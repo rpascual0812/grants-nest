@@ -21,7 +21,7 @@ export class ApplicationStatus extends BaseEntity {
      * Relationship
      */
 
-    @ManyToOne(type => Application, application => application.statuses, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-    @JoinColumn({ name: 'application_pk' })
-    application: Application;
+    // @ManyToOne(type => Application, application => application.statuses, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    // @JoinColumn({ name: 'application_pk' })
+    // application: Application;
 }
