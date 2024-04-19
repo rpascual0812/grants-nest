@@ -33,8 +33,8 @@ export class Project extends BaseEntity {
     @Column({ type: 'text', nullable: false })
     how_will_affect: string;
 
-    @Column({ name: 'status_pk', nullable: true })
-    status_pk: number;
+    @Column({ type: 'text', nullable: true })
+    status: string;
 
     @Column({ name: 'type_pk', nullable: true })
     type_pk: number;
@@ -60,9 +60,9 @@ export class Project extends BaseEntity {
     @JoinColumn({ name: 'project_beneficiary_pk' })
     project_location: ProjectLocation;
 
-    @OneToMany('ProjectStatus', (project_statuses: ProjectStatus) => project_statuses.project)
-    @JoinColumn({ name: 'status_pk' })
-    project_statuses: Array<ProjectStatus>;
+    // @OneToMany('ProjectStatus', (project_statuses: ProjectStatus) => project_statuses.project)
+    // @JoinColumn({ name: 'status_pk' })
+    // project_statuses: Array<ProjectStatus>;
 
     @ManyToOne(type => Type, type => type.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'type_pk' })

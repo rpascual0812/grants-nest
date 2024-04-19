@@ -15,7 +15,6 @@ import { Partner } from 'src/partner/entities/partner.entity';
 import { ApplicationStatus } from './application-statuses.entity';
 import { Project } from 'src/projects/entities/project.entity';
 import { Review } from 'src/review/entities/review.entity';
-import { Type } from 'src/type/entities/type.entity';
 import { Document } from 'src/document/entities/document.entity';
 import { ApplicationRecommendation } from './application-recommendation.entity';
 
@@ -78,9 +77,9 @@ export class Application extends BaseEntity {
     @JoinColumn({ name: 'pk' })
     recommendations: Array<ApplicationRecommendation>;
 
-    @OneToMany('ApplicationStatus', (application_statuses: ApplicationStatus) => application_statuses.application)
-    @JoinColumn({ name: 'pk' })
-    statuses: Array<ApplicationStatus>;
+    // @OneToMany('ApplicationStatus', (application_statuses: ApplicationStatus) => application_statuses.application)
+    // @JoinColumn({ name: 'pk' })
+    // statuses: Array<ApplicationStatus>;
 
     @ManyToMany(() => Review, (review) => review.applications, { cascade: ['insert', 'update'] })
     reviews: Review[];
@@ -88,6 +87,6 @@ export class Application extends BaseEntity {
     @ManyToMany(() => Document, (document) => document.applications, { cascade: ['insert', 'update'] })
     documents: Document[];
 
-    @ManyToMany(() => Type, (type) => type.applications, { cascade: ['insert', 'update'] })
-    types: Type[];
+    // @ManyToMany(() => Type, (type) => type.applications, { cascade: ['insert', 'update'] })
+    // types: Type[];
 }
