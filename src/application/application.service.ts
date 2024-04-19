@@ -5,7 +5,7 @@ import { DateTime } from 'luxon';
 import dataSource from 'db/data-source';
 import { Application } from './entities/application.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager, Equal, Brackets } from 'typeorm';
+import { Equal } from 'typeorm';
 import { GlobalService } from 'src/utilities/global.service';
 import { Log } from 'src/log/entities/log.entity';
 import { EmailService } from 'src/email/email.service';
@@ -37,7 +37,6 @@ export class ApplicationService extends GlobalService {
 
     constructor(
         @InjectRepository(Application)
-        private applicationRepository: Repository<Application>,
         private emailService: EmailService,
     ) {
         super();
@@ -169,15 +168,14 @@ export class ApplicationService extends GlobalService {
                 .createQueryBuilder('partners')
                 .select('partners')
                 .leftJoinAndSelect('partners.documents', 'documents as partner_documents')
-                .where("partners.pk = :pk", { pk: partner_pk })
-                .getOne()
-                ;
+                .where('partners.pk = :pk', { pk: partner_pk })
+                .getOne();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
             return {
-                status: false
-            }
+                status: false,
+            };
         }
     }
 
@@ -211,22 +209,24 @@ export class ApplicationService extends GlobalService {
                     'partner_organization_other_informations',
                     'partner_organizations.pk=partner_organization_other_informations.partner_organization_pk',
                 )
-                .leftJoinAndSelect('partner_organization_other_informations.documents', 'documents as partner_organization_other_information_documents')
+                .leftJoinAndSelect(
+                    'partner_organization_other_informations.documents',
+                    'documents as partner_organization_other_information_documents',
+                )
                 .leftJoinAndMapMany(
                     'partner_organization_other_informations.organization_other_information_financial_human_resources',
                     PartnerOrganizationOtherInformationFinancialHr,
                     'partner_organization_other_information_financial_human_resource',
                     'partner_organization_other_informations.pk=partner_organization_other_information_financial_human_resource.partner_organization_other_information_pk',
                 )
-                .where("partner_organizations.partner_pk = :pk", { pk: partner_pk })
-                .getOne()
-                ;
+                .where('partner_organizations.partner_pk = :pk', { pk: partner_pk })
+                .getOne();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
             return {
-                status: false
-            }
+                status: false,
+            };
         }
     }
 
@@ -236,15 +236,14 @@ export class ApplicationService extends GlobalService {
                 .getRepository(PartnerContact)
                 .createQueryBuilder('partner_contacts')
                 .select('partner_contacts')
-                .where("partner_contacts.partner_pk = :pk", { pk: partner_pk })
-                .getMany()
-                ;
+                .where('partner_contacts.partner_pk = :pk', { pk: partner_pk })
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
             return {
-                status: false
-            }
+                status: false,
+            };
         }
     }
 
@@ -254,16 +253,18 @@ export class ApplicationService extends GlobalService {
                 .getRepository(PartnerFiscalSponsor)
                 .createQueryBuilder('partner_fiscal_sponsors')
                 .select('partner_fiscal_sponsors')
-                .leftJoinAndSelect('partner_fiscal_sponsors.documents', 'documents as partner_fiscal_sponsors_documents')
-                .where("partner_fiscal_sponsors.partner_pk = :pk", { pk: partner_pk })
-                .getOne()
-                ;
+                .leftJoinAndSelect(
+                    'partner_fiscal_sponsors.documents',
+                    'documents as partner_fiscal_sponsors_documents',
+                )
+                .where('partner_fiscal_sponsors.partner_pk = :pk', { pk: partner_pk })
+                .getOne();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
             return {
-                status: false
-            }
+                status: false,
+            };
         }
     }
 
@@ -273,16 +274,18 @@ export class ApplicationService extends GlobalService {
                 .getRepository(PartnerNonprofitEquivalencyDetermination)
                 .createQueryBuilder('partner_nonprofit_equivalency_determinations')
                 .select('partner_nonprofit_equivalency_determinations')
-                .leftJoinAndSelect('partner_nonprofit_equivalency_determinations.documents', 'documents as partner_nonprofit_equivalency_determinations_documents')
-                .where("partner_nonprofit_equivalency_determinations.partner_pk = :pk", { pk: partner_pk })
-                .getOne()
-                ;
+                .leftJoinAndSelect(
+                    'partner_nonprofit_equivalency_determinations.documents',
+                    'documents as partner_nonprofit_equivalency_determinations_documents',
+                )
+                .where('partner_nonprofit_equivalency_determinations.partner_pk = :pk', { pk: partner_pk })
+                .getOne();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
             return {
-                status: false
-            }
+                status: false,
+            };
         }
     }
 
@@ -295,17 +298,16 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('applications.reviews', 'reviews')
                 .leftJoinAndSelect('reviews.user', 'users')
                 .leftJoinAndSelect('reviews.documents', 'documents as review_documents')
-                .where("applications.pk = :pk", { pk })
+                .where('applications.pk = :pk', { pk })
                 .andWhere('reviews.archived = false')
                 .orderBy('reviews.date_created', 'ASC')
-                .getOne()
-                ;
+                .getOne();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
             return {
-                status: false
-            }
+                status: false,
+            };
         }
     }
 
@@ -364,9 +366,7 @@ export class ApplicationService extends GlobalService {
                     .createQueryBuilder()
                     .insert()
                     .into(Application)
-                    .values([
-                        obj
-                    ])
+                    .values([obj])
                     .returning('pk')
                     .execute();
                 const new_application_pk = new_application.generatedMaps[0].pk;
@@ -434,6 +434,7 @@ export class ApplicationService extends GlobalService {
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const partnerID = data?.partner_id;
+
                 const existingPartner = await EntityManager.findOne(Partner, {
                     where: {
                         partner_id: Equal(partnerID),
@@ -1213,21 +1214,21 @@ export class ApplicationService extends GlobalService {
 
                 if (data?.human_resources) {
                     data?.human_resources.forEach((hr: any) => {
-
                         if (hr.hasOwnProperty('pk')) {
                             EntityManager.update(PartnerOrganizationOtherInformationFinancialHr, { pk: hr.pk }, hr);
-                        }
-                        else {
+                        } else {
                             dataSource
                                 .createQueryBuilder()
                                 .insert()
                                 .into(PartnerOrganizationOtherInformationFinancialHr)
-                                .values([{
-                                    partner_organization_other_information_pk: savedPartnerOrgOtherInfo.pk,
-                                    name: hr.name,
-                                    designation: hr.designation,
-                                    created_by: user.pk
-                                }])
+                                .values([
+                                    {
+                                        partner_organization_other_information_pk: savedPartnerOrgOtherInfo.pk,
+                                        name: hr.name,
+                                        designation: hr.designation,
+                                        created_by: user.pk,
+                                    },
+                                ])
                                 .returning('*')
                                 .execute();
                         }
