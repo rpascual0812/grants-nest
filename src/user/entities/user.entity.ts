@@ -11,6 +11,7 @@ import { PartnerAssessment } from 'src/partner/entities/partner-assessment.entit
 import { Type } from 'src/type/entities/type.entity';
 import { Donor } from 'src/donor/entities/donor.entity';
 import { PartnerOrganizationOtherInformationFinancialHumanResources } from 'src/partner/entities/partner-organization-other-information-financial-human-resources.entity';
+import { ProjectSite } from 'src/projects/entities/project-site.entity';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
@@ -100,4 +101,8 @@ export class User extends BaseEntity {
     @OneToMany('Donor', (donor: Donor) => donor.user)
     @JoinColumn({ name: 'pk' })
     donor: Array<Donor>;
+
+    @OneToMany('ProjectSite', (project_site: ProjectSite) => project_site.user)
+    @JoinColumn({ name: 'pk' })
+    project_site: Array<ProjectSite>;
 }
