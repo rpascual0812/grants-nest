@@ -8,9 +8,10 @@ import {
     JoinColumn,
     BaseEntity,
     OneToMany,
+    ManyToMany,
 } from 'typeorm';
 import { ProjectFunding } from './project-funding.entity';
-
+import { Document } from 'src/document/entities/document.entity';
 
 @Entity({ name: 'project_funding_reports' })
 export class ProjectFundingReport extends BaseEntity {
@@ -21,7 +22,7 @@ export class ProjectFundingReport extends BaseEntity {
     project_funding_pk: number;
 
     @Column({ type: 'text', nullable: false })
-    link: string;
+    title: string;
 
     @Column({ type: 'text', nullable: false })
     status: string;
@@ -42,4 +43,7 @@ export class ProjectFundingReport extends BaseEntity {
     )
     @JoinColumn({ name: 'project_funding_pk' })
     project_funding: ProjectFunding;
+
+    @ManyToMany(() => Document, (document) => document.project_funding_reports, { cascade: ['insert', 'update'] })
+    documents: Document[];
 }

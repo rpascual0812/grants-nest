@@ -7,6 +7,7 @@ import { PartnerOrganizationOtherInformation } from 'src/partner/entities/partne
 import { PartnerNonprofitEquivalencyDetermination } from 'src/partner/entities/partner-nonprofit-equivalency-determination.entity';
 import { ProjectFunding } from 'src/projects/entities/project-funding.entity';
 import { ProjectFundingLiquidation } from 'src/projects/entities/project-funding-liquidation.entity';
+import { ProjectFundingReport } from 'src/projects/entities/project-funding-report.entity';
 
 @Entity({ name: 'documents' })
 @Unique(['filename'])
@@ -131,9 +132,23 @@ export class Document {
     @OneToOne(type => ProjectFunding, funding => funding.grantee_acknowledgement, { cascade: true })
     grantee_acknowledgement: ProjectFunding;
 
+    @ManyToMany(() => ProjectFundingReport, project_funding_report => project_funding_report.documents)
+    @JoinTable({
+        name: 'document_project_funding_report_relation',
+        joinColumn: {
+            name: 'document_pk',
+            referencedColumnName: 'pk',
+        },
+        inverseJoinColumn: {
+            name: 'project_funding_report_pk',
+            referencedColumnName: 'pk',
+        }
+    })
+    project_funding_reports: ProjectFundingReport[];
+
     @ManyToMany(() => ProjectFundingLiquidation, project_funding_liquidation => project_funding_liquidation.documents)
     @JoinTable({
-        name: 'project_document_funding_liquidation_relation',
+        name: 'document_project_funding_liquidation_relation',
         joinColumn: {
             name: 'document_pk',
             referencedColumnName: 'pk',
