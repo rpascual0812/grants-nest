@@ -5,6 +5,8 @@ import { Partner } from 'src/partner/entities/partner.entity';
 import { PartnerFiscalSponsor } from 'src/partner/entities/partner-fiscal-sponsor.entity';
 import { PartnerOrganizationOtherInformation } from 'src/partner/entities/partner-organization-other-information.entity';
 import { PartnerNonprofitEquivalencyDetermination } from 'src/partner/entities/partner-nonprofit-equivalency-determination.entity';
+import { ProjectFunding } from 'src/projects/entities/project-funding.entity';
+import { ProjectFundingLiquidation } from 'src/projects/entities/project-funding-liquidation.entity';
 
 @Entity({ name: 'documents' })
 @Unique(['filename'])
@@ -122,4 +124,24 @@ export class Document {
         }
     })
     partner_nonprofit_equivalency_determinations: PartnerNonprofitEquivalencyDetermination[];
+
+    @OneToOne(type => ProjectFunding, funding => funding.bank_receipt_document, { cascade: true })
+    bank_receipt: ProjectFunding;
+
+    @OneToOne(type => ProjectFunding, funding => funding.grantee_acknowledgement, { cascade: true })
+    grantee_acknowledgement: ProjectFunding;
+
+    @ManyToMany(() => ProjectFundingLiquidation, project_funding_liquidation => project_funding_liquidation.documents)
+    @JoinTable({
+        name: 'project_document_funding_liquidation_relation',
+        joinColumn: {
+            name: 'document_pk',
+            referencedColumnName: 'pk',
+        },
+        inverseJoinColumn: {
+            name: 'project_funding_liquidation_pk',
+            referencedColumnName: 'pk',
+        }
+    })
+    project_funding_liquidations: ProjectFundingLiquidation[];
 }
