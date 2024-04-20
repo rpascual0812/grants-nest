@@ -132,7 +132,7 @@ export class ApplicationService extends GlobalService {
                 .select('partners')
                 .leftJoinAndSelect('partners.documents', 'documents as partner_documents')
                 .where("partners.pk IN (:...pk)", { pk: pks })
-                .getOne()
+                .getMany()
                 ;
         } catch (error) {
             console.log(error);
@@ -184,7 +184,7 @@ export class ApplicationService extends GlobalService {
                     'partner_organization_other_informations.pk=partner_organization_other_information_financial_human_resource.partner_organization_other_information_pk',
                 )
                 .where("partner_organizations.partner_pk IN (:...pk)", { pk: pks })
-                .getOne()
+                .getMany()
                 ;
         } catch (error) {
             console.log(error);
@@ -221,7 +221,7 @@ export class ApplicationService extends GlobalService {
                 .select('partner_fiscal_sponsors')
                 .leftJoinAndSelect('partner_fiscal_sponsors.documents', 'documents as partner_fiscal_sponsors_documents')
                 .where("partner_fiscal_sponsors.partner_pk IN (:...pk)", { pk: pks })
-                .getOne()
+                .getMany()
                 ;
         } catch (error) {
             console.log(error);
@@ -240,7 +240,7 @@ export class ApplicationService extends GlobalService {
                 .select('partner_nonprofit_equivalency_determinations')
                 .leftJoinAndSelect('partner_nonprofit_equivalency_determinations.documents', 'documents as partner_nonprofit_equivalency_determinations_documents')
                 .where("partner_nonprofit_equivalency_determinations.partner_pk IN (:...pk)", { pk: pks })
-                .getOne()
+                .getMany()
                 ;
         } catch (error) {
             console.log(error);
@@ -263,7 +263,7 @@ export class ApplicationService extends GlobalService {
                 .where("applications.pk IN (:...pk)", { pk: pks })
                 .andWhere('reviews.archived = false')
                 .orderBy('reviews.date_created', 'ASC')
-                .getOne();
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
