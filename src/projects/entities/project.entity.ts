@@ -6,6 +6,7 @@ import { ProjectStatus } from './project-statuses.entity';
 import { Type } from 'src/type/entities/type.entity';
 import { ProjectProposal } from './project-proposal.entity';
 import { Partner } from 'src/partner/entities/partner.entity';
+import { ProjectFunding } from './project-funding.entity';
 
 @Entity({ name: 'projects' })
 export class Project extends BaseEntity {
@@ -74,4 +75,7 @@ export class Project extends BaseEntity {
     @ManyToOne((type) => Partner, (partner) => partner.projects, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'partner_pk' })
     partner: Partner;
+
+    @OneToMany((type) => ProjectFunding, (project_funding) => project_funding.project, { cascade: true })
+    project_funding: ProjectFunding;
 }
