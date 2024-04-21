@@ -141,8 +141,8 @@ export class PartnerService extends GlobalService {
                 )
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
-                .leftJoinAndSelect('applications.statuses', 'application_statuses')
-                .leftJoinAndSelect('applications.types', 'type_application_relation')
+                // .leftJoinAndSelect('applications.statuses', 'application_statuses')
+                // .leftJoinAndSelect('applications.types', 'type_application_relation')
                 .leftJoinAndSelect('partner_fiscal_sponsors.documents', 'documents as fiscal_sponsor_documents')
                 .leftJoinAndSelect(
                     'partner_nonprofit_equivalency_determinations.documents',
