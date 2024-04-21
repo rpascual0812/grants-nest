@@ -131,9 +131,8 @@ export class ApplicationService extends GlobalService {
                 .createQueryBuilder('partners')
                 .select('partners')
                 .leftJoinAndSelect('partners.documents', 'documents as partner_documents')
-                .where("partners.pk IN (:...pk)", { pk: pks })
-                .getMany()
-                ;
+                .where('partners.pk IN (:...pk)', { pk: pks })
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
@@ -183,9 +182,8 @@ export class ApplicationService extends GlobalService {
                     'partner_organization_other_information_financial_human_resource',
                     'partner_organization_other_informations.pk=partner_organization_other_information_financial_human_resource.partner_organization_other_information_pk',
                 )
-                .where("partner_organizations.partner_pk IN (:...pk)", { pk: pks })
-                .getMany()
-                ;
+                .where('partner_organizations.partner_pk IN (:...pk)', { pk: pks })
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
@@ -201,9 +199,8 @@ export class ApplicationService extends GlobalService {
                 .getRepository(PartnerContact)
                 .createQueryBuilder('partner_contacts')
                 .select('partner_contacts')
-                .where("partner_contacts.partner_pk IN (:...pk)", { pk: pks })
-                .getMany()
-                ;
+                .where('partner_contacts.partner_pk IN (:...pk)', { pk: pks })
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
@@ -219,10 +216,12 @@ export class ApplicationService extends GlobalService {
                 .getRepository(PartnerFiscalSponsor)
                 .createQueryBuilder('partner_fiscal_sponsors')
                 .select('partner_fiscal_sponsors')
-                .leftJoinAndSelect('partner_fiscal_sponsors.documents', 'documents as partner_fiscal_sponsors_documents')
-                .where("partner_fiscal_sponsors.partner_pk IN (:...pk)", { pk: pks })
-                .getMany()
-                ;
+                .leftJoinAndSelect(
+                    'partner_fiscal_sponsors.documents',
+                    'documents as partner_fiscal_sponsors_documents',
+                )
+                .where('partner_fiscal_sponsors.partner_pk IN (:...pk)', { pk: pks })
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
@@ -238,10 +237,12 @@ export class ApplicationService extends GlobalService {
                 .getRepository(PartnerNonprofitEquivalencyDetermination)
                 .createQueryBuilder('partner_nonprofit_equivalency_determinations')
                 .select('partner_nonprofit_equivalency_determinations')
-                .leftJoinAndSelect('partner_nonprofit_equivalency_determinations.documents', 'documents as partner_nonprofit_equivalency_determinations_documents')
-                .where("partner_nonprofit_equivalency_determinations.partner_pk IN (:...pk)", { pk: pks })
-                .getMany()
-                ;
+                .leftJoinAndSelect(
+                    'partner_nonprofit_equivalency_determinations.documents',
+                    'documents as partner_nonprofit_equivalency_determinations_documents',
+                )
+                .where('partner_nonprofit_equivalency_determinations.partner_pk IN (:...pk)', { pk: pks })
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
@@ -260,7 +261,7 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('applications.reviews', 'reviews')
                 .leftJoinAndSelect('reviews.user', 'users')
                 .leftJoinAndSelect('reviews.documents', 'documents as review_documents')
-                .where("applications.pk IN (:...pk)", { pk: pks })
+                .where('applications.pk IN (:...pk)', { pk: pks })
                 .andWhere('reviews.archived = false')
                 .orderBy('reviews.date_created', 'ASC')
                 .getMany();
@@ -642,15 +643,21 @@ export class ApplicationService extends GlobalService {
         try {
             const savedProject = await queryRunner.manager.transaction(async (EntityManager) => {
                 const appProjectPk = getParsedPk(data?.pk);
-                const applicationPk = data?.application_pk;
+                const applicationPk = getParsedPk(data?.application_pk);
                 const existingProject = await EntityManager.findOne(Project, {
                     where: {
                         pk: Equal(appProjectPk),
                     },
                 });
+                const existingApplication = await EntityManager.findOne(Application, {
+                    where: {
+                        pk: Equal(applicationPk),
+                    },
+                });
 
                 const project = existingProject ? existingProject : new Project();
                 project.application_pk = applicationPk;
+                project.partner_pk = existingApplication?.partner_pk;
                 project.title = getDefaultValue(data?.title, existingProject?.title);
                 project.duration = getDefaultValue(data?.duration, existingProject?.duration);
                 project.background = getDefaultValue(data?.background, existingProject?.background);
@@ -1177,19 +1184,24 @@ export class ApplicationService extends GlobalService {
                 if (data?.human_resources) {
                     data?.human_resources.forEach((hr: any) => {
                         if (hr.hasOwnProperty('pk')) {
-                            EntityManager.update(PartnerOrganizationOtherInformationFinancialHumanResources, { pk: hr.pk }, hr);
-                        }
-                        else {
+                            EntityManager.update(
+                                PartnerOrganizationOtherInformationFinancialHumanResources,
+                                { pk: hr.pk },
+                                hr,
+                            );
+                        } else {
                             dataSource
                                 .createQueryBuilder()
                                 .insert()
                                 .into(PartnerOrganizationOtherInformationFinancialHumanResources)
-                                .values([{
-                                    partner_organization_other_information_pk: savedPartnerOrgOtherInfo.pk,
-                                    name: hr.name,
-                                    designation: hr.designation,
-                                    created_by: user.pk
-                                }])
+                                .values([
+                                    {
+                                        partner_organization_other_information_pk: savedPartnerOrgOtherInfo.pk,
+                                        name: hr.name,
+                                        designation: hr.designation,
+                                        created_by: user.pk,
+                                    },
+                                ])
                                 .returning('*')
                                 .execute();
                         }
