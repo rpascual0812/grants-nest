@@ -132,4 +132,20 @@ export class ProjectsController {
         return project;
     }
 
+    @UseGuards(JwtAuthGuard)
+    @Post('attachment')
+    saveAttachment(@Body() body: any, @Request() req: any) {
+        return this.projectsService.saveAttachment(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk/document/:document_pk')
+    deleteApplicationAttachment(
+        @Param('pk') project_pk: number,
+        @Param('document_pk') document_pk: number,
+        @Request() req: any,
+    ) {
+        return this.projectsService.deleteAttachment(project_pk, document_pk, req.user);
+    }
+
 }

@@ -8,6 +8,7 @@ import { PartnerNonprofitEquivalencyDetermination } from 'src/partner/entities/p
 import { ProjectFunding } from 'src/projects/entities/project-funding.entity';
 import { ProjectFundingLiquidation } from 'src/projects/entities/project-funding-liquidation.entity';
 import { ProjectFundingReport } from 'src/projects/entities/project-funding-report.entity';
+import { Project } from 'src/projects/entities/project.entity';
 
 @Entity({ name: 'documents' })
 @Unique(['filename'])
@@ -159,4 +160,18 @@ export class Document {
         }
     })
     project_funding_liquidations: ProjectFundingLiquidation[];
+
+    @ManyToMany(() => Project, project => project.documents)
+    @JoinTable({
+        name: 'document_project_relation',
+        joinColumn: {
+            name: 'document_pk',
+            referencedColumnName: 'pk',
+        },
+        inverseJoinColumn: {
+            name: 'project_pk',
+            referencedColumnName: 'pk',
+        }
+    })
+    projects: Project[];
 }
