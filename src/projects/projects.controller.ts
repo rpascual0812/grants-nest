@@ -54,10 +54,10 @@ export class ProjectsController {
                 if (!project.hasOwnProperty('partner')) {
                     project['partner'] = {};
                 }
-                const partner = partners.filter((partner) => partner.pk == project.partner_pk);
-                project['partner'] = partner[0];
 
-                if (!project['partner'].hasOwnProperty('organization')) {
+                const partner = partners.filter((partner) => partner.pk == project.partner_pk);
+                project['partner'] = partner[0] ?? {};
+                if (!project.partner.hasOwnProperty('organization')) {
                     project['partner']['organization'] = {};
                 }
                 const partner_organization = partner_organizations.filter(
