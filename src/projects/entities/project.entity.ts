@@ -9,6 +9,7 @@ import { Partner } from 'src/partner/entities/partner.entity';
 import { ProjectFunding } from './project-funding.entity';
 import { Review } from 'src/review/entities/review.entity';
 
+
 @Entity({ name: 'projects' })
 export class Project extends BaseEntity {
     @PrimaryGeneratedColumn()
