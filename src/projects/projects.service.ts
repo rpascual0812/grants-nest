@@ -15,6 +15,7 @@ import { PartnerContact } from 'src/partner/entities/partner-contacts.entity';
 import { PartnerFiscalSponsor } from 'src/partner/entities/partner-fiscal-sponsor.entity';
 import { PartnerNonprofitEquivalencyDetermination } from 'src/partner/entities/partner-nonprofit-equivalency-determination.entity';
 import { Application } from 'src/application/entities/application.entity';
+import { Document } from 'src/document/entities/document.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -59,6 +60,7 @@ export class ProjectsService extends GlobalService {
             const data = await dataSource
                 .getRepository(Project)
                 .createQueryBuilder('projects')
+                .leftJoinAndSelect('projects.documents', 'documents')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
                 .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
@@ -89,7 +91,7 @@ export class ProjectsService extends GlobalService {
                 .leftJoinAndSelect('applications.documents', 'documents')
                 .leftJoinAndSelect('applications.recommendations', 'application_recommendations')
                 .andWhere('applications.pk IN (:...pk)', { pk: pks })
-                .getOne();
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
@@ -245,6 +247,75 @@ export class ProjectsService extends GlobalService {
             return {
                 status: false,
             };
+        }
+    }
+
+    async saveAttachment(data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const project_pk = data?.project_pk;
+
+                if (project_pk && data.file.pk) {
+                    await EntityManager.update(Document, { pk: data.file.pk }, { type: data.type });
+
+                    const document = await EntityManager.query(
+                        'insert into document_project_relation (document_pk, project_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
+                        [data.file.pk, project_pk],
+                    );
+                    return {
+                        status: document ? true : false,
+                    };
+                } else {
+                    return {
+                        status: false,
+                        code: 500,
+                        message: 'Project not found',
+                    };
+                }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async deleteAttachment(pk: number, document_pk: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                await EntityManager.query(
+                    'delete from document_project_relation where document_pk = $1 and project_pk = $2;',
+                    [document_pk, pk],
+                );
+
+                const doc = await EntityManager.update(Document, { pk: document_pk }, { archived: true });
+
+                // save logs
+                const model = {
+                    pk: document_pk,
+                    name: 'documents',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return {
+                    status: doc ? true : false,
+                };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
         }
     }
 }
