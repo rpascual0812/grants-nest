@@ -9,6 +9,7 @@ import { Partner } from 'src/partner/entities/partner.entity';
 import { ProjectFunding } from './project-funding.entity';
 import { Review } from 'src/review/entities/review.entity';
 import { Document } from 'src/document/entities/document.entity';
+import { ProjectRecommendation } from './project-recommendation.entity';
 
 @Entity({ name: 'projects' })
 export class Project extends BaseEntity {
@@ -92,4 +93,8 @@ export class Project extends BaseEntity {
 
     @ManyToMany(() => Document, (document) => document.projects, { cascade: ['insert', 'update'] })
     documents: Document[];
+
+    @OneToMany('ProjectRecommendation', (projectRecommendation: ProjectRecommendation) => projectRecommendation.project)
+    @JoinColumn({ name: 'pk' })
+    recommendations: Array<ProjectRecommendation>;
 }
