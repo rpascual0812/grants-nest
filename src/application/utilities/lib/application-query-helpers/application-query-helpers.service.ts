@@ -5,42 +5,36 @@ type TODO = any;
 
 @Injectable()
 export class ApplicationQueryHelpersService {
-    constructor(private applicationService: ApplicationService) { }
+    constructor(private applicationService: ApplicationService) {}
 
-    async getPartner(application: TODO) {
-        const partner = await this.applicationService.getPartner([application.data.partner_pk]);
+    async getPartner(partnerPks: number[]) {
+        const partner = await this.applicationService.getPartner(partnerPks);
         return partner ?? {};
     }
 
-    async getPartnerOrganization(application: TODO) {
-        const partnerOrganization = await this.applicationService.getPartnerOrganization(
-            [application?.data?.['partner']?.pk]
-        );
+    async getPartnerOrganization(partnerPks: number[]) {
+        const partnerOrganization = await this.applicationService.getPartnerOrganization(partnerPks);
         return partnerOrganization ?? {};
     }
 
-    async getPartnerContacts(application: TODO) {
-        const partnerContacts = await this.applicationService.getPartnerContacts([application?.data?.['partner']?.pk]);
+    async getPartnerContacts(partnerPks: number[]) {
+        const partnerContacts = await this.applicationService.getPartnerContacts(partnerPks);
         return partnerContacts ?? {};
     }
 
-    async getPartnerFiscalSponsor(application: TODO) {
-        const partnerFiscalSponsor = await this.applicationService.getPartnerFiscalSponsor(
-            [application?.data?.['partner']?.pk]
-        );
+    async getPartnerFiscalSponsor(partnerPks: number[]) {
+        const partnerFiscalSponsor = await this.applicationService.getPartnerFiscalSponsor(partnerPks);
         return partnerFiscalSponsor ?? {};
     }
 
-    async getPartnerNonProfitEquivalencyDetermination(application: TODO) {
+    async getPartnerNonProfitEquivalencyDetermination(partnerPks: number[]) {
         const partnerNonProfitEquivalencyDetermination =
-            await this.applicationService.getPartnerNonprofitEquivalencyDetermination(
-                [application?.data?.['partner']?.pk]
-            );
+            await this.applicationService.getPartnerNonprofitEquivalencyDetermination(partnerPks);
         return partnerNonProfitEquivalencyDetermination ?? {};
     }
 
-    async getApplicationReviews(application: TODO) {
-        const applicationReviews = await this.applicationService.getReviews([application?.data?.pk]);
+    async getApplicationReviews(partnerPks: number[]) {
+        const applicationReviews = await this.applicationService.getReviews(partnerPks);
         return applicationReviews ?? {};
     }
 }
