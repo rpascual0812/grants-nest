@@ -16,6 +16,8 @@ import { PartnerFiscalSponsor } from 'src/partner/entities/partner-fiscal-sponso
 import { PartnerNonprofitEquivalencyDetermination } from 'src/partner/entities/partner-nonprofit-equivalency-determination.entity';
 import { Application } from 'src/application/entities/application.entity';
 import { Document } from 'src/document/entities/document.entity';
+import { Review } from 'src/review/entities/review.entity';
+import { ProjectRecommendation } from './entities/project-recommendation.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -61,6 +63,7 @@ export class ProjectsService extends GlobalService {
                 .getRepository(Project)
                 .createQueryBuilder('projects')
                 .leftJoinAndSelect('projects.documents', 'documents')
+                .leftJoinAndSelect('projects.recommendations', 'project_recommendations')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
                 .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
@@ -309,6 +312,177 @@ export class ProjectsService extends GlobalService {
                 return {
                     status: doc ? true : false,
                 };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveReview(data: any, user: any) {
+        console.log(data);
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const review = new Review();
+                review.message = data.message;
+                review.type = data.type;
+                review.created_by = user.pk;
+                review.documents = data.documents;
+                const newReview = await dataSource.manager.save(review);
+
+                if (newReview) {
+                    let project = await Project.findOneBy({
+                        pk: data.project_pk,
+                    });
+
+                    if (!project.status) {
+                        project.status = 'Contract Preparation';
+                        project.save();
+                    }
+
+                    await EntityManager.query(
+                        'insert into review_project_relation (review_pk, project_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
+                        [newReview.pk, data.project_pk],
+                    );
+
+                    return {
+                        status: true,
+                        data: newReview,
+                    };
+                } else {
+                    return {
+                        status: false,
+                        code: 500,
+                        message: 'Application not found',
+                    };
+                }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async deleteReview(pk: number, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const review = await EntityManager.update(Review, { pk }, { archived: true });
+
+                // save logs
+                const model = {
+                    pk,
+                    name: 'reviews',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return {
+                    status: review ? true : false,
+                };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveRecommendation(data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const project_pk = data?.project_pk;
+
+                if (project_pk) {
+                    const exists = await ProjectRecommendation.findOneBy({
+                        project_pk: data.project_pk,
+                        type: data.type,
+                    });
+
+                    let newRecommendation = null;
+                    if (exists) {
+                        newRecommendation = await EntityManager.update(
+                            ProjectRecommendation,
+                            { project_pk: data.project_pk, type: data.type },
+                            { recommendation: data.recommendation },
+                        );
+                    } else {
+                        const recommendation = new ProjectRecommendation();
+                        recommendation.project_pk = data.project_pk;
+                        recommendation.recommendation = data.recommendation;
+                        recommendation.type = data.type;
+                        recommendation.created_by = user.pk;
+                        newRecommendation = await dataSource.manager.save(recommendation);
+                    }
+
+                    if (newRecommendation) {
+                        let project = await Project.findOneBy({
+                            pk: data.project_pk,
+                        });
+
+                        if (project.status == 'Initial Submission' &&
+                            data.recommendation == 'Approved for Next Stage'
+                        ) {
+                            project.status = 'Contract Preparation';
+                            project.save();
+                        } else if (
+                            project.status == 'Contract Preparation' &&
+                            data.recommendation == 'Approved for Next Stage'
+                        ) {
+                            project.status = 'Final Approval';
+                            project.save();
+                        } else if (
+                            project.status == 'Final Approval' &&
+                            data.recommendation == 'Approved for Next Stage'
+                        ) {
+                            project.status = 'Partner Signing';
+                            project.save();
+                        } else if (
+                            project.status == 'Partner Signing' &&
+                            data.recommendation == 'Approved for Next Stage'
+                        ) {
+                            project.status = 'Closed';
+                            project.save();
+                        }
+                    }
+
+                    // save logs
+                    const model = {
+                        pk: data.project_pk,
+                        name: 'project_recommendations',
+                        recommendation: data.recommendation,
+                        type: data.type,
+                        status: exists ? 'update' : 'insert',
+                    };
+                    await this.saveLog({ model, user });
+
+                    return {
+                        status: newRecommendation ? true : false,
+                        data: newRecommendation,
+                    };
+                } else {
+                    return {
+                        status: false,
+                        code: 500,
+                        message: 'Document/Project not found',
+                    };
+                }
             });
         } catch (err) {
             this.saveError({});
