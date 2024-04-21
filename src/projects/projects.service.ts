@@ -457,7 +457,13 @@ export class ProjectsService extends GlobalService {
                             project.status == 'Partner Signing' &&
                             data.recommendation == 'Approved for Next Stage'
                         ) {
-                            project.status = 'Closed';
+                            project.status = 'Fund Release';
+                            project.save();
+                        } else if (
+                            project.status == 'Fund Release' &&
+                            data.recommendation == 'Approved for Next Stage'
+                        ) {
+                            project.status = 'Completed';
                             project.save();
                         }
                     }
