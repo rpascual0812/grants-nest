@@ -57,6 +57,20 @@ export class Review extends BaseEntity {
     })
     applications: Application[];
 
+    @ManyToMany(() => Project, project => project.reviews)
+    @JoinTable({
+        name: 'review_project_relation',
+        joinColumn: {
+            name: 'review_pk',
+            referencedColumnName: 'pk',
+        },
+        inverseJoinColumn: {
+            name: 'project_pk',
+            referencedColumnName: 'pk',
+        }
+    })
+    projects: Project[];
+
     @ManyToMany(() => Document, (document) => document.reviews, { cascade: ['insert', 'update'] })
     documents: Document[];
 }
