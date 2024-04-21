@@ -8,7 +8,7 @@ export class ApplicationController {
     constructor(
         private readonly applicationService: ApplicationService,
         private readonly applicationQueryHelpersService: ApplicationQueryHelpersService,
-    ) {}
+    ) { }
 
     @UseGuards(JwtAuthGuard)
     @Post('generate')
@@ -214,6 +214,10 @@ export class ApplicationController {
             await this.applicationQueryHelpersService.getPartnerNonProfitEquivalencyDetermination(partnerPks);
         application.data['partner']['partner_nonprofit_equivalency_determination'] =
             partnerNonprofitEquivalencyDetermination[0];
+
+        // Reviews
+        const applicationReviews: any = await this.applicationService.getReviews([application?.data?.pk]);
+        application.data['reviews'] = applicationReviews[0]?.['reviews'] ?? [];
 
         return application;
     }
