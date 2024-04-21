@@ -149,7 +149,7 @@ export class ApplicationController {
                     partner_nonprofit_equivalency_determination[0];
 
                 if (!application.hasOwnProperty('reviews')) {
-                    application['reviews'] = {};
+                    application['reviews'] = [];
                 }
                 const applicationReview = applicationReviews.filter((review) => review.pk == application.pk);
                 application['reviews'] = applicationReview[0]?.['reviews'] ?? [];
@@ -267,9 +267,9 @@ export class ApplicationController {
         // Reviews
         const applicationReviews = await this.applicationService.getReviews([application.data.pk]);
         if (!application.data.hasOwnProperty('reviews')) {
-            application.data['reviews'] = {};
+            application.data['reviews'] = [];
         }
-        application.data['reviews'] = applicationReviews[0]['reviews'];
+        application.data['reviews'] = applicationReviews[0]?.['reviews'] ?? [];
 
         return application;
     }

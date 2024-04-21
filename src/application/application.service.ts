@@ -56,12 +56,12 @@ export class ApplicationService extends GlobalService {
 
                 .leftJoinAndSelect('projects.type', 'types')
                 .where('applications.archived = false')
-                .andWhere(
-                    filters.hasOwnProperty('keyword') && filters.keyword != ''
-                        ? '(partners.name ILIKE :keyword or partners.email_address ILIKE :keyword)'
-                        : '1=1',
-                    { keyword: `%${filters.keyword}%` },
-                )
+                // .andWhere(
+                //     filters.hasOwnProperty('keyword') && filters.keyword != ''
+                //         ? '(partners.name ILIKE :keyword or partners.email_address ILIKE :keyword)'
+                //         : '1=1',
+                //     { keyword: `%${filters.keyword}%` },
+                // )
                 .andWhere(
                     filters.hasOwnProperty('type_pk') && filters?.type_pk && filters?.type_pk?.trim() !== ''
                         ? 'projects.type_pk = :type_pk'
