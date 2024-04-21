@@ -1586,7 +1586,7 @@ export class ApplicationService extends GlobalService {
                             application.status == 'Due Diligence Final Review' &&
                             data.recommendation == 'Approved for Next Stage'
                         ) {
-                            application.status = 'Contract Preparation';
+                            application.status = 'Approved';
                             application.save();
                         }
                     }
