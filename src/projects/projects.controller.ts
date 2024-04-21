@@ -21,34 +21,34 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectsService: ProjectsService) {}
+    constructor(private readonly projectService: ProjectsService) { }
 
     @UseGuards(JwtAuthGuard)
     @Get()
     async fetch(@Request() req: any) {
-        let projects: any = await this.projectsService.findAll(req.query);
+        let projects: any = await this.projectService.findAll(req.query);
         if (projects.data.length > 0) {
             const pks = projects.data.map((application) => application.pk);
             const partner_pks = projects.data.map((application) => application.partner_pk);
 
             // Partner
-            const partners: any = await this.projectsService.getPartner(partner_pks);
+            const partners: any = await this.projectService.getPartner(partner_pks);
 
             // Partner Organization
-            const partner_organizations: any = await this.projectsService.getPartnerOrganization(partner_pks);
+            const partner_organizations: any = await this.projectService.getPartnerOrganization(partner_pks);
 
             // Partner Contacts
-            const partner_contacts: any = await this.projectsService.getPartnerContacts(partner_pks);
+            const partner_contacts: any = await this.projectService.getPartnerContacts(partner_pks);
 
             // Partner Fiscal Sponsor
-            const partner_fiscal_sponsors: any = await this.projectsService.getPartnerFiscalSponsor(partner_pks);
+            const partner_fiscal_sponsors: any = await this.projectService.getPartnerFiscalSponsor(partner_pks);
 
             // Partner Non-profit Equivalency Determination
             const partner_nonprofit_equivalency_determinations: any =
-                await this.projectsService.getPartnerNonprofitEquivalencyDetermination(partner_pks);
+                await this.projectService.getPartnerNonprofitEquivalencyDetermination(partner_pks);
 
             // Reviews
-            const projectReviews: any = await this.projectsService.getReviews(pks);
+            const projectReviews: any = await this.projectService.getReviews(pks);
 
             projects.data.forEach((project) => {
                 if (!project.hasOwnProperty('partner')) {
@@ -102,24 +102,24 @@ export class ProjectsController {
     @UseGuards(JwtAuthGuard)
     @Get(':pk/review')
     async fetchReview(@Param('pk') pk: number, @Request() req: any) {
-        const project: any = await this.projectsService.find({ pk });
+        const project: any = await this.projectService.find({ pk });
 
         // Application
-        const application = await this.projectsService.getApplication([project.data.application_pk]);
+        const application = await this.projectService.getApplication([project.data.application_pk]);
         if (!project.data.hasOwnProperty('partner')) {
             project.data['application'] = {};
         }
         project.data['application'] = application[0];
 
         // Partner
-        const partner = await this.projectsService.getPartner([project.data.partner_pk]);
+        const partner = await this.projectService.getPartner([project.data.partner_pk]);
         if (!project.data.hasOwnProperty('partner')) {
             project.data['partner'] = {};
         }
         project.data['partner'] = partner[0];
 
         // Partner Organization
-        const partner_organizations = await this.projectsService.getPartnerOrganization([
+        const partner_organizations = await this.projectService.getPartnerOrganization([
             project?.data?.['partner']?.pk,
         ]);
 
@@ -129,14 +129,14 @@ export class ProjectsController {
         project.data['partner']['organization'] = partner_organizations[0];
 
         // Partner Contacts
-        const partner_contacts = await this.projectsService.getPartnerContacts([project.data['partner'].pk]);
+        const partner_contacts = await this.projectService.getPartnerContacts([project.data['partner'].pk]);
         if (!project.data['partner'].hasOwnProperty('contacts')) {
             project.data['partner']['contacts'] = [];
         }
         project.data['partner']['contacts'] = partner_contacts;
 
         // Partner Fiscal Sponsor
-        const partner_fiscal_sponsor = await this.projectsService.getPartnerFiscalSponsor([project.data['partner'].pk]);
+        const partner_fiscal_sponsor = await this.projectService.getPartnerFiscalSponsor([project.data['partner'].pk]);
         if (!project.data['partner'].hasOwnProperty('partner_fiscal_sponsor')) {
             project.data['partner']['partner_fiscal_sponsor'] = {};
         }
@@ -144,7 +144,7 @@ export class ProjectsController {
 
         // Partner Non-profit Equivalency Determination
         const partner_nonprofit_equivalency_determination =
-            await this.projectsService.getPartnerNonprofitEquivalencyDetermination([project.data['partner'].pk]);
+            await this.projectService.getPartnerNonprofitEquivalencyDetermination([project.data['partner'].pk]);
         if (!project.data['partner'].hasOwnProperty('partner_nonprofit_equivalency_determination')) {
             project.data['partner']['partner_nonprofit_equivalency_determination'] = {};
         }
@@ -152,7 +152,7 @@ export class ProjectsController {
             partner_nonprofit_equivalency_determination[0];
 
         // Reviews
-        const projectReviews = await this.projectsService.getReviews([project.data.pk]);
+        const projectReviews = await this.projectService.getReviews([project.data.pk]);
         if (!project.data.hasOwnProperty('reviews')) {
             project.data['reviews'] = [];
         }
@@ -164,7 +164,7 @@ export class ProjectsController {
     @UseGuards(JwtAuthGuard)
     @Post('attachment')
     saveAttachment(@Body() body: any, @Request() req: any) {
-        return this.projectsService.saveAttachment(body, req.user);
+        return this.projectService.saveAttachment(body, req.user);
     }
 
     @UseGuards(JwtAuthGuard)
@@ -174,6 +174,24 @@ export class ProjectsController {
         @Param('document_pk') document_pk: number,
         @Request() req: any,
     ) {
-        return this.projectsService.deleteAttachment(project_pk, document_pk, req.user);
+        return this.projectService.deleteAttachment(project_pk, document_pk, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('review')
+    saveReview(@Body() body: any, @Request() req: any) {
+        return this.projectService.saveReview(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete('review/:pk')
+    deleteReview(@Param('pk') pk: number, @Request() req: any) {
+        return this.projectService.deleteReview(pk, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('recommendation')
+    saveRecommendation(@Body() body: any, @Request() req: any) {
+        return this.projectService.saveRecommendation(body, req.user);
     }
 }

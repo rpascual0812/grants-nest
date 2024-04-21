@@ -1836,6 +1836,9 @@ export class ApplicationService extends GlobalService {
                     </div>\
                 </div>\
             </div>\
+            <div style="width: 100%; text-align: center;">\
+                <a href="http://3.0.54.110/public/application/${application.uuid}/status">http://3.0.54.110/public/${application.uuid}/status</a>\
+            </div>\
         </div>\
     </div>`; // MODIFY: must be a template from the database
 
