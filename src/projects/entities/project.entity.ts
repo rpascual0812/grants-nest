@@ -8,7 +8,7 @@ import { ProjectProposal } from './project-proposal.entity';
 import { Partner } from 'src/partner/entities/partner.entity';
 import { ProjectFunding } from './project-funding.entity';
 import { Review } from 'src/review/entities/review.entity';
-
+import { Document } from 'src/document/entities/document.entity';
 
 @Entity({ name: 'projects' })
 export class Project extends BaseEntity {
@@ -89,4 +89,7 @@ export class Project extends BaseEntity {
 
     @ManyToMany(() => Review, (review) => review.projects, { cascade: ['insert', 'update'] })
     reviews: Review[];
+
+    @ManyToMany(() => Document, (document) => document.projects, { cascade: ['insert', 'update'] })
+    documents: Document[];
 }
