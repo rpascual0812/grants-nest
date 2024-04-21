@@ -1,10 +1,27 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, UseInterceptors, UploadedFile, Response, HttpStatus, UnauthorizedException, InternalServerErrorException, Put } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Body,
+    Patch,
+    Param,
+    Delete,
+    UseGuards,
+    Request,
+    UseInterceptors,
+    UploadedFile,
+    Response,
+    HttpStatus,
+    UnauthorizedException,
+    InternalServerErrorException,
+    Put,
+} from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectsService: ProjectsService) { }
+    constructor(private readonly projectsService: ProjectsService) {}
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -27,46 +44,54 @@ export class ProjectsController {
             const partner_fiscal_sponsors: any = await this.projectsService.getPartnerFiscalSponsor(partner_pks);
 
             // Partner Non-profit Equivalency Determination
-            const partner_nonprofit_equivalency_determinations: any = await this.projectsService.getPartnerNonprofitEquivalencyDetermination(partner_pks);
+            const partner_nonprofit_equivalency_determinations: any =
+                await this.projectsService.getPartnerNonprofitEquivalencyDetermination(partner_pks);
 
             // Reviews
             const projectReviews: any = await this.projectsService.getReviews(pks);
 
-            projects.data.forEach(project => {
+            projects.data.forEach((project) => {
                 if (!project.hasOwnProperty('partner')) {
                     project['partner'] = {};
                 }
-                const partner = partners.filter(partner => partner.pk == project.partner_pk);
+                const partner = partners.filter((partner) => partner.pk == project.partner_pk);
                 project['partner'] = partner[0];
 
                 if (!project['partner'].hasOwnProperty('organization')) {
                     project['partner']['organization'] = {};
                 }
-                const partner_organization = partner_organizations.filter(organization => organization.partner_pk == project.partner_pk);
+                const partner_organization = partner_organizations.filter(
+                    (organization) => organization.partner_pk == project.partner_pk,
+                );
                 project['partner']['organization'] = partner_organization;
 
                 if (!project['partner'].hasOwnProperty('contacts')) {
                     project['partner']['contacts'] = {};
                 }
-                const partner_contact = partner_contacts.filter(contact => contact.partner_pk == project.partner_pk);
+                const partner_contact = partner_contacts.filter((contact) => contact.partner_pk == project.partner_pk);
                 project['partner']['contacts'] = partner_contact;
 
                 if (!project['partner'].hasOwnProperty('partner_fiscal_sponsor')) {
                     project['partner']['partner_fiscal_sponsor'] = {};
                 }
-                const partner_fiscal_sponsor = partner_fiscal_sponsors.filter(fiscal => fiscal.partner_pk == project.partner_pk);
+                const partner_fiscal_sponsor = partner_fiscal_sponsors.filter(
+                    (fiscal) => fiscal.partner_pk == project.partner_pk,
+                );
                 project['partner']['partner_fiscal_sponsor'] = partner_fiscal_sponsor[0];
 
                 if (!project['partner'].hasOwnProperty('partner_nonprofit_equivalency_determination')) {
                     project['partner']['partner_nonprofit_equivalency_determination'] = {};
                 }
-                const partner_nonprofit_equivalency_determination = partner_nonprofit_equivalency_determinations.filter(nonprofit => nonprofit.partner_pk == project.partner_pk);
-                project['partner']['partner_nonprofit_equivalency_determination'] = partner_nonprofit_equivalency_determination[0];
+                const partner_nonprofit_equivalency_determination = partner_nonprofit_equivalency_determinations.filter(
+                    (nonprofit) => nonprofit.partner_pk == project.partner_pk,
+                );
+                project['partner']['partner_nonprofit_equivalency_determination'] =
+                    partner_nonprofit_equivalency_determination[0];
 
                 if (!project.hasOwnProperty('reviews')) {
                     project['reviews'] = [];
                 }
-                const projectReview = projectReviews.filter(review => review.pk == project.pk);
+                const projectReview = projectReviews.filter((review) => review.pk == project.pk);
                 project['reviews'] = projectReview[0]?.['reviews'] ?? [];
             });
         }
@@ -80,7 +105,7 @@ export class ProjectsController {
         const project: any = await this.projectsService.find({ pk });
 
         // Application
-        const application = await this.projectsService.getApplication([project.data.pk]);
+        const application = await this.projectsService.getApplication([project.data.application_pk]);
         if (!project.data.hasOwnProperty('partner')) {
             project.data['application'] = {};
         }
@@ -94,7 +119,10 @@ export class ProjectsController {
         project.data['partner'] = partner[0];
 
         // Partner Organization
-        const partner_organizations = await this.projectsService.getPartnerOrganization([project.data['partner'].pk]);
+        const partner_organizations = await this.projectsService.getPartnerOrganization([
+            project?.data?.['partner']?.pk,
+        ]);
+
         if (!project.data['partner'].hasOwnProperty('organization')) {
             project.data['partner']['organization'] = {};
         }
@@ -115,7 +143,8 @@ export class ProjectsController {
         project.data['partner']['partner_fiscal_sponsor'] = partner_fiscal_sponsor[0];
 
         // Partner Non-profit Equivalency Determination
-        const partner_nonprofit_equivalency_determination = await this.projectsService.getPartnerNonprofitEquivalencyDetermination([project.data['partner'].pk]);
+        const partner_nonprofit_equivalency_determination =
+            await this.projectsService.getPartnerNonprofitEquivalencyDetermination([project.data['partner'].pk]);
         if (!project.data['partner'].hasOwnProperty('partner_nonprofit_equivalency_determination')) {
             project.data['partner']['partner_nonprofit_equivalency_determination'] = {};
         }
@@ -147,5 +176,4 @@ export class ProjectsController {
     ) {
         return this.projectsService.deleteAttachment(project_pk, document_pk, req.user);
     }
-
 }
