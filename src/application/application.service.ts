@@ -1844,7 +1844,7 @@ export class ApplicationService extends GlobalService {
         </div>\
     </div>`; // MODIFY: must be a template from the database
 
-                    // await this.emailService.create();
+                    await this.emailService.create();
                 }
             });
         } catch (err) {
