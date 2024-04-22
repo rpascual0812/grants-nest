@@ -19,7 +19,7 @@ export interface SaveLogModel {
 
 @Injectable()
 export class GlobalService {
-    constructor() {}
+    constructor() { }
 
     async saveLog(data: Partial<SaveLogModel>): Promise<any> {
         return dataSource

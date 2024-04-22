@@ -17,4 +17,10 @@ export class RoleController {
     save(@Request() req: any) {
         return this.roleService.save(req.body, req.user);
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('restrictions')
+    saveRestriction(@Body() body, @Request() req: any) {
+        return this.roleService.saveRestriction(body, req.user);
+    }
 }

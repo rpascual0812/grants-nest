@@ -14,6 +14,9 @@ export class Role extends BaseEntity {
     @Column({ type: 'text', nullable: true })
     details: string;
 
+    @Column({ type: 'jsonb', nullable: true })
+    restrictions: object;
+
     @Column({ default: false })
     archived: boolean;
 
