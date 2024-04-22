@@ -206,4 +206,10 @@ export class ProjectsController {
     fetchProjectFunding(@Param('pk') project_pk: number, @Request() req: any) {
         return this.projectService.getProjectFunding({ project_pk });
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('project_funding_liquidation')
+    saveProjectFundingLiquidation(@Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectFundingLiquidation(body);
+    }
 }

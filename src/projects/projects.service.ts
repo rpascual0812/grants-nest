@@ -24,6 +24,7 @@ import { getParsedPk } from 'src/application/utilities/get-parsed-pk.utils';
 import { Equal } from 'typeorm';
 import { getDefaultValue } from 'src/application/utilities/get-default-value.utils';
 import { ProjectFundingReport } from './entities/project-funding-report.entity';
+import { ProjectFundingLiquidation } from './entities/project-funding-liquidation.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -270,6 +271,12 @@ export class ProjectsService extends GlobalService {
                     ProjectFundingReport,
                     'project_funding_reports',
                     'project_funding_reports.project_funding_pk=project_fundings.pk',
+                )
+                .leftJoinAndMapOne(
+                    'project_fundings.project_funding_liquidation',
+                    ProjectFundingLiquidation,
+                    'project_funding_liquidations',
+                    'project_funding_liquidations.project_funding_pk=project_fundings.pk',
                 )
                 .andWhere('project_funding_reports.archived = false')
                 .where('project_fundings.project_pk = :project_pk', { project_pk: filters?.project_pk })
@@ -565,10 +572,18 @@ export class ProjectsService extends GlobalService {
                 projectFunding.project_pk = projectPk;
 
                 projectFunding.title = getDefaultValue(data?.title, existingProjectFunding?.title);
-                // projectFunding.released_amount = getDefaultValue(
-                //     data?.released_amount,
-                //     existingProjectFunding?.released_amount,
-                // );
+                projectFunding.released_amount_usd = getDefaultValue(
+                    data?.released_amount_usd,
+                    existingProjectFunding?.released_amount_usd,
+                );
+                projectFunding.released_amount_other = getDefaultValue(
+                    data?.released_amount_other,
+                    existingProjectFunding?.released_amount_other,
+                );
+                projectFunding.released_amount_other_currency = getDefaultValue(
+                    data?.released_amount_other_currency,
+                    existingProjectFunding?.released_amount_other_currency,
+                );
                 projectFunding.released_date = getDefaultValue(
                     data?.released_date,
                     existingProjectFunding?.released_date,
@@ -578,10 +593,11 @@ export class ProjectsService extends GlobalService {
                     existingProjectFunding?.report_due_date,
                 );
 
-                // projectFunding.grantee_acknowledgement_pk = getDefaultValue(
-                //     data?.grantee_acknowledgement_pk,
-                //     existingProjectFunding?.grantee_acknowledgement_pk,
-                // );
+                projectFunding.grantee_acknowledgement = getDefaultValue(
+                    data?.grantee_acknowledgement,
+                    existingProjectFunding?.grantee_acknowledgement,
+                );
+
                 projectFunding.bank_receipt_pk = getDefaultValue(
                     data?.bank_receipt_pk,
                     existingProjectFunding?.bank_receipt_pk,
@@ -676,6 +692,75 @@ export class ProjectsService extends GlobalService {
                 status: true,
                 data: {
                     project_funding_report: savedProjectFundingReport,
+                },
+            };
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveProjectFundingLiquidation(data: Partial<ProjectFundingLiquidation>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            const savedProjectFundingLiquidation = await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectFundingLiquidationPk = getParsedPk(data?.pk);
+                const projectFundingPk = getParsedPk(data?.project_funding_pk);
+
+                const existingProjectFundingLiquidation = await EntityManager.findOne(ProjectFundingLiquidation, {
+                    where: {
+                        pk: Equal(projectFundingLiquidationPk),
+                        project_funding_pk: Equal(projectFundingPk),
+                    },
+                });
+
+                const projectFundingLiquidation = existingProjectFundingLiquidation
+                    ? existingProjectFundingLiquidation
+                    : new ProjectFundingLiquidation();
+
+                projectFundingLiquidation.project_funding_pk = projectFundingPk;
+
+                projectFundingLiquidation.status = getDefaultValue(
+                    data?.status,
+                    existingProjectFundingLiquidation?.status,
+                );
+                projectFundingLiquidation.description = getDefaultValue(
+                    data?.description,
+                    existingProjectFundingLiquidation?.description,
+                );
+                projectFundingLiquidation.amount_usd = getDefaultValue(
+                    data?.amount_usd,
+                    existingProjectFundingLiquidation?.amount_usd,
+                );
+                projectFundingLiquidation.amount_other = getDefaultValue(
+                    data?.amount_other,
+                    existingProjectFundingLiquidation?.amount_other,
+                );
+                projectFundingLiquidation.amount_other_currency = getDefaultValue(
+                    data?.amount_other_currency,
+                    existingProjectFundingLiquidation?.amount_other_currency,
+                );
+                projectFundingLiquidation.date_released = getDefaultValue(
+                    data?.date_released,
+                    existingProjectFundingLiquidation?.date_released,
+                );
+                const savedItem = await EntityManager.save(ProjectFundingLiquidation, {
+                    ...projectFundingLiquidation,
+                });
+
+                return {
+                    ...savedItem,
+                };
+            });
+
+            return {
+                status: true,
+                data: {
+                    ...savedProjectFundingLiquidation,
                 },
             };
         } catch (err) {
