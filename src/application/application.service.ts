@@ -1600,6 +1600,8 @@ export class ApplicationService extends GlobalService {
                         ) {
                             application.status = 'Approved';
                             application.save();
+
+                            await EntityManager.update(Project, { application_pk: data.application_pk }, { status: 'Contract Preparation' });
                         }
                     }
 
