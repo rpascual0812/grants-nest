@@ -3,9 +3,10 @@ import dataSource from 'db/data-source';
 
 import { Role } from './entities/role.entity';
 import { UserRole } from 'src/user/entities/user-role.entity';
+import { GlobalService } from 'src/utilities/global.service';
 
 @Injectable()
-export class RoleService {
+export class RoleService extends GlobalService {
 
     async findAll(filters: any) {
         try {
@@ -22,6 +23,7 @@ export class RoleService {
                 .andWhere("archived = false")
                 .skip(filters.skip)
                 .take(filters.take)
+                .orderBy('roles.name', 'ASC')
                 .getManyAndCount()
                 ;
 
@@ -40,6 +42,55 @@ export class RoleService {
     }
 
     async save(data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const role = await dataSource
+                    .createQueryBuilder()
+                    .insert()
+                    .into(Role)
+                    .values([{
+                        name: data.name,
+                        details: data.details,
+                    }])
+                    .returning('*')
+                    .execute();
+
+                // save logs
+                const model = { pk: role.generatedMaps[0].pk, name: 'roles', status: 'Added' };
+                await this.saveLog({ model, user });
+
+                return { status: role ? true : false };
+            });
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false
+            }
+        }
+    }
+
+    async saveRestriction(data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                await EntityManager.update(Role, { pk: data.pk }, { restrictions: data.restrictions });
+            });
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false
+            }
+        }
+    }
+
+    async saveUserRole(data: any, user: any) {
         try {
             if (data.checked) {
                 return await dataSource
