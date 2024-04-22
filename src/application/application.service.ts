@@ -30,6 +30,7 @@ import { PartnerNonprofitEquivalencyDetermination } from 'src/partner/entities/p
 import { PartnerOrganizationBank } from 'src/partner/entities/partner-organization-bank.entity';
 import { PartnerOrganizationOtherInformation } from 'src/partner/entities/partner-organization-other-information.entity';
 import { PartnerOrganizationOtherInformationFinancialHumanResources } from 'src/partner/entities/partner-organization-other-information-financial-human-resources.entity';
+import { Email } from 'src/email/entities/email.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -1784,67 +1785,105 @@ export class ApplicationService extends GlobalService {
                 }
 
                 if (!application.email_sent) {
-                    // send email
-                    this.emailService.uuid = uuidv4();
-                    this.emailService.user_pk = application.created_by;
-                    this.emailService.from = process.env.SEND_FROM;
-                    this.emailService.from_name = process.env.SENDER;
-                    this.emailService.to = application.partner.email_address;
-                    this.emailService.to_name = '';
-                    this.emailService.subject = 'Thank you for submitting your application';
-                    this.emailService.body = `<div style="width: 100%;">\
-        <div style="width: 40%; float: left;">\
-            <div>\
-                <p>Proponent</p>\
-                <h3>${application.partner.name}</h3>\
-            </div>\
-            <div>\
-                <p>ID Number</p>\
-                <h3>${application.partner.partner_id}</h3>\
-            </div>\
-            <div>\
-                <p>Date of submission</p>\
-                <h3>${DateTime.fromISO(application.date_created.toLocaleString()).toFormat('y-LL-dd HH:mm:ss')}</h3>\
-            </div>\
-        </div>\
-        <div style="width: 60%; float: left; text-align: left;">\
-            <div style="width: 100%;">\
-                <div style="width: 50%; float: left;">\
-                    <div>\
-                        <p>Grantee Project</p>\
-                        <p>${application.project.title}</p>\
-                    </div>\
-                    <div>\
-                        <p>Thematic Area</p>\
-                        <p></p>\
-                    </div>\
-                    <div>\
-                        <p>Country</p>\
-                        <p>${application.partner['organization']['country']['name']}</p>\
-                    </div>\
-                </div>\
-                <div style="width: 50%; float: left;">\
-                    <div>\
-                        <p>Duration</p>\
-                        <p>${application.project.duration}</p>\
-                    </div>\
-                    <div>\
-                        <p>Local Currency</p>\
-                        <p>${application.project.project_proposal.budget_request_other_currency}</p>\
-                    </div>\
-                    <div>\
-                        <p>Amount Requested (USD)</p>\
-                        <p>${application.project.project_proposal.budget_request_usd}</p>\
-                    </div>\
-                </div>\
-            </div>\
-            <div style="width: 100%; text-align: center;">\
-                <a href="http://3.0.54.110/public/application/${application.uuid}/status">http://3.0.54.110/public/${application.uuid}/status</a>\
-            </div>\
-        </div>\
-    </div>`; // MODIFY: must be a template from the database
 
-                    await this.emailService.create();
+                    const partner = await dataSource
+                        .getRepository(Partner)
+                        .createQueryBuilder('partners')
+                        .select('partners')
+                        .leftJoinAndSelect('partners.documents', 'documents')
+                        .leftJoinAndSelect('partners.partner_organization', 'partner_organizations')
+                        .leftJoinAndSelect('partner_organizations.country', 'countries')
+                        .where('partners.pk = :pk', { pk: application.partner_pk })
+                        .getOne();
+
+                    // send email
+
+                    const body = `<div style="width: 100%;">\
+    <div style="width: 40%; float: left;">\
+        <div>\
+            <p>Proponent</p>\
+            <h3>${partner.name}</h3>\
+        </div>\
+        <div>\
+            <p>ID Number</p>\
+            <h3>${partner.partner_id}</h3>\
+        </div>\
+        <div>\
+            <p>Date of submission</p>\
+            <h3>${DateTime.fromISO(application.date_created.toLocaleString()).toFormat('y-LL-dd HH:mm:ss')}</h3>\
+        </div>\
+    </div>\
+    <div style="width: 60%; float: left; text-align: left;">\
+        <div style="width: 100%;">\
+            <div style="width: 50%; float: left;">\
+                <div>\
+                    <p>Grantee Project</p>\
+                    <p>${application.project.title}</p>\
+                </div>\
+                <div>\
+                    <p>Thematic Area</p>\
+                    <p></p>\
+                </div>\
+                <div>\
+                    <p>Country</p>\
+                    <p>${partner['partner_organization']['country']['name']}</p>\
+                </div>\
+            </div>\
+            <div style="width: 50%; float: left;">\
+                <div>\
+                    <p>Duration</p>\
+                    <p>${application.project.duration}</p>\
+                </div>\
+                <div>\
+                    <p>Local Currency</p>\
+                    <p>${application.project.project_proposal.budget_request_other_currency}</p>\
+                </div>\
+                <div>\
+                    <p>Amount Requested (USD)</p>\
+                    <p>${application.project.project_proposal.budget_request_usd}</p>\
+                </div>\
+            </div>\
+        </div>\
+        <div style="width: 100%; text-align: center;">\
+            <a href="http://3.0.54.110/public/application/${application.uuid}/status">http://3.0.54.110/public/${application.uuid}/status</a>\
+        </div>\
+    </div>\
+</div>`; // MODIFY: must be a template from the database
+
+                    const email = {
+                        uuid: uuidv4(),
+                        user_pk: application.created_by,
+                        from: process.env.SEND_FROM,
+                        from_name: process.env.SENDER,
+                        to: partner.email_address,
+                        to_name: '',
+                        subject: 'Thank you for submitting your application',
+                        body: body
+                    }
+
+                    // this.emailService.uuid = uuidv4();
+                    // this.emailService.user_pk = application.created_by;
+                    // this.emailService.from = process.env.SEND_FROM;
+                    // this.emailService.from_name = process.env.SENDER;
+                    // this.emailService.to = partner.email_address;
+                    // this.emailService.to_name = '';
+                    // this.emailService.subject = 'Thank you for submitting your application';
+                    // this.emailService.body = body;
+                    // await this.emailService.create();
+
+                    await dataSource.manager
+                        .getRepository(Email)
+                        .createQueryBuilder('email')
+                        .createQueryBuilder()
+                        .insert()
+                        .into(Email)
+                        .values([
+                            email
+                        ])
+                        .returning('pk')
+                        .execute();
+
+                    await EntityManager.update(Application, { pk: application.pk }, { email_sent: true });
                 }
             });
         } catch (err) {
