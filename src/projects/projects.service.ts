@@ -266,6 +266,7 @@ export class ProjectsService extends GlobalService {
                 .getRepository(ProjectFunding)
                 .createQueryBuilder('project_fundings')
                 .select('project_fundings')
+                .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
                 .leftJoinAndMapMany(
                     'project_fundings.project_funding_report',
                     ProjectFundingReport,
@@ -601,6 +602,11 @@ export class ProjectsService extends GlobalService {
                 projectFunding.bank_receipt_pk = getDefaultValue(
                     data?.bank_receipt_pk,
                     existingProjectFunding?.bank_receipt_pk,
+                );
+
+                projectFunding.grantee_acknowledgement = getDefaultValue(
+                    data?.grantee_acknowledgement,
+                    existingProjectFunding?.grantee_acknowledgement,
                 );
 
                 const savedProjectFunding = await EntityManager.save(ProjectFunding, {
