@@ -777,4 +777,43 @@ export class ProjectsService extends GlobalService {
             await queryRunner.release();
         }
     }
+
+    async deleteProjectFundingReport(
+        data: {
+            project_pk: number;
+            project_funding_pk: number;
+            project_funding_report_pk: number;
+        },
+        user: any,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectFundingReportPk = getParsedPk(+data?.project_funding_report_pk);
+                const report = await EntityManager.findOneBy(ProjectFundingReport, {
+                    pk: Equal(projectFundingReportPk),
+                });
+
+                await report.remove();
+
+                // save logs
+                const model = {
+                    pk: projectFundingReportPk,
+                    name: 'project_funding_report',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: true };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
 }
