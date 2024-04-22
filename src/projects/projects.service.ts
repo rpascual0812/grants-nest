@@ -18,10 +18,15 @@ import { Application } from 'src/application/entities/application.entity';
 import { Document } from 'src/document/entities/document.entity';
 import { Review } from 'src/review/entities/review.entity';
 import { ProjectRecommendation } from './entities/project-recommendation.entity';
+import { ProjectFunding } from './entities/project-funding.entity';
+import { User } from 'src/user/entities/user.entity';
+import { getParsedPk } from 'src/application/utilities/get-parsed-pk.utils';
+import { Equal } from 'typeorm';
+import { getDefaultValue } from 'src/application/utilities/get-default-value.utils';
+import { ProjectFundingReport } from './entities/project-funding-report.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
-
     constructor(
         @InjectRepository(Project)
         private emailService: EmailService,
@@ -111,9 +116,8 @@ export class ProjectsService extends GlobalService {
                 .createQueryBuilder('partners')
                 .select('partners')
                 .leftJoinAndSelect('partners.documents', 'documents as partner_documents')
-                .where("partners.pk IN (:...pk)", { pk: pks })
-                .getMany()
-                ;
+                .where('partners.pk IN (:...pk)', { pk: pks })
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
@@ -163,9 +167,8 @@ export class ProjectsService extends GlobalService {
                     'partner_organization_other_information_financial_human_resource',
                     'partner_organization_other_informations.pk=partner_organization_other_information_financial_human_resource.partner_organization_other_information_pk',
                 )
-                .where("partner_organizations.partner_pk IN (:...pk)", { pk: pks })
-                .getMany()
-                ;
+                .where('partner_organizations.partner_pk IN (:...pk)', { pk: pks })
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
@@ -181,9 +184,8 @@ export class ProjectsService extends GlobalService {
                 .getRepository(PartnerContact)
                 .createQueryBuilder('partner_contacts')
                 .select('partner_contacts')
-                .where("partner_contacts.partner_pk IN (:...pk)", { pk: pks })
-                .getMany()
-                ;
+                .where('partner_contacts.partner_pk IN (:...pk)', { pk: pks })
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
@@ -199,10 +201,12 @@ export class ProjectsService extends GlobalService {
                 .getRepository(PartnerFiscalSponsor)
                 .createQueryBuilder('partner_fiscal_sponsors')
                 .select('partner_fiscal_sponsors')
-                .leftJoinAndSelect('partner_fiscal_sponsors.documents', 'documents as partner_fiscal_sponsors_documents')
-                .where("partner_fiscal_sponsors.partner_pk IN (:...pk)", { pk: pks })
-                .getMany()
-                ;
+                .leftJoinAndSelect(
+                    'partner_fiscal_sponsors.documents',
+                    'documents as partner_fiscal_sponsors_documents',
+                )
+                .where('partner_fiscal_sponsors.partner_pk IN (:...pk)', { pk: pks })
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
@@ -218,10 +222,12 @@ export class ProjectsService extends GlobalService {
                 .getRepository(PartnerNonprofitEquivalencyDetermination)
                 .createQueryBuilder('partner_nonprofit_equivalency_determinations')
                 .select('partner_nonprofit_equivalency_determinations')
-                .leftJoinAndSelect('partner_nonprofit_equivalency_determinations.documents', 'documents as partner_nonprofit_equivalency_determinations_documents')
-                .where("partner_nonprofit_equivalency_determinations.partner_pk IN (:...pk)", { pk: pks })
-                .getMany()
-                ;
+                .leftJoinAndSelect(
+                    'partner_nonprofit_equivalency_determinations.documents',
+                    'documents as partner_nonprofit_equivalency_determinations_documents',
+                )
+                .where('partner_nonprofit_equivalency_determinations.partner_pk IN (:...pk)', { pk: pks })
+                .getMany();
         } catch (error) {
             console.log(error);
             // SAVE ERROR
@@ -240,10 +246,42 @@ export class ProjectsService extends GlobalService {
                 .leftJoinAndSelect('projects.reviews', 'reviews')
                 .leftJoinAndSelect('reviews.user', 'users')
                 .leftJoinAndSelect('reviews.documents', 'documents as review_documents')
-                .where("projects.pk IN (:...pk)", { pk: pks })
+                .where('projects.pk IN (:...pk)', { pk: pks })
                 .andWhere('reviews.archived = false')
                 .orderBy('reviews.date_created', 'ASC')
                 .getMany();
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false,
+            };
+        }
+    }
+
+    async getProjectFunding(filters: { project_pk?: number }) {
+        try {
+            const data = await dataSource
+                .getRepository(ProjectFunding)
+                .createQueryBuilder('project_fundings')
+                .select('project_fundings')
+                .leftJoinAndMapMany(
+                    'project_fundings.project_funding_report',
+                    ProjectFundingReport,
+                    'project_funding_reports',
+                    'project_funding_reports.project_funding_pk=project_fundings.pk',
+                )
+                .andWhere('project_funding_reports.archived = false')
+                .where('project_fundings.project_pk = :project_pk', { project_pk: filters?.project_pk })
+                .orderBy('project_funding_reports.date_created', 'ASC')
+                .orderBy('project_fundings.date_created', 'ASC')
+                .getMany();
+            return {
+                status: true,
+                data: {
+                    project_funding: data,
+                },
+            };
         } catch (error) {
             console.log(error);
             // SAVE ERROR
@@ -436,7 +474,8 @@ export class ProjectsService extends GlobalService {
                             pk: data.project_pk,
                         });
 
-                        if (project.status == 'Initial Submission' &&
+                        if (
+                            project.status == 'Initial Submission' &&
                             data.recommendation == 'Approved for Next Stage'
                         ) {
                             project.status = 'Contract Preparation';
@@ -490,6 +529,155 @@ export class ProjectsService extends GlobalService {
                     };
                 }
             });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveProjectFunding(
+        data: Partial<
+            ProjectFunding & {
+                project_funding_report: Partial<ProjectFundingReport>[];
+            }
+        >,
+        user: User,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            const savedProjectFunding = await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectFundingPk = getParsedPk(data?.pk);
+                const projectPk = getParsedPk(data?.project_pk);
+                const existingProjectFunding = await EntityManager.findOne(ProjectFunding, {
+                    where: {
+                        pk: Equal(projectFundingPk),
+                        project_pk: Equal(projectPk),
+                    },
+                });
+
+                const projectFunding = existingProjectFunding ? existingProjectFunding : new ProjectFunding();
+                projectFunding.created_by = user?.pk;
+                projectFunding.project_pk = projectPk;
+
+                projectFunding.title = getDefaultValue(data?.title, existingProjectFunding?.title);
+                projectFunding.released_amount = getDefaultValue(
+                    data?.released_amount,
+                    existingProjectFunding?.released_amount,
+                );
+                projectFunding.released_date = getDefaultValue(
+                    data?.released_date,
+                    existingProjectFunding?.released_date,
+                );
+                projectFunding.report_due_date = getDefaultValue(
+                    data?.report_due_date,
+                    existingProjectFunding?.report_due_date,
+                );
+
+                projectFunding.grantee_acknowledgement_pk = getDefaultValue(
+                    data?.grantee_acknowledgement_pk,
+                    existingProjectFunding?.grantee_acknowledgement_pk,
+                );
+                projectFunding.bank_receipt_pk = getDefaultValue(
+                    data?.bank_receipt_pk,
+                    existingProjectFunding?.bank_receipt_pk,
+                );
+
+                const savedProjectFunding = await EntityManager.save(ProjectFunding, {
+                    ...projectFunding,
+                });
+
+                return savedProjectFunding;
+            });
+
+            const projectFundingPk = savedProjectFunding?.pk;
+            let savedProjectFundingReports = [];
+
+            const projectFundingReports = data?.project_funding_report ?? [];
+            const resProjectFundingReports = await this.saveProjectFundingReport({
+                project_funding_pk: projectFundingPk,
+                project_funding_report: projectFundingReports,
+            });
+
+            savedProjectFundingReports = resProjectFundingReports?.data?.project_funding_report;
+
+            return {
+                status: true,
+                data: {
+                    ...savedProjectFunding,
+                    project_funding_report: savedProjectFundingReports,
+                },
+            };
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveProjectFundingReport(
+        data: Partial<{
+            project_funding_pk: number;
+            project_funding_report: Partial<ProjectFundingReport>[];
+        }>,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            const savedProjectFundingReport = await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectFundingPk = getParsedPk(data?.project_funding_pk);
+                const projectFundingReport = data?.project_funding_report ?? [];
+
+                const tmpProjectFundingReport = projectFundingReport?.map(async (item) => {
+                    const projectFundingReportPk = getParsedPk(item?.pk);
+                    const existingProjectFundingReport = await EntityManager.findOne(ProjectFundingReport, {
+                        where: {
+                            pk: Equal(projectFundingReportPk),
+                            project_funding_pk: Equal(projectFundingPk),
+                        },
+                    });
+
+                    const projectFundingReport = existingProjectFundingReport
+                        ? existingProjectFundingReport
+                        : new ProjectFundingReport();
+                    projectFundingReport.project_funding_pk = projectFundingPk;
+                    projectFundingReport.title = getDefaultValue(item?.title, existingProjectFundingReport?.title);
+                    projectFundingReport.status = getDefaultValue(item?.status, existingProjectFundingReport?.status);
+
+                    const savedItem = await EntityManager.save(ProjectFundingReport, {
+                        ...projectFundingReport,
+                    });
+
+                    return {
+                        ...savedItem,
+                    };
+                });
+
+                await Promise.all(tmpProjectFundingReport);
+
+                const savedProjectFundingReport =
+                    (await EntityManager.findBy(ProjectFundingReport, {
+                        project_funding_pk: Equal(projectFundingPk),
+                    })) ?? [];
+
+                const allItems = [...savedProjectFundingReport];
+
+                return allItems;
+            });
+
+            return {
+                status: true,
+                data: {
+                    project_funding_report: savedProjectFundingReport,
+                },
+            };
         } catch (err) {
             this.saveError({});
             console.log(err);
