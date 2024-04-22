@@ -21,7 +21,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) { }
+    constructor(private readonly projectService: ProjectsService) {}
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -193,5 +193,17 @@ export class ProjectsController {
     @Post('recommendation')
     saveRecommendation(@Body() body: any, @Request() req: any) {
         return this.projectService.saveRecommendation(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('project_funding')
+    saveProjectFunding(@Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectFunding(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':pk/project_funding')
+    fetchProjectFunding(@Param('pk') project_pk: number, @Request() req: any) {
+        return this.projectService.getProjectFunding({ project_pk });
     }
 }
