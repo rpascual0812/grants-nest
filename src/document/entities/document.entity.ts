@@ -130,22 +130,23 @@ export class Document {
     @OneToOne(type => ProjectFunding, funding => funding.bank_receipt_document, { cascade: true })
     bank_receipt: ProjectFunding;
 
-    @OneToOne(type => ProjectFunding, funding => funding.grantee_acknowledgement, { cascade: true })
-    grantee_acknowledgement: ProjectFunding;
+    @OneToOne(type => ProjectFundingReport, funding_report => funding_report.document, { cascade: true })
+    funding_report_attachment: ProjectFundingReport;
 
-    @ManyToMany(() => ProjectFundingReport, project_funding_report => project_funding_report.documents)
-    @JoinTable({
-        name: 'document_project_funding_report_relation',
-        joinColumn: {
-            name: 'document_pk',
-            referencedColumnName: 'pk',
-        },
-        inverseJoinColumn: {
-            name: 'project_funding_report_pk',
-            referencedColumnName: 'pk',
-        }
-    })
-    project_funding_reports: ProjectFundingReport[];
+
+    // @ManyToMany(() => ProjectFundingReport, project_funding_report => project_funding_report.documents)
+    // @JoinTable({
+    //     name: 'document_project_funding_report_relation',
+    //     joinColumn: {
+    //         name: 'document_pk',
+    //         referencedColumnName: 'pk',
+    //     },
+    //     inverseJoinColumn: {
+    //         name: 'project_funding_report_pk',
+    //         referencedColumnName: 'pk',
+    //     }
+    // })
+    // project_funding_reports: ProjectFundingReport[];
 
     @ManyToMany(() => ProjectFundingLiquidation, project_funding_liquidation => project_funding_liquidation.documents)
     @JoinTable({

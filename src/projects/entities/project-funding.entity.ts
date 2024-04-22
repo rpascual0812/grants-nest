@@ -26,8 +26,14 @@ export class ProjectFunding extends BaseEntity {
     @Column({ name: 'project_pk', nullable: false })
     project_pk: number;
 
+    @Column({ type: 'decimal', nullable: false })
+    released_amount_usd: number;
+
+    @Column({ type: 'decimal', nullable: false })
+    released_amount_other: number;
+
     @Column({ type: 'text', nullable: false })
-    released_amount: string;
+    released_amount_other_currency: string;
 
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     released_date: Date;
@@ -35,8 +41,8 @@ export class ProjectFunding extends BaseEntity {
     @Column({ name: 'bank_receipt_pk', nullable: true })
     bank_receipt_pk: number;
 
-    @Column({ name: 'grantee_acknowledgement_pk', nullable: true })
-    grantee_acknowledgement_pk: number;
+    @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+    grantee_acknowledgement: Date;
 
     @Column({ name: 'created_by', nullable: false })
     created_by: number;
@@ -63,10 +69,10 @@ export class ProjectFunding extends BaseEntity {
     @JoinTable()
     bank_receipt_document: Document;
 
-    @OneToOne(type => Document, document => document.grantee_acknowledgement, { eager: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-    @JoinColumn({ name: 'grantee_acknowledgement_pk' })
-    @JoinTable()
-    grantee_acknowledgement: Document;
+    // @OneToOne(type => Document, document => document.grantee_acknowledgement, { eager: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    // @JoinColumn({ name: 'grantee_acknowledgement_pk' })
+    // @JoinTable()
+    // grantee_acknowledgement: Document;
 
     @OneToMany(
         'ProjectFundingReport',
