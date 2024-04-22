@@ -565,10 +565,10 @@ export class ProjectsService extends GlobalService {
                 projectFunding.project_pk = projectPk;
 
                 projectFunding.title = getDefaultValue(data?.title, existingProjectFunding?.title);
-                projectFunding.released_amount = getDefaultValue(
-                    data?.released_amount,
-                    existingProjectFunding?.released_amount,
-                );
+                // projectFunding.released_amount = getDefaultValue(
+                //     data?.released_amount,
+                //     existingProjectFunding?.released_amount,
+                // );
                 projectFunding.released_date = getDefaultValue(
                     data?.released_date,
                     existingProjectFunding?.released_date,
@@ -578,10 +578,10 @@ export class ProjectsService extends GlobalService {
                     existingProjectFunding?.report_due_date,
                 );
 
-                projectFunding.grantee_acknowledgement_pk = getDefaultValue(
-                    data?.grantee_acknowledgement_pk,
-                    existingProjectFunding?.grantee_acknowledgement_pk,
-                );
+                // projectFunding.grantee_acknowledgement_pk = getDefaultValue(
+                //     data?.grantee_acknowledgement_pk,
+                //     existingProjectFunding?.grantee_acknowledgement_pk,
+                // );
                 projectFunding.bank_receipt_pk = getDefaultValue(
                     data?.bank_receipt_pk,
                     existingProjectFunding?.bank_receipt_pk,
