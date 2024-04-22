@@ -40,7 +40,8 @@ export class ProjectFundingLiquidation extends BaseEntity {
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
 
-
+    @Column({ type: 'timestamptz', nullable: false })
+    date_released: Date;
 
     /**
      * Relationship
