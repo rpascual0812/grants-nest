@@ -21,7 +21,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) {}
+    constructor(private readonly projectService: ProjectsService) { }
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -229,5 +229,10 @@ export class ProjectsController {
             },
             req.user,
         );
+    }     
+
+    @Post('liquidation/attachment')
+    saveProjectFundingLiquidationAttachment(@Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectFundingLiquidationAttachments(body, req.user);
     }
 }
