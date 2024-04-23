@@ -645,8 +645,7 @@ export class ProjectsService extends GlobalService {
                         data?.grantee_acknowledgement,
                         existingProjectFunding?.grantee_acknowledgement,
                     );
-                }
-                else {
+                } else {
                     projectFunding.grantee_acknowledgement = null;
                 }
 
@@ -658,6 +657,10 @@ export class ProjectsService extends GlobalService {
                 return savedProjectFunding;
             });
 
+            return {
+                status: true,
+                ...savedProjectFunding,
+            };
         } catch (err) {
             this.saveError({});
             console.log(err);
