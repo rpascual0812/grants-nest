@@ -214,6 +214,23 @@ export class ProjectsController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @Delete(':pk/project_funding/:project_funding_pk/project_funding_report/:project_funding_report_pk')
+    deleteFundingProjectReport(
+        @Param('pk') project_pk: number,
+        @Param('project_funding_pk') project_funding_pk: number,
+        @Param('project_funding_report_pk') project_funding_report_pk: number,
+        @Request() req: any,
+    ) {
+        return this.projectService.deleteProjectFundingReport(
+            {
+                project_pk,
+                project_funding_pk,
+                project_funding_report_pk,
+            },
+            req.user,
+        );
+    }     
+
     @Post('liquidation/attachment')
     saveProjectFundingLiquidationAttachment(@Body() body: any, @Request() req: any) {
         return this.projectService.saveProjectFundingLiquidationAttachments(body, req.user);
