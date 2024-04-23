@@ -22,7 +22,6 @@ export class DocumentController {
         }),
     )
     async uploadedFile(@UploadedFile() file: Express.Multer.File, @Request() req) {
-        console.log(33, file);
         return await this.documentService.create(file);
     }
 

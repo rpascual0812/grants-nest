@@ -35,19 +35,19 @@ export class ProjectFunding extends BaseEntity {
     @Column({ type: 'text', nullable: false })
     released_amount_other_currency: string;
 
-    @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+    @Column({ type: 'date', nullable: true })
     released_date: Date;
 
     @Column({ name: 'bank_receipt_pk', nullable: true })
     bank_receipt_pk: number;
 
-    @Column({ type: 'timestamptz', nullable: true })
+    @Column({ type: 'date', nullable: true })
     grantee_acknowledgement: Date;
 
     @Column({ name: 'created_by', nullable: false })
     created_by: number;
 
-    @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+    @Column({ type: 'date', nullable: true })
     report_due_date: Date;
 
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })

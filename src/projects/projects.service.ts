@@ -25,6 +25,7 @@ import { Equal } from 'typeorm';
 import { getDefaultValue } from 'src/application/utilities/get-default-value.utils';
 import { ProjectFundingReport } from './entities/project-funding-report.entity';
 import { ProjectFundingLiquidation } from './entities/project-funding-liquidation.entity';
+import { DateTime } from 'luxon';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -279,6 +280,7 @@ export class ProjectsService extends GlobalService {
                     'project_funding_liquidations',
                     'project_funding_liquidations.project_funding_pk=project_fundings.pk',
                 )
+                .leftJoinAndSelect('project_funding_liquidations.documents', 'documents as liquidation_documents')
                 .andWhere('project_funding_reports.archived = false')
                 .where('project_fundings.project_pk = :project_pk', { project_pk: filters?.project_pk })
                 .orderBy('project_funding_reports.date_created', 'ASC')
@@ -313,6 +315,39 @@ export class ProjectsService extends GlobalService {
                     const document = await EntityManager.query(
                         'insert into document_project_relation (document_pk, project_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
                         [data.file.pk, project_pk],
+                    );
+                    return {
+                        status: document ? true : false,
+                    };
+                } else {
+                    return {
+                        status: false,
+                        code: 500,
+                        message: 'Project not found',
+                    };
+                }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveProjectFundingLiquidationAttachments(data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const liquidation_pk = data?.liquidation_pk;
+
+                if (liquidation_pk && data.file.pk) {
+                    const document = await EntityManager.query(
+                        'insert into document_project_funding_liquidation_relation (document_pk, project_funding_liquidation_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
+                        [data.file.pk, liquidation_pk],
                     );
                     return {
                         status: document ? true : false,
@@ -585,6 +620,7 @@ export class ProjectsService extends GlobalService {
                     data?.released_amount_other_currency,
                     existingProjectFunding?.released_amount_other_currency,
                 );
+
                 projectFunding.released_date = getDefaultValue(
                     data?.released_date,
                     existingProjectFunding?.released_date,
@@ -604,11 +640,17 @@ export class ProjectsService extends GlobalService {
                     existingProjectFunding?.bank_receipt_pk,
                 );
 
-                projectFunding.grantee_acknowledgement = getDefaultValue(
-                    data?.grantee_acknowledgement,
-                    existingProjectFunding?.grantee_acknowledgement,
-                );
+                if (data?.grantee_acknowledgement) {
+                    projectFunding.grantee_acknowledgement = getDefaultValue(
+                        data?.grantee_acknowledgement,
+                        existingProjectFunding?.grantee_acknowledgement,
+                    );
+                }
+                else {
+                    projectFunding.grantee_acknowledgement = null;
+                }
 
+                console.log(projectFunding);
                 const savedProjectFunding = await EntityManager.save(ProjectFunding, {
                     ...projectFunding,
                 });
@@ -616,24 +658,6 @@ export class ProjectsService extends GlobalService {
                 return savedProjectFunding;
             });
 
-            const projectFundingPk = savedProjectFunding?.pk;
-            let savedProjectFundingReports = [];
-
-            const projectFundingReports = data?.project_funding_report ?? [];
-            const resProjectFundingReports = await this.saveProjectFundingReport({
-                project_funding_pk: projectFundingPk,
-                project_funding_report: projectFundingReports,
-            });
-
-            savedProjectFundingReports = resProjectFundingReports?.data?.project_funding_report;
-
-            return {
-                status: true,
-                data: {
-                    ...savedProjectFunding,
-                    project_funding_report: savedProjectFundingReports,
-                },
-            };
         } catch (err) {
             this.saveError({});
             console.log(err);
