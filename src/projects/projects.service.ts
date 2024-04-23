@@ -656,10 +656,23 @@ export class ProjectsService extends GlobalService {
 
                 return savedProjectFunding;
             });
+            const projectFundingPk = savedProjectFunding?.pk;
+            let savedProjectFundingReports = [];
+
+            const projectFundingReports = data?.project_funding_report ?? [];
+            const resProjectFundingReports = await this.saveProjectFundingReport({
+                project_funding_pk: projectFundingPk,
+                project_funding_report: projectFundingReports,
+            });
+
+            savedProjectFundingReports = resProjectFundingReports?.data?.project_funding_report;
 
             return {
                 status: true,
-                ...savedProjectFunding,
+                data: {
+                    ...savedProjectFunding,
+                    project_funding_report: savedProjectFundingReports,
+                },
             };
         } catch (err) {
             this.saveError({});
