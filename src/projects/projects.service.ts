@@ -635,6 +635,7 @@ export class ProjectsService extends GlobalService {
                     existingProjectFunding?.grantee_acknowledgement,
                 );
 
+                // 1 bank_receipt_pk is not updating if value is null
                 projectFunding.bank_receipt_pk = getDefaultValue(
                     data?.bank_receipt_pk,
                     existingProjectFunding?.bank_receipt_pk,
@@ -649,10 +650,12 @@ export class ProjectsService extends GlobalService {
                     projectFunding.grantee_acknowledgement = null;
                 }
 
-                console.log(projectFunding);
                 const savedProjectFunding = await EntityManager.save(ProjectFunding, {
                     ...projectFunding,
                 });
+
+                // 2 bank_receipt_pk is not updating if value is null
+                await EntityManager.update(ProjectFunding, { pk: data?.pk }, { bank_receipt_pk: data?.bank_receipt_pk });
 
                 return savedProjectFunding;
             });
