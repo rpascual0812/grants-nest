@@ -14,6 +14,9 @@ import { PartnerOrganizationOtherInformationFinancialHumanResources } from 'src/
 import { ProjectSite } from 'src/projects/entities/project-site.entity';
 
 @Entity({ name: 'users' })
+@Unique(['unique_id'])
+@Unique(['uuid'])
+@Unique(['first_name', 'middle_name', 'last_name', 'email_address'])
 export class User extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;

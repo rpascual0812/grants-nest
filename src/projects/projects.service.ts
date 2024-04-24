@@ -989,4 +989,32 @@ export class ProjectsService extends GlobalService {
             await queryRunner.release();
         }
     }
+
+    async updateFinancialManagementTraining(data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                await EntityManager.update(Project, { pk: data.project_pk }, { financial_management_training: data.financial_management_training });
+
+                // save logs
+                const model = {
+                    pk: data.project_pk,
+                    name: 'projects',
+                    financial_management_training: data.financial_management_training,
+                    status: 'update',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: true };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
 }
