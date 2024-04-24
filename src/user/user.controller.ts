@@ -100,7 +100,6 @@ export class UserController {
     @UseGuards(JwtAuthGuard)
     @Post(':pk/reset-password')
     async sendResetPassword(@Request() req: any, @Param('pk') pk: string, @Body() body: any) {
-        console.log(req.user, pk);
         return await this.userService.sendResetPassword(req.user, pk, body);
     }
 
@@ -113,5 +112,11 @@ export class UserController {
         }
 
         return await this.accountService.update(req.user, body.pk, data);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('roles')
+    async updateRoles(@Body() body: any, @Request() req: any) {
+        return await this.userService.updateRoles(body, req.user);
     }
 }
