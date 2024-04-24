@@ -21,7 +21,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) { }
+    constructor(private readonly projectService: ProjectsService) {}
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -229,10 +229,38 @@ export class ProjectsController {
             },
             req.user,
         );
-    }     
+    }
 
     @Post('liquidation/attachment')
     saveProjectFundingLiquidationAttachment(@Body() body: any, @Request() req: any) {
         return this.projectService.saveProjectFundingLiquidationAttachments(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':pk/project_site')
+    fetchProjectSites(@Param('pk') project_pk: number, @Request() req: any) {
+        return this.projectService.getProjectSite({ projectPks: [project_pk] });
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('project_site')
+    saveProjectSite(@Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectSite(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk/project_site/:project_site_pk')
+    deleteProjectSite(
+        @Param('pk') project_pk: number,
+        @Param('project_site_pk') project_site_pk: number,
+        @Request() req: any,
+    ) {
+        return this.projectService.deleteProjectSite(
+            {
+                project_pk,
+                project_site_pk,
+            },
+            req.user,
+        );
     }
 }
