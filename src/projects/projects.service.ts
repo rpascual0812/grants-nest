@@ -26,6 +26,7 @@ import { getDefaultValue } from 'src/application/utilities/get-default-value.uti
 import { ProjectFundingReport } from './entities/project-funding-report.entity';
 import { ProjectFundingLiquidation } from './entities/project-funding-liquidation.entity';
 import { DateTime } from 'luxon';
+import { ProjectSite } from './entities/project-site.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -655,7 +656,11 @@ export class ProjectsService extends GlobalService {
                 });
 
                 // 2 bank_receipt_pk is not updating if value is null
-                await EntityManager.update(ProjectFunding, { pk: data?.pk }, { bank_receipt_pk: data?.bank_receipt_pk });
+                await EntityManager.update(
+                    ProjectFunding,
+                    { pk: data?.pk },
+                    { bank_receipt_pk: data?.bank_receipt_pk },
+                );
 
                 return savedProjectFunding;
             });
@@ -845,6 +850,131 @@ export class ProjectsService extends GlobalService {
                 const model = {
                     pk: projectFundingReportPk,
                     name: 'project_funding_report',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: true };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async getProjectSite(filter: { projectPks: number[] }) {
+        try {
+            const data = await dataSource
+                .getRepository(ProjectSite)
+                .createQueryBuilder('project_sites')
+                .select('project_sites')
+                .where('project_sites.project_pk IN (:...project_pk)', { project_pk: filter.projectPks })
+                .orderBy('project_sites.date_created', 'ASC')
+                .getMany();
+            return {
+                status: true,
+                data,
+            };
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false,
+            };
+        }
+    }
+
+    async saveProjectSite(
+        data: {
+            project_pk: number;
+            project_site: Partial<ProjectSite>[];
+        },
+        user: Partial<User>,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            const savedProjectSites = await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectPk = getParsedPk(data?.project_pk);
+                const projectSites = data?.project_site ?? [];
+
+                const tmpProjectSite = projectSites?.map(async (item) => {
+                    const projectSitePk = getParsedPk(item?.pk);
+                    const existingProjectSite = await EntityManager.findOne(ProjectSite, {
+                        where: {
+                            pk: Equal(projectSitePk),
+                            project_pk: Equal(projectPk),
+                        },
+                    });
+
+                    const projectSite = existingProjectSite ? existingProjectSite : new ProjectSite();
+                    projectSite.project_pk = projectPk;
+                    projectSite.site = getDefaultValue(item?.site, existingProjectSite?.site);
+                    projectSite.created_by = user?.pk;
+
+                    const savedItem = await EntityManager.save(ProjectSite, {
+                        ...projectSite,
+                    });
+
+                    return {
+                        ...savedItem,
+                    };
+                });
+
+                await Promise.all(tmpProjectSite);
+
+                const savedProjectSite =
+                    (await EntityManager.findBy(ProjectSite, {
+                        project_pk: Equal(projectPk),
+                    })) ?? [];
+
+                const allItems = [...savedProjectSite];
+
+                return allItems;
+            });
+
+            return {
+                status: true,
+                data: {
+                    project_site: savedProjectSites,
+                },
+            };
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async deleteProjectSite(
+        data: {
+            project_pk: number;
+            project_site_pk: number;
+        },
+        user: any,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectSitePk = getParsedPk(+data?.project_site_pk);
+                const site = await EntityManager.findOneBy(ProjectSite, {
+                    pk: Equal(projectSitePk),
+                });
+
+                await site.remove();
+
+                // save logs
+                const model = {
+                    pk: projectSitePk,
+                    name: 'project_site',
                     status: 'deleted',
                 };
                 await this.saveLog({ model, user });
