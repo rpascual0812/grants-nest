@@ -3,6 +3,7 @@ import { User } from './user.entity';
 import { Role } from 'src/role/entities/role.entity';
 
 @Entity({ name: 'user_roles' })
+@Unique(['user_pk', 'role_pk'])
 export class UserRole extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;

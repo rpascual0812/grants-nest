@@ -12,6 +12,7 @@ import { EmailService } from 'src/email/email.service';
 import { SessionService } from 'src/session/session.service';
 import { Document } from 'src/document/entities/document.entity';
 import { UserRole } from './entities/user-role.entity';
+import { GlobalService } from 'src/utilities/global.service';
 
 // import { Document } from 'src/documents/entities/document.entity';
 // import { UserDocument } from './entities/user-document.entity';
@@ -33,7 +34,7 @@ import { UserRole } from './entities/user-role.entity';
 // }
 
 @Injectable()
-export class UserService {
+export class UserService extends GlobalService {
 
     constructor(
         @InjectRepository(User)
@@ -41,7 +42,9 @@ export class UserService {
         private accountService: AccountService,
         private emailService: EmailService,
         private sessionService: SessionService
-    ) { }
+    ) {
+        super();
+    }
 
     async findAll(data: any, filters: any) {
         try {
@@ -427,5 +430,48 @@ export class UserService {
             return false;
         }
         return false;
+    }
+
+    async updateRoles(data, user) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+
+                await dataSource
+                    .createQueryBuilder()
+                    .delete()
+                    .from(UserRole)
+                    .where('user_pk = :pk', { pk: data.pk })
+                    .execute();
+
+                let roles = [];
+                data.roles.forEach(role => {
+                    roles.push(
+                        {
+                            user_pk: data.pk,
+                            role_pk: role.pk
+                        }
+                    );
+                });
+
+                const role = await dataSource
+                    .createQueryBuilder()
+                    .insert()
+                    .into(UserRole)
+                    .values(roles)
+                    .returning('*')
+                    .execute();
+
+                return { status: true };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
     }
 }

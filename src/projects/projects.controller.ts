@@ -263,4 +263,10 @@ export class ProjectsController {
             req.user,
         );
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('update_financial_management_training')
+    updateFinancialManagementTraining(@Body() body: any, @Request() req: any) {
+        return this.projectService.updateFinancialManagementTraining(body, req.user);
+    }
 }
