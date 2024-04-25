@@ -40,15 +40,18 @@ export class ProjectFundingReport extends BaseEntity {
     /**
      * Relationship
      */
-    @ManyToOne(
-        (type) => ProjectFunding,
-        (project_funding) => project_funding.project_funding_report,
-        { onDelete: 'CASCADE', onUpdate: 'CASCADE' },
-    )
+    @ManyToOne((type) => ProjectFunding, (project_funding) => project_funding.project_funding_report, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
     @JoinColumn({ name: 'project_funding_pk' })
     project_funding: ProjectFunding;
 
-    @OneToOne(type => Document, document => document.funding_report_attachment, { eager: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToOne((type) => Document, (document) => document.funding_report_attachment, {
+        eager: true,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
     @JoinColumn({ name: 'attachment_pk' })
     @JoinTable()
     document: Document;
