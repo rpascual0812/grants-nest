@@ -276,6 +276,12 @@ export class ProjectsService extends GlobalService {
                     'project_funding_reports.project_funding_pk=project_fundings.pk',
                 )
                 .leftJoinAndMapOne(
+                    'project_funding_reports.document',
+                    Document,
+                    'report_document',
+                    'report_document.pk=project_funding_reports.attachment_pk',
+                )
+                .leftJoinAndMapOne(
                     'project_fundings.project_funding_liquidation',
                     ProjectFundingLiquidation,
                     'project_funding_liquidations',
@@ -720,6 +726,10 @@ export class ProjectsService extends GlobalService {
                     projectFundingReport.project_funding_pk = projectFundingPk;
                     projectFundingReport.title = getDefaultValue(item?.title, existingProjectFundingReport?.title);
                     projectFundingReport.status = getDefaultValue(item?.status, existingProjectFundingReport?.status);
+                    projectFundingReport.attachment_pk = getDefaultValue(
+                        item?.attachment_pk,
+                        existingProjectFundingReport?.attachment_pk,
+                    );
 
                     const savedItem = await EntityManager.save(ProjectFundingReport, {
                         ...projectFundingReport,
@@ -996,7 +1006,11 @@ export class ProjectsService extends GlobalService {
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                await EntityManager.update(Project, { pk: data.project_pk }, { financial_management_training: data.financial_management_training });
+                await EntityManager.update(
+                    Project,
+                    { pk: data.project_pk },
+                    { financial_management_training: data.financial_management_training },
+                );
 
                 // save logs
                 const model = {
