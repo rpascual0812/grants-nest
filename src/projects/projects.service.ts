@@ -27,6 +27,7 @@ import { ProjectFundingReport } from './entities/project-funding-report.entity';
 import { ProjectFundingLiquidation } from './entities/project-funding-liquidation.entity';
 import { DateTime } from 'luxon';
 import { ProjectSite } from './entities/project-site.entity';
+import { ProjectEvent } from './entities/project-event.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -1029,6 +1030,22 @@ export class ProjectsService extends GlobalService {
             return { status: false, code: err.code };
         } finally {
             await queryRunner.release();
+        }
+    }
+
+    async getEvents(pk, user: any) {
+        try {
+            return await dataSource
+                .getRepository(ProjectEvent)
+                .createQueryBuilder('project_events')
+                .andWhere('project_pk = :pk', { pk })
+                .getMany();
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false,
+            };
         }
     }
 }
