@@ -21,7 +21,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) {}
+    constructor(private readonly projectService: ProjectsService) { }
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -268,5 +268,11 @@ export class ProjectsController {
     @Post('update_financial_management_training')
     updateFinancialManagementTraining(@Body() body: any, @Request() req: any) {
         return this.projectService.updateFinancialManagementTraining(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':project_pk/events')
+    getEvents(@Param('project_pk') project_pk: number, @Request() req: any) {
+        return this.projectService.getEvents(project_pk, req.user);
     }
 }
