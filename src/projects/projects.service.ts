@@ -28,6 +28,7 @@ import { ProjectFundingLiquidation } from './entities/project-funding-liquidatio
 import { DateTime } from 'luxon';
 import { ProjectSite } from './entities/project-site.entity';
 import { ProjectEvent } from './entities/project-event.entity';
+import { ProjectEventAttendee } from './entities/project-event-attendees.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -1046,6 +1047,64 @@ export class ProjectsService extends GlobalService {
             return {
                 status: false,
             };
+        }
+    }
+
+    async getAttendees(pks) {
+        try {
+            return await dataSource
+                .getRepository(ProjectEventAttendee)
+                .createQueryBuilder('project_event_attendees')
+                .andWhere('project_event_pk IN (:...pk)', { pk: pks })
+                .andWhere('archived = false')
+                .getMany();
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false,
+            };
+        }
+    }
+
+    async saveAttendee(project_pk: number, data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {                
+                if(data.pk) {
+                    await EntityManager.update(ProjectEventAttendee, { pk: data.pk }, data);
+                }
+                else {
+                    delete data.pk;
+                    let attendee = data;
+                    await EntityManager.insert(ProjectEventAttendee, attendee);
+                }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async destroyAttendee(pk: number, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                await EntityManager.update(ProjectEventAttendee, { pk: pk }, { archived: true });
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
         }
     }
 }

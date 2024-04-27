@@ -272,7 +272,31 @@ export class ProjectsController {
 
     @UseGuards(JwtAuthGuard)
     @Get(':project_pk/events')
-    getEvents(@Param('project_pk') project_pk: number, @Request() req: any) {
-        return this.projectService.getEvents(project_pk, req.user);
+    async getEvents(@Param('project_pk') project_pk: number, @Request() req: any) {
+        let events: any = await this.projectService.getEvents(project_pk, req.user);
+        const pks = events.map((event) => event.pk);
+
+        let attendees: any = await this.projectService.getAttendees(pks);
+        events.forEach((event: any) => {
+            if (!event.hasOwnProperty('attendees')) {
+                event['attendees'] = [];
+            }
+            const attendee = attendees.filter((attendees) => attendees.project_event_pk == event.pk);
+            event['attendees'] = attendee;
+        });
+
+        return events;
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':project_pk/attendee')
+    saveAttendee(@Param('project_pk') project_pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.saveAttendee(project_pk, body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete('attendee/:pk')
+    destroyAttendee(@Param('pk') pk: number, @Request() req: any) {
+        return this.projectService.destroyAttendee(pk, req.user);
     }
 }
