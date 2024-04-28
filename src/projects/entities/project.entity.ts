@@ -11,6 +11,8 @@ import { Review } from 'src/review/entities/review.entity';
 import { Document } from 'src/document/entities/document.entity';
 import { ProjectRecommendation } from './project-recommendation.entity';
 import { ProjectEvent } from './project-event.entity';
+import { ProjectOutput } from './project-output.entity';
+import { ProjectObjectiveResult } from './project-objective-result.entity';
 
 @Entity({ name: 'projects' })
 export class Project extends BaseEntity {
@@ -71,6 +73,10 @@ export class Project extends BaseEntity {
     @JoinColumn({ name: 'project_event_pk' })
     project_event: ProjectEvent;
 
+    @OneToMany('ProjectOutput', (project_output: ProjectOutput) => project_output.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'project_output_pk' })
+    project_output: ProjectOutput;
+
     @OneToMany('ProjectLocation', (projectLocation: ProjectLocation) => projectLocation.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'project_beneficiary_pk' })
     project_location: ProjectLocation;
@@ -98,4 +104,8 @@ export class Project extends BaseEntity {
     @OneToMany('ProjectRecommendation', (projectRecommendation: ProjectRecommendation) => projectRecommendation.project)
     @JoinColumn({ name: 'pk' })
     recommendations: Array<ProjectRecommendation>;
+
+    @OneToMany('ProjectObjectiveResult', (project_objective_result: ProjectObjectiveResult) => project_objective_result.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'project_objective_result_pk' })
+    project_objective_result: ProjectObjectiveResult;
 }
