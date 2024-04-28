@@ -21,7 +21,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) {}
+    constructor(private readonly projectService: ProjectsService) { }
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -268,5 +268,41 @@ export class ProjectsController {
     @Post('update_financial_management_training')
     updateFinancialManagementTraining(@Body() body: any, @Request() req: any) {
         return this.projectService.updateFinancialManagementTraining(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':project_pk/events')
+    async getEvents(@Param('project_pk') project_pk: number, @Request() req: any) {
+        let events: any = await this.projectService.getEvents(project_pk, req.user);
+        const pks = events.map((event) => event.pk);
+
+        let attendees: any = await this.projectService.getAttendees(pks);
+        events.forEach((event: any) => {
+            if (!event.hasOwnProperty('attendees')) {
+                event['attendees'] = [];
+            }
+            const attendee = attendees.filter((attendees) => attendees.project_event_pk == event.pk);
+            event['attendees'] = attendee;
+        });
+
+        return events;
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':project_pk/events')
+    saveEvent(@Param('project_pk') project_pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.saveEvent(project_pk, body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':project_pk/events/:event_pk/attendee')
+    saveAttendee(@Param('project_pk') project_pk: number, @Param('event_pk') event_pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.saveAttendee(project_pk, event_pk, body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete('attendee/:pk')
+    destroyAttendee(@Param('pk') pk: number, @Request() req: any) {
+        return this.projectService.destroyAttendee(pk, req.user);
     }
 }

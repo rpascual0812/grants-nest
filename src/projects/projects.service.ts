@@ -27,6 +27,8 @@ import { ProjectFundingReport } from './entities/project-funding-report.entity';
 import { ProjectFundingLiquidation } from './entities/project-funding-liquidation.entity';
 import { DateTime } from 'luxon';
 import { ProjectSite } from './entities/project-site.entity';
+import { ProjectEvent } from './entities/project-event.entity';
+import { ProjectEventAttendee } from './entities/project-event-attendees.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -1022,6 +1024,106 @@ export class ProjectsService extends GlobalService {
                 await this.saveLog({ model, user });
 
                 return { status: true };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async getEvents(pk, user: any) {
+        try {
+            return await dataSource
+                .getRepository(ProjectEvent)
+                .createQueryBuilder('project_events')
+                .andWhere('project_pk = :pk', { pk })
+                .getMany();
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false,
+            };
+        }
+    }
+
+    async getAttendees(pks) {
+        try {
+            return await dataSource
+                .getRepository(ProjectEventAttendee)
+                .createQueryBuilder('project_event_attendees')
+                .andWhere('project_event_pk IN (:...pk)', { pk: pks })
+                .andWhere('archived = false')
+                .getMany();
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false,
+            };
+        }
+    }
+
+    async saveEvent(project_pk: number, event: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                event.created_by = user.pk;
+                event.archived = event.archived ?? false;
+                event = await EntityManager.insert(ProjectEvent, event);
+
+                return { status: event ? true : false, data: event.raw[0] }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveAttendee(project_pk: number, event_pk: number, data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                let attendee = null;
+                if (data.pk) {
+                    attendee = await EntityManager.update(ProjectEventAttendee, { pk: data.pk }, data);
+                }
+                else {
+                    delete data.pk;
+                    let attendee = data;
+                    attendee.created_by = user.pk;
+                    attendee.archived = attendee.archived ?? false;
+                    attendee = await EntityManager.insert(ProjectEventAttendee, attendee);
+                }
+
+                return { status: attendee ? true : false }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async destroyAttendee(pk: number, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                await EntityManager.update(ProjectEventAttendee, { pk: pk }, { archived: true });
             });
         } catch (err) {
             this.saveError({});
