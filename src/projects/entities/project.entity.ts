@@ -10,6 +10,7 @@ import { ProjectFunding } from './project-funding.entity';
 import { Review } from 'src/review/entities/review.entity';
 import { Document } from 'src/document/entities/document.entity';
 import { ProjectRecommendation } from './project-recommendation.entity';
+import { ProjectEvent } from './project-event.entity';
 
 @Entity({ name: 'projects' })
 export class Project extends BaseEntity {
@@ -63,16 +64,16 @@ export class Project extends BaseEntity {
     application: Application;
 
     @OneToMany('ProjectBeneficiary', (ProjectBeneficiary: ProjectBeneficiary) => ProjectBeneficiary.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-    @JoinColumn({ name: 'application_project_beneficiary_pk' })
+    @JoinColumn({ name: 'project_beneficiary_pk' })
     project_beneficiary: ProjectBeneficiary;
+
+    @OneToMany('ProjectEvent', (project_event: ProjectEvent) => project_event.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'project_event_pk' })
+    project_event: ProjectEvent;
 
     @OneToMany('ProjectLocation', (projectLocation: ProjectLocation) => projectLocation.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'project_beneficiary_pk' })
     project_location: ProjectLocation;
-
-    // @OneToMany('ProjectStatus', (project_statuses: ProjectStatus) => project_statuses.project)
-    // @JoinColumn({ name: 'status_pk' })
-    // project_statuses: Array<ProjectStatus>;
 
     @ManyToOne(type => Type, type => type.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'type_pk' })
