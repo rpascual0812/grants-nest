@@ -305,4 +305,28 @@ export class ProjectsController {
     destroyAttendee(@Param('pk') pk: number, @Request() req: any) {
         return this.projectService.destroyAttendee(pk, req.user);
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':pk/objective-results')
+    fetchProjectObjectiveResults(@Param('pk') project_pk: number, @Request() req: any) {
+        return this.projectService.getProjectObjectiveResults(project_pk, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':pk/output')
+    fetchProjectOutput(@Param('pk') project_pk: number, @Request() req: any) {
+        return this.projectService.getProjectOutput(project_pk, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/objective-results')
+    saveProjectObjectiveResults(@Param('pk') project_pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectObjectiveResult(project_pk, body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/output')
+    saveProjectOutput(@Param('pk') project_pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectOutput(project_pk, body, req.user);
+    }
 }
