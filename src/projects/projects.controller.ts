@@ -289,9 +289,15 @@ export class ProjectsController {
     }
 
     @UseGuards(JwtAuthGuard)
-    @Post(':project_pk/attendee')
-    saveAttendee(@Param('project_pk') project_pk: number, @Body() body: any, @Request() req: any) {
-        return this.projectService.saveAttendee(project_pk, body, req.user);
+    @Post(':project_pk/events')
+    saveEvent(@Param('project_pk') project_pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.saveEvent(project_pk, body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':project_pk/events/:event_pk/attendee')
+    saveAttendee(@Param('project_pk') project_pk: number, @Param('event_pk') event_pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.saveAttendee(project_pk, event_pk, body, req.user);
     }
 
     @UseGuards(JwtAuthGuard)
