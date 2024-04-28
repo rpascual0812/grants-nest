@@ -1067,20 +1067,46 @@ export class ProjectsService extends GlobalService {
         }
     }
 
-    async saveAttendee(project_pk: number, data: any, user: any) {
+    async saveEvent(project_pk: number, event: any, user: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
-            return await queryRunner.manager.transaction(async (EntityManager) => {                
-                if(data.pk) {
-                    await EntityManager.update(ProjectEventAttendee, { pk: data.pk }, data);
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                event.created_by = user.pk;
+                event.archived = event.archived ?? false;
+                event = await EntityManager.insert(ProjectEvent, event);
+
+                return { status: event ? true : false, data: event.raw[0] }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveAttendee(project_pk: number, event_pk: number, data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                let attendee = null;
+                if (data.pk) {
+                    attendee = await EntityManager.update(ProjectEventAttendee, { pk: data.pk }, data);
                 }
                 else {
                     delete data.pk;
                     let attendee = data;
-                    await EntityManager.insert(ProjectEventAttendee, attendee);
+                    attendee.created_by = user.pk;
+                    attendee.archived = attendee.archived ?? false;
+                    attendee = await EntityManager.insert(ProjectEventAttendee, attendee);
                 }
+
+                return { status: attendee ? true : false }
             });
         } catch (err) {
             this.saveError({});
