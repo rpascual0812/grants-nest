@@ -29,6 +29,8 @@ import { DateTime } from 'luxon';
 import { ProjectSite } from './entities/project-site.entity';
 import { ProjectEvent } from './entities/project-event.entity';
 import { ProjectEventAttendee } from './entities/project-event-attendees.entity';
+import { ProjectObjectiveResult } from './entities/project-objective-result.entity';
+import { ProjectOutput } from './entities/project-output.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -1124,6 +1126,122 @@ export class ProjectsService extends GlobalService {
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 await EntityManager.update(ProjectEventAttendee, { pk: pk }, { archived: true });
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async getProjectObjectiveResults(pk, user: any) {
+        try {
+            const data = await dataSource
+                .getRepository(ProjectObjectiveResult)
+                .createQueryBuilder('project_objective_results')
+                .andWhere('project_pk = :pk', { pk })
+                .andWhere('archived = false')
+                .orderBy('pk', 'ASC')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: data[0],
+                total: data[1],
+            };
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false,
+            };
+        }
+    }
+
+    async getProjectOutput(pk, user: any) {
+        try {
+            return await dataSource
+                .getRepository(ProjectOutput)
+                .createQueryBuilder('project_outputs')
+                .andWhere('project_pk = :pk', { pk })
+                .andWhere('archived = false')
+                .orderBy('pk', 'ASC')
+                .getOne();
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false,
+            };
+        }
+    }
+
+    async saveProjectObjectiveResult(project_pk: number, data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                let objective_result = null;
+                if (data.pk) {
+                    delete data.editable;
+                    objective_result = await EntityManager.update(ProjectObjectiveResult, { pk: data.pk }, data);
+                }
+                else {
+                    objective_result = data;
+                    objective_result.created_by = user.pk;
+                    objective_result.archived = objective_result.archived ?? false;
+                    objective_result = await EntityManager.insert(ProjectObjectiveResult, objective_result);
+                }
+
+                return { status: objective_result ? true : false, data: objective_result }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveProjectOutput(project_pk: number, data: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                data.project_pk = project_pk;
+                console.log(project_pk, data);
+                const existing = await EntityManager.findOne(ProjectOutput, {
+                    where: { project_pk },
+                });
+
+                const output = existing ? existing : new ProjectOutput();
+                output.project_pk = parseInt(data.project_pk);
+                output.tenure_security = data.tenure_security;
+                output.tenure_security_form = data.tenure_security_form;
+                output.territory = data.territory;
+                output.hectares = data.hectares == '' ? 0 : data.hectares;
+                output.livelihood = data.livelihood;
+                output.individual_income = data.individual_income;
+                output.household_income = data.household_income;
+                output.individual = data.individual;
+                output.household = data.household;
+                output.disability_rights = data.disability_rights;
+                output.intervention_type = data.intervention_type;
+                output.created_by = user.pk;
+
+                const saved = await EntityManager.save(ProjectOutput, {
+                    ...output,
+                });
+
+                return {
+                    status: saved ? true : false,
+                    data: saved,
+                };
             });
         } catch (err) {
             this.saveError({});

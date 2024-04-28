@@ -14,6 +14,7 @@ import { PartnerOrganizationOtherInformationFinancialHumanResources } from 'src/
 import { ProjectSite } from 'src/projects/entities/project-site.entity';
 import { ProjectEvent } from 'src/projects/entities/project-event.entity';
 import { ProjectEventAttendee } from 'src/projects/entities/project-event-attendees.entity';
+import { ProjectOutput } from 'src/projects/entities/project-output.entity';
 
 @Entity({ name: 'users' })
 @Unique(['unique_id'])
@@ -118,4 +119,8 @@ export class User extends BaseEntity {
     @OneToMany('ProjectEventAttendee', (project_event_attendee: ProjectEventAttendee) => project_event_attendee.user)
     @JoinColumn({ name: 'pk' })
     project_event_attendee: Array<ProjectEventAttendee>;
+
+    @OneToMany('ProjectOutput', (project_output: ProjectOutput) => project_output.user)
+    @JoinColumn({ name: 'pk' })
+    project_output: Array<ProjectOutput>;
 }
