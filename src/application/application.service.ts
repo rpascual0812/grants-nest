@@ -48,9 +48,7 @@ export class ApplicationService extends GlobalService {
             const data = await dataSource.manager
                 .getRepository(Application)
                 .createQueryBuilder('applications')
-
                 .leftJoinAndSelect('applications.project', 'projects')
-                .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activities')
@@ -95,11 +93,9 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('applications.recommendations', 'application_recommendations')
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
-                .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
                 .leftJoinAndSelect('projects.type', 'types')
-
                 .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere(filter.hasOwnProperty('uuid') ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
                 .andWhere(filter.hasOwnProperty('number') ? 'applications.number = :number' : '1=1', {
@@ -112,6 +108,13 @@ export class ApplicationService extends GlobalService {
                 //     'partner_organization_references.pk': 'ASC',
                 // })
                 .getOne();
+
+            const singleEntryProjectBeneficiary: ProjectBeneficiary =
+                (await this.getProjectBeneficiary(data?.project?.pk)) ?? null;
+            if (data?.project) {
+                data.project['project_beneficiary'] = singleEntryProjectBeneficiary;
+            }
+
             return {
                 status: true,
                 data,
@@ -140,6 +143,22 @@ export class ApplicationService extends GlobalService {
             return {
                 status: false,
             };
+        }
+    }
+
+    async getProjectBeneficiary(projectPk: number) {
+        try {
+            return await dataSource
+                .getRepository(ProjectBeneficiary)
+                .createQueryBuilder('project_beneficiaries')
+                .select('project_beneficiaries')
+                .where('project_beneficiaries.project_pk=:projectPk', { projectPk: projectPk })
+                .orderBy('project_beneficiaries.date_created', 'ASC')
+                .getOne();
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return null;
         }
     }
 
@@ -684,20 +703,22 @@ export class ApplicationService extends GlobalService {
             });
             savedProjLoc = resProj?.data?.project_location;
 
-            let savedProjBeneficiary = [];
-            const projBeneficiary = data?.project_beneficiary ?? [];
+            let savedProjBeneficiary = {};
+            const projBeneficiary = data?.project_beneficiary;
             const resBeneficiary: any = await this.saveProjBeneficiary({
                 project_pk: projPk,
-                project_beneficiary: projBeneficiary,
+                ...projBeneficiary,
             });
-            savedProjBeneficiary = resBeneficiary?.data?.project_beneficiary;
+            savedProjBeneficiary = resBeneficiary?.data;
 
             return {
                 status: true,
                 data: {
                     ...savedProject,
                     project_location: savedProjLoc,
-                    project_beneficiary: savedProjBeneficiary,
+                    project_beneficiary: {
+                        ...savedProjBeneficiary,
+                    },
                 },
             };
         } catch (err) {
@@ -764,52 +785,84 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    async saveProjBeneficiary(data: any) {
+    async saveProjBeneficiary(data: Partial<ProjectBeneficiary>) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
-            return await queryRunner.manager.transaction(async (EntityManager) => {
-                const projectPk = data?.project_pk;
-                const projBeneficiary = data?.project_beneficiary ?? [];
-                const tmpProjBeneficiary = projBeneficiary.map(async (item) => {
-                    const beneficiaryPk = getParsedPk(item?.pk);
-                    const existingProjBeneficiary = await EntityManager.findOneBy(ProjectBeneficiary, {
-                        pk: Equal(beneficiaryPk),
-                        project_pk: Equal(projectPk),
-                    });
+            const savedProjBeneficiary = await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectPk = getParsedPk(data?.project_pk);
+                const projBeneficiaryPk = getParsedPk(data?.pk);
 
-                    const beneficiary = existingProjBeneficiary ? existingProjBeneficiary : new ProjectBeneficiary();
-                    beneficiary.project_pk = projectPk;
-                    beneficiary.type = getDefaultValue(item?.type, existingProjBeneficiary?.type);
-                    beneficiary.name = getDefaultValue(item?.name, existingProjBeneficiary?.name);
-                    beneficiary.count = getDefaultValue(item?.count, existingProjBeneficiary?.count);
-
-                    const savedItem = await EntityManager.save(ProjectBeneficiary, {
-                        ...beneficiary,
-                    });
-
-                    return {
-                        ...savedItem,
-                    };
+                const existingProjBeneficiary = await EntityManager.findOneBy(ProjectBeneficiary, {
+                    pk: Equal(projBeneficiaryPk),
+                    project_pk: Equal(projectPk),
                 });
 
-                await Promise.all(tmpProjBeneficiary);
+                const beneficiary = existingProjBeneficiary ? existingProjBeneficiary : new ProjectBeneficiary();
+                beneficiary.project_pk = projectPk;
 
-                const existingProjLoc =
-                    (await EntityManager.findBy(ProjectBeneficiary, {
-                        project_pk: Equal(projectPk),
-                    })) ?? [];
+                beneficiary.women_count = getDefaultValue(data?.women_count, existingProjBeneficiary?.women_count);
+                beneficiary.women_diffable_count = getDefaultValue(
+                    data?.women_diffable_count,
+                    existingProjBeneficiary?.women_diffable_count,
+                );
+                beneficiary.women_other_vulnerable_sector_count = getDefaultValue(
+                    data?.women_other_vulnerable_sector_count,
+                    existingProjBeneficiary?.women_other_vulnerable_sector_count,
+                );
 
-                const allProj = [...existingProjLoc];
+                beneficiary.young_women_count = getDefaultValue(
+                    data?.young_women_count,
+                    existingProjBeneficiary?.young_women_count,
+                );
+                beneficiary.young_women_diffable_count = getDefaultValue(
+                    data?.young_women_diffable_count,
+                    existingProjBeneficiary?.young_women_diffable_count,
+                );
+                beneficiary.young_women_other_vulnerable_sector_count = getDefaultValue(
+                    data?.young_women_other_vulnerable_sector_count,
+                    existingProjBeneficiary?.young_women_other_vulnerable_sector_count,
+                );
+
+                beneficiary.men_count = getDefaultValue(data?.men_count, existingProjBeneficiary?.men_count);
+                beneficiary.men_diffable_count = getDefaultValue(
+                    data?.men_diffable_count,
+                    existingProjBeneficiary?.men_diffable_count,
+                );
+                beneficiary.men_other_vulnerable_sector_count = getDefaultValue(
+                    data?.men_other_vulnerable_sector_count,
+                    existingProjBeneficiary?.men_other_vulnerable_sector_count,
+                );
+
+                beneficiary.young_men_count = getDefaultValue(
+                    data?.young_men_count,
+                    existingProjBeneficiary?.young_men_count,
+                );
+                beneficiary.young_men_diffable_count = getDefaultValue(
+                    data?.young_men_diffable_count,
+                    existingProjBeneficiary?.young_men_diffable_count,
+                );
+                beneficiary.young_men_other_vulnerable_sector_count = getDefaultValue(
+                    data?.young_men_other_vulnerable_sector_count,
+                    existingProjBeneficiary?.young_men_other_vulnerable_sector_count,
+                );
+
+                const savedItem = await EntityManager.save(ProjectBeneficiary, {
+                    ...beneficiary,
+                });
 
                 return {
-                    status: true,
-                    data: {
-                        project_beneficiary: allProj,
-                    },
+                    ...savedItem,
                 };
             });
+
+            return {
+                status: true,
+                data: {
+                    ...savedProjBeneficiary,
+                },
+            };
         } catch (err) {
             console.log(err);
             this.saveError({});
@@ -1602,7 +1655,11 @@ export class ApplicationService extends GlobalService {
                             application.status = 'Approved';
                             application.save();
 
-                            await EntityManager.update(Project, { application_pk: data.application_pk }, { status: 'Contract Preparation' });
+                            await EntityManager.update(
+                                Project,
+                                { application_pk: data.application_pk },
+                                { status: 'Contract Preparation' },
+                            );
                         }
                     }
 
@@ -1785,7 +1842,6 @@ export class ApplicationService extends GlobalService {
                 }
 
                 if (!application.email_sent) {
-
                     const partner = await dataSource
                         .getRepository(Partner)
                         .createQueryBuilder('partners')
@@ -1845,7 +1901,8 @@ export class ApplicationService extends GlobalService {
             </div>\
         </div>\
         <div style="width: 100%; text-align: center;">\
-            <a href="http://3.0.54.110/public/application/${application.uuid}/status">http://3.0.54.110/public/${application.uuid}/status</a>\
+            <a href="http://3.0.54.110/public/application/${application.uuid}/status">http://3.0.54.110/public/${application.uuid
+                        }/status</a>\
         </div>\
     </div>\
 </div>`; // MODIFY: must be a template from the database
@@ -1858,8 +1915,8 @@ export class ApplicationService extends GlobalService {
                         to: partner.email_address,
                         to_name: '',
                         subject: 'Thank you for submitting your application',
-                        body: body
-                    }
+                        body: body,
+                    };
 
                     // this.emailService.uuid = uuidv4();
                     // this.emailService.user_pk = application.created_by;
@@ -1877,9 +1934,7 @@ export class ApplicationService extends GlobalService {
                         .createQueryBuilder()
                         .insert()
                         .into(Email)
-                        .values([
-                            email
-                        ])
+                        .values([email])
                         .returning('pk')
                         .execute();
 
