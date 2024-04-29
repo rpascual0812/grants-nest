@@ -31,6 +31,7 @@ import { ProjectEvent } from './entities/project-event.entity';
 import { ProjectEventAttendee } from './entities/project-event-attendees.entity';
 import { ProjectObjectiveResult } from './entities/project-objective-result.entity';
 import { ProjectOutput } from './entities/project-output.entity';
+import { ProjectBeneficiary } from './entities/project-beneficiary.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -47,7 +48,6 @@ export class ProjectsService extends GlobalService {
                 .getRepository(Project)
                 .createQueryBuilder('projects')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
-                .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
                 .leftJoinAndSelect('projects.type', 'types')
@@ -77,14 +77,18 @@ export class ProjectsService extends GlobalService {
                 .leftJoinAndSelect('projects.documents', 'documents')
                 .leftJoinAndSelect('projects.recommendations', 'project_recommendations')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
-                .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiary')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
                 .leftJoinAndSelect('projects.type', 'types')
-
                 .andWhere(filter.hasOwnProperty('pk') ? 'projects.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere('projects.archived = :archived', { archived: false })
                 .getOne();
+
+            if (data) {
+                const singleEntryProjectBeneficiary = (await this.getProjectBeneficiary(data?.pk)) ?? null;
+                data['project_beneficiary'] = singleEntryProjectBeneficiary;
+            }
+
             return {
                 status: true,
                 data,
@@ -309,6 +313,22 @@ export class ProjectsService extends GlobalService {
             return {
                 status: false,
             };
+        }
+    }
+
+    async getProjectBeneficiary(projectPk: number) {
+        try {
+            return await dataSource
+                .getRepository(ProjectBeneficiary)
+                .createQueryBuilder('project_beneficiaries')
+                .select('project_beneficiaries')
+                .where('project_beneficiaries.project_pk=:projectPk', { projectPk: projectPk })
+                .orderBy('project_beneficiaries.date_created', 'ASC')
+                .getOne();
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return null;
         }
     }
 
@@ -1079,7 +1099,7 @@ export class ProjectsService extends GlobalService {
                 event.archived = event.archived ?? false;
                 event = await EntityManager.insert(ProjectEvent, event);
 
-                return { status: event ? true : false, data: event.raw[0] }
+                return { status: event ? true : false, data: event.raw[0] };
             });
         } catch (err) {
             this.saveError({});
@@ -1099,8 +1119,7 @@ export class ProjectsService extends GlobalService {
                 let attendee = null;
                 if (data.pk) {
                     attendee = await EntityManager.update(ProjectEventAttendee, { pk: data.pk }, data);
-                }
-                else {
+                } else {
                     delete data.pk;
                     let attendee = data;
                     attendee.created_by = user.pk;
@@ -1108,7 +1127,7 @@ export class ProjectsService extends GlobalService {
                     attendee = await EntityManager.insert(ProjectEventAttendee, attendee);
                 }
 
-                return { status: attendee ? true : false }
+                return { status: attendee ? true : false };
             });
         } catch (err) {
             this.saveError({});
@@ -1246,6 +1265,153 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async getProjectBeneficiaries(filter: { project_pk: number }) {
+        try {
+            const projBeneficiaries = await dataSource
+                .getRepository(ProjectBeneficiary)
+                .createQueryBuilder('project_beneficiaries')
+                .select('project_beneficiaries')
+                .where('project_beneficiaries.project_pk=:project_pk', { project_pk: filter?.project_pk })
+                .orderBy('project_beneficiaries.date_created', 'ASC')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: projBeneficiaries[0],
+                total: projBeneficiaries[1],
+            };
+        } catch (error) {
+            console.log(error);
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
+
+    async saveProjectBeneficiary(data: Partial<ProjectBeneficiary>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            const savedProjBeneficiary = await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectPk = getParsedPk(data?.project_pk);
+                const projBeneficiaryPk = getParsedPk(data?.pk);
+                const existingProjBeneficiary = await EntityManager.findOne(ProjectBeneficiary, {
+                    where: {
+                        pk: Equal(projBeneficiaryPk),
+                        project_pk: Equal(projectPk),
+                    },
+                });
+                const beneficiary = existingProjBeneficiary ? existingProjBeneficiary : new ProjectBeneficiary();
+                beneficiary.project_pk = projectPk;
+                beneficiary.women_count = getDefaultValue(data?.women_count, existingProjBeneficiary?.women_count);
+                beneficiary.women_diffable_count = getDefaultValue(
+                    data?.women_diffable_count,
+                    existingProjBeneficiary?.women_diffable_count,
+                );
+                beneficiary.women_other_vulnerable_sector_count = getDefaultValue(
+                    data?.women_other_vulnerable_sector_count,
+                    existingProjBeneficiary?.women_other_vulnerable_sector_count,
+                );
+
+                beneficiary.young_women_count = getDefaultValue(
+                    data?.young_women_count,
+                    existingProjBeneficiary?.young_women_count,
+                );
+                beneficiary.young_women_diffable_count = getDefaultValue(
+                    data?.young_women_diffable_count,
+                    existingProjBeneficiary?.young_women_diffable_count,
+                );
+                beneficiary.young_women_other_vulnerable_sector_count = getDefaultValue(
+                    data?.young_women_other_vulnerable_sector_count,
+                    existingProjBeneficiary?.young_women_other_vulnerable_sector_count,
+                );
+
+                beneficiary.men_count = getDefaultValue(data?.men_count, existingProjBeneficiary?.men_count);
+                beneficiary.men_diffable_count = getDefaultValue(
+                    data?.men_diffable_count,
+                    existingProjBeneficiary?.men_diffable_count,
+                );
+                beneficiary.men_other_vulnerable_sector_count = getDefaultValue(
+                    data?.men_other_vulnerable_sector_count,
+                    existingProjBeneficiary?.men_other_vulnerable_sector_count,
+                );
+
+                beneficiary.young_men_count = getDefaultValue(
+                    data?.young_men_count,
+                    existingProjBeneficiary?.young_men_count,
+                );
+                beneficiary.young_men_diffable_count = getDefaultValue(
+                    data?.young_men_diffable_count,
+                    existingProjBeneficiary?.young_men_diffable_count,
+                );
+                beneficiary.young_men_other_vulnerable_sector_count = getDefaultValue(
+                    data?.young_men_other_vulnerable_sector_count,
+                    existingProjBeneficiary?.young_men_other_vulnerable_sector_count,
+                );
+
+                const savedItem = await EntityManager.save(ProjectBeneficiary, {
+                    ...beneficiary,
+                });
+
+                return {
+                    ...savedItem,
+                };
+            });
+
+            return {
+                status: true,
+                data: {
+                    ...savedProjBeneficiary,
+                },
+            };
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async deleteProjectBeneficiary(
+        data: {
+            pk: number;
+        },
+        user: any,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectBeneficiaryPk = getParsedPk(+data?.pk);
+                const projectBeneficiary = await EntityManager.findOneBy(ProjectBeneficiary, {
+                    pk: Equal(projectBeneficiaryPk),
+                });
+
+                await projectBeneficiary.remove();
+
+                // save logs
+                const model = {
+                    pk: projectBeneficiaryPk,
+                    name: 'project_beneficiary',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: true };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
             return { status: false, code: err.code };
         } finally {
             await queryRunner.release();

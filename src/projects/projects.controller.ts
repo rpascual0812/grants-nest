@@ -21,7 +21,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) { }
+    constructor(private readonly projectService: ProjectsService) {}
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -296,7 +296,12 @@ export class ProjectsController {
 
     @UseGuards(JwtAuthGuard)
     @Post(':project_pk/events/:event_pk/attendee')
-    saveAttendee(@Param('project_pk') project_pk: number, @Param('event_pk') event_pk: number, @Body() body: any, @Request() req: any) {
+    saveAttendee(
+        @Param('project_pk') project_pk: number,
+        @Param('event_pk') event_pk: number,
+        @Body() body: any,
+        @Request() req: any,
+    ) {
         return this.projectService.saveAttendee(project_pk, event_pk, body, req.user);
     }
 
@@ -328,5 +333,31 @@ export class ProjectsController {
     @Post(':pk/output')
     saveProjectOutput(@Param('pk') project_pk: number, @Body() body: any, @Request() req: any) {
         return this.projectService.saveProjectOutput(project_pk, body, req.user);
+    }
+
+    @Get(':project_pk/project_beneficiary')
+    async getProjectBeneficiaries(@Param('project_pk') project_pk: number, @Request() req: any) {
+        return this.projectService.getProjectBeneficiaries({ project_pk });
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('project_beneficiary')
+    async saveProjectBeneficiary(@Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectBeneficiary(body);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk/project_beneficiary/:project_beneficiary_pk')
+    deleteProjectBeneficiary(
+        @Param('pk') project_pk: number,
+        @Param('project_beneficiary_pk') project_beneficiary_pk: number,
+        @Request() req: any,
+    ) {
+        return this.projectService.deleteProjectBeneficiary(
+            {
+                pk: project_beneficiary_pk,
+            },
+            req.user,
+        );
     }
 }
