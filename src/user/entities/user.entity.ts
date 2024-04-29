@@ -15,6 +15,7 @@ import { ProjectSite } from 'src/projects/entities/project-site.entity';
 import { ProjectEvent } from 'src/projects/entities/project-event.entity';
 import { ProjectEventAttendee } from 'src/projects/entities/project-event-attendees.entity';
 import { ProjectOutput } from 'src/projects/entities/project-output.entity';
+import { ProjectCapDev } from 'src/projects/entities/project-capdev.entity';
 
 @Entity({ name: 'users' })
 @Unique(['unique_id'])
@@ -123,4 +124,8 @@ export class User extends BaseEntity {
     @OneToMany('ProjectOutput', (project_output: ProjectOutput) => project_output.user)
     @JoinColumn({ name: 'pk' })
     project_output: Array<ProjectOutput>;
+
+    @OneToMany('ProjectCapDev', (project_capdev: ProjectCapDev) => project_capdev.user)
+    @JoinColumn({ name: 'pk' })
+    project_capdev: Array<ProjectCapDev>;
 }

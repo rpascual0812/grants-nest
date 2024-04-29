@@ -13,6 +13,7 @@ import { ProjectRecommendation } from './project-recommendation.entity';
 import { ProjectEvent } from './project-event.entity';
 import { ProjectOutput } from './project-output.entity';
 import { ProjectObjectiveResult } from './project-objective-result.entity';
+import { ProjectCapDev } from './project-capdev.entity';
 
 @Entity({ name: 'projects' })
 export class Project extends BaseEntity {
@@ -72,6 +73,10 @@ export class Project extends BaseEntity {
     @OneToMany('ProjectEvent', (project_event: ProjectEvent) => project_event.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'project_event_pk' })
     project_event: ProjectEvent;
+
+    @OneToMany('ProjectCapDev', (project_capdev: ProjectCapDev) => project_capdev.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'project_capdev_pk' })
+    project_capdev: ProjectCapDev;
 
     @OneToMany('ProjectOutput', (project_output: ProjectOutput) => project_output.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'project_output_pk' })
