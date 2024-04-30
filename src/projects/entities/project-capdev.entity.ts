@@ -1,4 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    Unique,
+    OneToOne,
+    ManyToOne,
+    JoinColumn,
+    BaseEntity,
+    OneToMany,
+} from 'typeorm';
 import { Project } from './project.entity';
 import { User } from 'src/user/entities/user.entity';
 
@@ -31,7 +41,7 @@ export class ProjectCapDev extends BaseEntity {
     /**
      * Relationship
      */
-    @ManyToOne(type => Project, project => project.project_capdev, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne((type) => Project, (project) => project.project_capdev, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'project_pk' })
     project: Project;
 
