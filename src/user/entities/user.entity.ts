@@ -1,4 +1,15 @@
-import { Entity, Column, PrimaryGeneratedColumn, Unique, JoinColumn, ManyToOne, OneToOne, BaseEntity, OneToMany, ManyToMany } from 'typeorm';
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    Unique,
+    JoinColumn,
+    ManyToOne,
+    OneToOne,
+    BaseEntity,
+    OneToMany,
+    ManyToMany,
+} from 'typeorm';
 import { Account } from 'src/account/entities/account.entity';
 import { Gender } from 'src/gender/entities/gender.entity';
 import { UserRole } from './user-role.entity';
@@ -15,6 +26,9 @@ import { ProjectSite } from 'src/projects/entities/project-site.entity';
 import { ProjectEvent } from 'src/projects/entities/project-event.entity';
 import { ProjectEventAttendee } from 'src/projects/entities/project-event-attendees.entity';
 import { ProjectOutput } from 'src/projects/entities/project-output.entity';
+import { ProjectCapDev } from 'src/projects/entities/project-capdev.entity';
+import { ProjectCapDevSkill } from 'src/projects/entities/project-capdev-skill.entity';
+import { ProjectCapDevObserve } from 'src/projects/entities/project-capdev-observe.entity';
 
 @Entity({ name: 'users' })
 @Unique(['unique_id'])
@@ -60,7 +74,7 @@ export class User extends BaseEntity {
     /**
      * Relationship
      */
-    @OneToOne(type => Account, account => account.user, { onDelete: 'CASCADE' })
+    @OneToOne((type) => Account, (account) => account.user, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'account_pk' })
     account: Account;
 
@@ -68,7 +82,7 @@ export class User extends BaseEntity {
     @JoinColumn({ name: 'gender_pk' })
     gender: Gender;
 
-    @OneToMany(type => UserRole, user_role => user_role.user, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToMany((type) => UserRole, (user_role) => user_role.user, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'user_role_pk' })
     user_role: UserRole;
 
@@ -92,7 +106,12 @@ export class User extends BaseEntity {
     @JoinColumn({ name: 'pk' })
     organization_bank: Array<PartnerOrganizationBank>;
 
-    @OneToMany('PartnerOrganizationOtherInformationFinancialHumanResources', (organization_other_information_financial_human_resources: PartnerOrganizationOtherInformationFinancialHumanResources) => organization_other_information_financial_human_resources.user)
+    @OneToMany(
+        'PartnerOrganizationOtherInformationFinancialHumanResources',
+        (
+            organization_other_information_financial_human_resources: PartnerOrganizationOtherInformationFinancialHumanResources,
+        ) => organization_other_information_financial_human_resources.user,
+    )
     @JoinColumn({ name: 'pk' })
     organization_other_information_financial_human_resources: Array<PartnerOrganizationOtherInformationFinancialHumanResources>;
 
@@ -123,4 +142,16 @@ export class User extends BaseEntity {
     @OneToMany('ProjectOutput', (project_output: ProjectOutput) => project_output.user)
     @JoinColumn({ name: 'pk' })
     project_output: Array<ProjectOutput>;
+
+    @OneToMany('ProjectCapDev', (project_capdev: ProjectCapDev) => project_capdev.user)
+    @JoinColumn({ name: 'pk' })
+    project_capdev: Array<ProjectCapDev>;
+
+    @OneToMany('ProjectCapDevSkill', (project_capdev_skill: ProjectCapDev) => project_capdev_skill.user)
+    @JoinColumn({ name: 'pk' })
+    project_capdev_skill: Array<ProjectCapDevSkill>;
+
+    @OneToMany('ProjectCapDevObserve', (project_capdev_observe: ProjectCapDevObserve) => project_capdev_observe.user)
+    @JoinColumn({ name: 'pk' })
+    project_capdev_observe: Array<ProjectCapDevObserve>;
 }

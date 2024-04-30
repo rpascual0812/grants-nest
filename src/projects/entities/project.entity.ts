@@ -1,4 +1,15 @@
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany, ManyToMany } from 'typeorm';
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    Unique,
+    OneToOne,
+    ManyToOne,
+    JoinColumn,
+    BaseEntity,
+    OneToMany,
+    ManyToMany,
+} from 'typeorm';
 import { ProjectBeneficiary } from './project-beneficiary.entity';
 import { Application } from 'src/application/entities/application.entity';
 import { ProjectLocation } from './project-location.entity';
@@ -13,6 +24,9 @@ import { ProjectRecommendation } from './project-recommendation.entity';
 import { ProjectEvent } from './project-event.entity';
 import { ProjectOutput } from './project-output.entity';
 import { ProjectObjectiveResult } from './project-objective-result.entity';
+import { ProjectCapDev } from './project-capdev.entity';
+import { ProjectCapDevSkill } from './project-capdev-skill.entity';
+import { ProjectCapDevObserve } from './project-capdev-observe.entity';
 
 @Entity({ name: 'projects' })
 export class Project extends BaseEntity {
@@ -61,27 +75,64 @@ export class Project extends BaseEntity {
     /**
      * Relationship
      */
-    @OneToOne(type => Application, application => application.project, { onDelete: 'CASCADE' })
+    @OneToOne((type) => Application, (application) => application.project, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'application_pk' })
     application: Application;
 
-    @OneToMany('ProjectBeneficiary', (ProjectBeneficiary: ProjectBeneficiary) => ProjectBeneficiary.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToMany('ProjectBeneficiary', (ProjectBeneficiary: ProjectBeneficiary) => ProjectBeneficiary.project, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
     @JoinColumn({ name: 'project_beneficiary_pk' })
     project_beneficiary: ProjectBeneficiary;
 
-    @OneToMany('ProjectEvent', (project_event: ProjectEvent) => project_event.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToMany('ProjectEvent', (project_event: ProjectEvent) => project_event.project, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
     @JoinColumn({ name: 'project_event_pk' })
     project_event: ProjectEvent;
 
-    @OneToMany('ProjectOutput', (project_output: ProjectOutput) => project_output.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToMany('ProjectCapDev', (project_capdev: ProjectCapDev) => project_capdev.project, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
+    @JoinColumn({ name: 'project_capdev_pk' })
+    project_capdev: ProjectCapDev;
+
+    @OneToMany('ProjectCapDevSkill', (project_capdev_skill: ProjectCapDevSkill) => project_capdev_skill.project, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
+    @JoinColumn({ name: 'project_capdev_skill_pk' })
+    project_capdev_skill: ProjectCapDevSkill;
+
+    @OneToMany(
+        'ProjectCapDevObserve',
+        (project_capdev_observe: ProjectCapDevObserve) => project_capdev_observe.project,
+        {
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE',
+        },
+    )
+    @JoinColumn({ name: 'project_capdev_observe_pk' })
+    project_capdev_observe: ProjectCapDevObserve;
+
+    @OneToMany('ProjectOutput', (project_output: ProjectOutput) => project_output.project, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
     @JoinColumn({ name: 'project_output_pk' })
     project_output: ProjectOutput;
 
-    @OneToMany('ProjectLocation', (projectLocation: ProjectLocation) => projectLocation.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToMany('ProjectLocation', (projectLocation: ProjectLocation) => projectLocation.project, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
     @JoinColumn({ name: 'project_beneficiary_pk' })
     project_location: ProjectLocation;
 
-    @ManyToOne(type => Type, type => type.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne((type) => Type, (type) => type.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'type_pk' })
     type: Type;
 
@@ -105,7 +156,11 @@ export class Project extends BaseEntity {
     @JoinColumn({ name: 'pk' })
     recommendations: Array<ProjectRecommendation>;
 
-    @OneToMany('ProjectObjectiveResult', (project_objective_result: ProjectObjectiveResult) => project_objective_result.project, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToMany(
+        'ProjectObjectiveResult',
+        (project_objective_result: ProjectObjectiveResult) => project_objective_result.project,
+        { onDelete: 'CASCADE', onUpdate: 'CASCADE' },
+    )
     @JoinColumn({ name: 'project_objective_result_pk' })
     project_objective_result: ProjectObjectiveResult;
 }
