@@ -32,6 +32,9 @@ import { ProjectEventAttendee } from './entities/project-event-attendees.entity'
 import { ProjectObjectiveResult } from './entities/project-objective-result.entity';
 import { ProjectOutput } from './entities/project-output.entity';
 import { ProjectBeneficiary } from './entities/project-beneficiary.entity';
+import { ProjectCapDev } from './entities/project-capdev.entity';
+import { ProjectCapDevSkill } from './entities/project-capdev-skill.entity';
+import { ProjectCapDevObserve } from './entities/project-capdev-observe.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -1207,15 +1210,14 @@ export class ProjectsService extends GlobalService {
                 if (data.pk) {
                     delete data.editable;
                     objective_result = await EntityManager.update(ProjectObjectiveResult, { pk: data.pk }, data);
-                }
-                else {
+                } else {
                     objective_result = data;
                     objective_result.created_by = user.pk;
                     objective_result.archived = objective_result.archived ?? false;
                     objective_result = await EntityManager.insert(ProjectObjectiveResult, objective_result);
                 }
 
-                return { status: objective_result ? true : false, data: objective_result }
+                return { status: objective_result ? true : false, data: objective_result };
             });
         } catch (err) {
             this.saveError({});
@@ -1403,6 +1405,338 @@ export class ProjectsService extends GlobalService {
                 const model = {
                     pk: projectBeneficiaryPk,
                     name: 'project_beneficiary',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: true };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async getProjectCapDevKnowledge(filter: { project_pk: number }) {
+        try {
+            const projectCapDevKnowledge = await dataSource
+                .getRepository(ProjectCapDev)
+                .createQueryBuilder('project_capdevs')
+                .select('project_capdevs')
+                .where('project_capdevs.project_pk=:project_pk', { project_pk: filter?.project_pk })
+                .orderBy('project_capdevs.date_created', 'ASC')
+                .andWhere('project_capdevs.archived = :archived', { archived: false })
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: projectCapDevKnowledge[0],
+                total: projectCapDevKnowledge[1],
+            };
+        } catch (error) {
+            console.log(error);
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
+
+    async saveProjectCapDevKnowledge(data: Partial<ProjectCapDev>, user: Partial<User>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            const savedProjCapDevKnowledge = await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectPk = getParsedPk(data?.project_pk);
+                const projCapDevKnowledgePk = getParsedPk(data?.pk);
+                const existingKnowledge = await EntityManager.findOne(ProjectCapDev, {
+                    where: {
+                        pk: Equal(projCapDevKnowledgePk),
+                        project_pk: Equal(projectPk),
+                    },
+                });
+                const capDevKnowledge = existingKnowledge ? existingKnowledge : new ProjectCapDev();
+                capDevKnowledge.project_pk = projectPk;
+                capDevKnowledge.created_by = user?.pk;
+                capDevKnowledge.knowledge = getDefaultValue(data?.knowledge, existingKnowledge?.knowledge);
+                capDevKnowledge.instruction = getDefaultValue(data?.instruction, existingKnowledge?.instruction);
+                capDevKnowledge.remarks = getDefaultValue(data?.remarks, existingKnowledge?.remarks);
+
+                const savedItem = await EntityManager.save(ProjectCapDev, {
+                    ...capDevKnowledge,
+                });
+
+                return {
+                    ...savedItem,
+                };
+            });
+
+            return {
+                status: true,
+                data: {
+                    ...savedProjCapDevKnowledge,
+                },
+            };
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async deleteProjectCapDevKnowledge(
+        data: {
+            project_pk: number;
+            pk: number;
+        },
+        user: any,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectCapDevKnowledgePk = getParsedPk(+data?.pk);
+                const projectCapDevKnowledge = await EntityManager.findOneBy(ProjectCapDev, {
+                    pk: Equal(projectCapDevKnowledgePk),
+                });
+
+                const savedItem = await EntityManager.save(ProjectCapDev, {
+                    ...projectCapDevKnowledge,
+                    archived: true,
+                });
+
+                // save logs
+                const model = {
+                    pk: savedItem?.pk,
+                    name: 'project_capdev',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: true };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async getProjectCapDevSkill(filter: { project_pk: number }) {
+        try {
+            const projectCapDevSkill = await dataSource
+                .getRepository(ProjectCapDevSkill)
+                .createQueryBuilder('project_capdev_skills')
+                .select('project_capdev_skills')
+                .where('project_capdev_skills.project_pk=:project_pk', { project_pk: filter?.project_pk })
+                .orderBy('project_capdev_skills.date_created', 'ASC')
+                .andWhere('project_capdev_skills.archived = :archived', { archived: false })
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: projectCapDevSkill[0],
+                total: projectCapDevSkill[1],
+            };
+        } catch (error) {
+            console.log(error);
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
+
+    async saveProjectCapDevSkill(data: Partial<ProjectCapDevSkill>, user: Partial<User>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            const savedProjCapDevSkill = await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectPk = getParsedPk(data?.project_pk);
+                const projCapDevSkillPk = getParsedPk(data?.pk);
+                const existingSkill = await EntityManager.findOne(ProjectCapDevSkill, {
+                    where: {
+                        pk: Equal(projCapDevSkillPk),
+                        project_pk: Equal(projectPk),
+                    },
+                });
+                const capDevSkill = existingSkill ? existingSkill : new ProjectCapDevSkill();
+                capDevSkill.project_pk = projectPk;
+                capDevSkill.created_by = user?.pk;
+                capDevSkill.skill_gained = getDefaultValue(data?.skill_gained, existingSkill?.skill_gained);
+                capDevSkill.skill = getDefaultValue(data?.skill, existingSkill?.skill);
+                capDevSkill.instruction = getDefaultValue(data?.instruction, existingSkill?.instruction);
+                capDevSkill.remarks = getDefaultValue(data?.remarks, existingSkill?.remarks);
+
+                const savedItem = await EntityManager.save(ProjectCapDevSkill, {
+                    ...capDevSkill,
+                });
+
+                return {
+                    ...savedItem,
+                };
+            });
+
+            return {
+                status: true,
+                data: {
+                    ...savedProjCapDevSkill,
+                },
+            };
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async deleteProjectCapDevSkill(
+        data: {
+            project_pk: number;
+            pk: number;
+        },
+        user: any,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectCapDevSkillPk = getParsedPk(+data?.pk);
+                const projectCapDevSkill = await EntityManager.findOneBy(ProjectCapDevSkill, {
+                    pk: Equal(projectCapDevSkillPk),
+                });
+
+                const savedItem = await EntityManager.save(ProjectCapDevSkill, {
+                    ...projectCapDevSkill,
+                    archived: true,
+                });
+
+                // save logs
+                const model = {
+                    pk: savedItem?.pk,
+                    name: 'project_capdev_skill',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: true };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async getProjectCapDevObserve(filter: { project_pk: number }) {
+        try {
+            const projectCapDevObserve = await dataSource
+                .getRepository(ProjectCapDevObserve)
+                .createQueryBuilder('project_capdev_observes')
+                .select('project_capdev_observes')
+                .where('project_capdev_observes.project_pk=:project_pk', { project_pk: filter?.project_pk })
+                .orderBy('project_capdev_observes.date_created', 'ASC')
+                .andWhere('project_capdev_observes.archived = :archived', { archived: false })
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: projectCapDevObserve[0],
+                total: projectCapDevObserve[1],
+            };
+        } catch (error) {
+            console.log(error);
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
+
+    async saveProjectCapDevObserve(data: Partial<ProjectCapDevObserve>, user: Partial<User>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            const savedProjCapDevObserve = await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectPk = getParsedPk(data?.project_pk);
+                const projCapDevObservePk = getParsedPk(data?.pk);
+                const existingObserve = await EntityManager.findOne(ProjectCapDevObserve, {
+                    where: {
+                        pk: Equal(projCapDevObservePk),
+                        project_pk: Equal(projectPk),
+                    },
+                });
+                const capDevObserve = existingObserve ? existingObserve : new ProjectCapDevObserve();
+                capDevObserve.project_pk = projectPk;
+                capDevObserve.created_by = user?.pk;
+                capDevObserve.observed = getDefaultValue(data?.observed, existingObserve?.observed);
+
+                const savedItem = await EntityManager.save(ProjectCapDevObserve, {
+                    ...capDevObserve,
+                });
+
+                return {
+                    ...savedItem,
+                };
+            });
+
+            return {
+                status: true,
+                data: {
+                    ...savedProjCapDevObserve,
+                },
+            };
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async deleteProjectCapDevObserve(
+        data: {
+            project_pk: number;
+            pk: number;
+        },
+        user: any,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectCapDevObservePk = getParsedPk(+data?.pk);
+                const projectCapDevObserve = await EntityManager.findOneBy(ProjectCapDevObserve, {
+                    pk: Equal(projectCapDevObservePk),
+                });
+
+                const savedItem = await EntityManager.save(ProjectCapDevObserve, {
+                    ...projectCapDevObserve,
+                    archived: true,
+                });
+
+                // save logs
+                const model = {
+                    pk: savedItem?.pk,
+                    name: 'project_capdev_observe',
                     status: 'deleted',
                 };
                 await this.saveLog({ model, user });

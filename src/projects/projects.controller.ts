@@ -360,4 +360,85 @@ export class ProjectsController {
             req.user,
         );
     }
+
+    @Get(':project_pk/project_capdev_knowledge')
+    async getProjectCapDevKnowledge(@Param('project_pk') project_pk: number, @Request() req: any) {
+        return this.projectService.getProjectCapDevKnowledge({ project_pk });
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('project_capdev_knowledge')
+    async saveProjectCapDevKnowledge(@Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectCapDevKnowledge(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk/project_capdev_knowledge/:project_capdev_knowledge_pk')
+    async deleteProjectCapDevKnowledge(
+        @Param('pk') project_pk: number,
+        @Param('project_capdev_knowledge_pk') project_capdev_knowledge_pk: number,
+        @Request() req: any,
+    ) {
+        return this.projectService.deleteProjectCapDevKnowledge(
+            {
+                project_pk: project_pk,
+                pk: project_capdev_knowledge_pk,
+            },
+            req.user,
+        );
+    }
+
+    @Get(':project_pk/project_capdev_skill')
+    async getProjectCapDevSkill(@Param('project_pk') project_pk: number, @Request() req: any) {
+        return this.projectService.getProjectCapDevSkill({ project_pk });
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('project_capdev_skill')
+    async saveProjectCapDevSkill(@Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectCapDevSkill(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk/project_capdev_skill/:project_capdev_skill_pk')
+    async deleteProjectCapDevSkill(
+        @Param('pk') project_pk: number,
+        @Param('project_capdev_skill_pk') project_capdev_skill_pk: number,
+        @Request() req: any,
+    ) {
+        return this.projectService.deleteProjectCapDevSkill(
+            {
+                project_pk: project_pk,
+                pk: project_capdev_skill_pk,
+            },
+            req.user,
+        );
+    }
+
+    @Get(':project_pk/project_capdev_observe')
+    async getProjectCapDevObserve(@Param('project_pk') project_pk: number, @Request() req: any) {
+        return this.projectService.getProjectCapDevObserve({ project_pk });
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('project_capdev_observe')
+    async saveProjectCapDevObserve(@Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectCapDevObserve(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk/project_capdev_observe/:project_capdev_observe_pk')
+    async deleteProjectCapDevObserve(
+        @Param('pk') project_pk: number,
+        @Param('project_capdev_observe_pk') project_capdev_observe_pk: number,
+        @Request() req: any,
+    ) {
+        return this.projectService.deleteProjectCapDevObserve(
+            {
+                project_pk: project_pk,
+                pk: project_capdev_observe_pk,
+            },
+            req.user,
+        );
+    }
 }
