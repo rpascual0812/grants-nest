@@ -15,6 +15,7 @@ import {
     UnauthorizedException,
     InternalServerErrorException,
     Put,
+    Query,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -437,6 +438,40 @@ export class ProjectsController {
             {
                 project_pk: project_pk,
                 pk: project_capdev_observe_pk,
+            },
+            req.user,
+        );
+    }
+
+    @Get(':project_pk/project_lesson')
+    async getProjectLesson(
+        @Param('project_pk') project_pk: number,
+        @Query() query: { type?: string },
+        @Request() req: any,
+    ) {
+        return this.projectService.getProjectLesson({
+            project_pk,
+            type: query?.type,
+        });
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('project_lesson')
+    async saveProjectLesson(@Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectLesson(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk/project_lesson/:project_lesson_pk')
+    async deleteProjectLesson(
+        @Param('pk') project_pk: number,
+        @Param('project_lesson_pk') project_lesson_pk: number,
+        @Request() req: any,
+    ) {
+        return this.projectService.deleteProjectLesson(
+            {
+                project_pk: project_pk,
+                pk: project_lesson_pk,
             },
             req.user,
         );

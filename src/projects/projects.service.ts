@@ -25,7 +25,6 @@ import { Equal } from 'typeorm';
 import { getDefaultValue } from 'src/application/utilities/get-default-value.utils';
 import { ProjectFundingReport } from './entities/project-funding-report.entity';
 import { ProjectFundingLiquidation } from './entities/project-funding-liquidation.entity';
-import { DateTime } from 'luxon';
 import { ProjectSite } from './entities/project-site.entity';
 import { ProjectEvent } from './entities/project-event.entity';
 import { ProjectEventAttendee } from './entities/project-event-attendees.entity';
@@ -35,6 +34,7 @@ import { ProjectBeneficiary } from './entities/project-beneficiary.entity';
 import { ProjectCapDev } from './entities/project-capdev.entity';
 import { ProjectCapDevSkill } from './entities/project-capdev-skill.entity';
 import { ProjectCapDevObserve } from './entities/project-capdev-observe.entity';
+import { ProjectLesson } from './entities/project-lesson.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -1737,6 +1737,117 @@ export class ProjectsService extends GlobalService {
                 const model = {
                     pk: savedItem?.pk,
                     name: 'project_capdev_observe',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: true };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async getProjectLesson(filter: { project_pk: number; type?: string }) {
+        try {
+            const projLesson = await dataSource
+                .getRepository(ProjectLesson)
+                .createQueryBuilder('project_lessons')
+                .select('project_lessons')
+                .where('project_lessons.project_pk=:project_pk', { project_pk: filter?.project_pk })
+                .andWhere(filter?.type ? 'project_lessons.type = :type' : '1=1', { type: filter?.type })
+                .andWhere('project_lessons.archived = :archived', { archived: false })
+                .orderBy('project_lessons.date_created', 'ASC')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: projLesson[0],
+                total: projLesson[1],
+            };
+        } catch (error) {
+            console.log(error);
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
+
+    async saveProjectLesson(data: Partial<ProjectLesson>, user: Partial<User>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            const saveProjLesson = await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectPk = getParsedPk(data?.project_pk);
+                const projLessonPk = getParsedPk(data?.pk);
+                const existingLesson = await EntityManager.findOne(ProjectLesson, {
+                    where: {
+                        pk: Equal(projLessonPk),
+                        project_pk: Equal(projectPk),
+                    },
+                });
+                const lesson = existingLesson ? existingLesson : new ProjectLesson();
+                lesson.project_pk = projectPk;
+                lesson.created_by = user?.pk;
+                lesson.type = getDefaultValue(data?.type, existingLesson?.type);
+                lesson.type_content = getDefaultValue(data?.type_content, existingLesson?.type_content);
+                lesson.description = getDefaultValue(data?.description, existingLesson?.description);
+
+                const savedItem = await EntityManager.save(ProjectLesson, {
+                    ...lesson,
+                });
+
+                return {
+                    ...savedItem,
+                };
+            });
+
+            return {
+                status: true,
+                data: {
+                    ...saveProjLesson,
+                },
+            };
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async deleteProjectLesson(
+        data: {
+            project_pk: number;
+            pk: number;
+        },
+        user: any,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectLessonPk = getParsedPk(+data?.pk);
+                const projectLesson = await EntityManager.findOneBy(ProjectLesson, {
+                    pk: Equal(projectLessonPk),
+                });
+
+                const existingItem = await EntityManager.save(ProjectLesson, {
+                    ...projectLesson,
+                    archived: true,
+                });
+
+                // save logs
+                const model = {
+                    pk: existingItem?.pk,
+                    name: 'project_lesson',
                     status: 'deleted',
                 };
                 await this.saveLog({ model, user });

@@ -27,6 +27,7 @@ import { ProjectObjectiveResult } from './project-objective-result.entity';
 import { ProjectCapDev } from './project-capdev.entity';
 import { ProjectCapDevSkill } from './project-capdev-skill.entity';
 import { ProjectCapDevObserve } from './project-capdev-observe.entity';
+import { ProjectLesson } from './project-lesson.entity';
 
 @Entity({ name: 'projects' })
 export class Project extends BaseEntity {
@@ -117,6 +118,13 @@ export class Project extends BaseEntity {
     )
     @JoinColumn({ name: 'project_capdev_observe_pk' })
     project_capdev_observe: ProjectCapDevObserve;
+
+    @OneToMany('ProjectLesson', (project_lesson: ProjectLesson) => project_lesson.project, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
+    @JoinColumn({ name: 'project_lesson_pk' })
+    project_lesson: ProjectLesson;
 
     @OneToMany('ProjectOutput', (project_output: ProjectOutput) => project_output.project, {
         onDelete: 'CASCADE',
