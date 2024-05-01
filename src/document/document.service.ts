@@ -29,16 +29,37 @@ export class DocumentService extends GlobalService {
         return this.documentRepository.save(newDocument);
     }
 
-    async findAll(pagination: any) {
-        return await dataSource
+    async findAll(filters: any) {
+        const data = await dataSource
             .manager
             .getRepository(Document)
             .createQueryBuilder()
+            .andWhere(
+                filters.hasOwnProperty('archived') && filters.archived != '' ?
+                    "archived = :archived" :
+                    '1=1', { archived: `${filters.archived}` }
+            )
+            .andWhere(
+                filters.hasOwnProperty('mimetype') && filters.archived != '' ?
+                    "mime_type like :mimetype" :
+                    '1=1', { mimetype: `${filters.mimetype}%` }
+            )
+            .andWhere(
+                filters.hasOwnProperty('type') && filters.archived != '' ?
+                    "type like :type" :
+                    '1=1', { type: `${filters.type}%` }
+            )
             .orderBy('pk', 'DESC')
-            .skip(pagination.skip)
-            .take(pagination.take)
-            .getMany()
+            .skip(filters.skip)
+            .take(filters.take)
+            .getManyAndCount()
             ;
+
+        return {
+            status: true,
+            data: data[0],
+            total: data[1],
+        };
     }
 
     async save(data: any, user: any) {

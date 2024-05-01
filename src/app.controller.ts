@@ -63,4 +63,9 @@ export class AppController {
     invoke(@Request() req, @Response() res) {
         return res.sendFile(req.path, { root: './' });
     }
+
+    @Get('assets/images/:imageName')
+    images(@Request() req, @Response() res) {
+        return res.sendFile(req.path, { root: './' });
+    }
 }
