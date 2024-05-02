@@ -20,7 +20,7 @@ export class UserController {
 
     @UseGuards(JwtAuthGuard)
     @Post()
-    async save(@Request() req: any, @Body() body: any) {
+    async save(@Body() body: any) {
         return await this.userService.save(body);
     }
 
