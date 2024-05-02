@@ -365,7 +365,18 @@ export class ApplicationService extends GlobalService {
                 this.emailService.body = '<a href="' + data.link + '">Please follow this link</a>'; // MODIFY: must be a template from the database
 
                 await this.emailService.create();
-                return this.find({ pk: new_application_pk });
+                const application = await this.find({ pk: new_application_pk });
+                const partnerPks = [application?.data?.partner_pk as number];
+                // partner
+                const partner = await this.getPartner(partnerPks);
+                application.data['partner'] = partner[0];
+
+                return {
+                    status: true,
+                    data: {
+                        ...application,
+                    },
+                };
             });
         } catch (err) {
             this.saveError(err);
@@ -1901,8 +1912,9 @@ export class ApplicationService extends GlobalService {
             </div>\
         </div>\
         <div style="width: 100%; text-align: center;">\
-            <a href="http://3.0.54.110/public/application/${application.uuid}/status">http://3.0.54.110/public/${application.uuid
-                        }/status</a>\
+            <a href="http://3.0.54.110/public/application/${application.uuid}/status">http://3.0.54.110/public/${
+                        application.uuid
+                    }/status</a>\
         </div>\
     </div>\
 </div>`; // MODIFY: must be a template from the database
