@@ -88,7 +88,22 @@ export class DocumentService extends GlobalService {
                         output = await EntityManager.update(Document, { pk: data.document_pk }, { type: data.type });
                     }
 
-                    return { status: output ? true : false, data: output };
+                    if (data.table_name == 'projects') {
+                        await EntityManager.query(
+                            'insert into document_project_relation (document_pk, project_pk) values ($1 ,$2);',
+                            [data.document_pk, data.table_pk],
+                        );
+
+                        output = await EntityManager.update(Document, { pk: data.document_pk }, { type: data.type });
+                    }
+
+                    const document = await EntityManager.findOne(Document, {
+                        where: {
+                            pk: data.document_pk
+                        },
+                    });
+
+                    return { status: output ? true : false, data: document };
                 }
             );
         } catch (err) {
@@ -130,6 +145,10 @@ export class DocumentService extends GlobalService {
                     );
                     await EntityManager.query(
                         'delete from document_partner_nonprofit_equivalency_determination_relation where document_pk = $1;',
+                        [pk],
+                    );
+                    await EntityManager.query(
+                        'delete from document_project_relation where document_pk = $1;',
                         [pk],
                     );
                     await EntityManager.query(

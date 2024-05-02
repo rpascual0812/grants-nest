@@ -30,6 +30,7 @@ import { ProjectCapDev } from 'src/projects/entities/project-capdev.entity';
 import { ProjectCapDevSkill } from 'src/projects/entities/project-capdev-skill.entity';
 import { ProjectCapDevObserve } from 'src/projects/entities/project-capdev-observe.entity';
 import { ProjectLesson } from 'src/projects/entities/project-lesson.entity';
+import { ProjectLink } from 'src/projects/entities/project-link.entity';
 
 @Entity({ name: 'users' })
 @Unique(['unique_id'])
@@ -159,4 +160,8 @@ export class User extends BaseEntity {
     @OneToMany('ProjectLesson', (project_lesson: ProjectLesson) => project_lesson.user)
     @JoinColumn({ name: 'pk' })
     project_lesson: Array<ProjectLesson>;
+
+    @OneToMany('ProjectLink', (project_link: ProjectLink) => project_link.user)
+    @JoinColumn({ name: 'pk' })
+    project_link: Array<ProjectLink>;
 }
