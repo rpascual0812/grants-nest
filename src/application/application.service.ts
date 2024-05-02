@@ -1864,8 +1864,60 @@ export class ApplicationService extends GlobalService {
                         .getOne();
 
                     // send email
+                    await this.successEmail(application, partner);
+                    await EntityManager.update(Application, { pk: application.pk }, { email_sent: true });
+                }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
 
-                    const body = `<div style="width: 100%;">\
+    async sendEmail(filter: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const data = await this.find({ pk: filter.application_pk });
+                const application = data.data;
+
+                if (application) {
+                    const partner = await dataSource
+                        .getRepository(Partner)
+                        .createQueryBuilder('partners')
+                        .select('partners')
+                        .leftJoinAndSelect('partners.documents', 'documents')
+                        .leftJoinAndSelect('partners.partner_organization', 'partner_organizations')
+                        .leftJoinAndSelect('partner_organizations.country', 'countries')
+                        .where('partners.pk = :pk', { pk: application.partner_pk })
+                        .getOne();
+
+                    // send email
+                    await this.successEmail(application, partner);
+                }
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async successEmail(application: any, partner: any) {
+        console.log(application);
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const body = `<div style="width: 100%;">\
     <div style="width: 40%; float: left;">\
         <div>\
             <p>Proponent</p>\
@@ -1912,47 +1964,33 @@ export class ApplicationService extends GlobalService {
             </div>\
         </div>\
         <div style="width: 100%; text-align: center;">\
-            <a href="http://3.0.54.110/public/application/${application.uuid}/status">http://3.0.54.110/public/${
-                        application.uuid
+            <a href="http://3.0.54.110/public/application/${application.uuid}/status">http://3.0.54.110/public/${application.uuid
                     }/status</a>\
         </div>\
     </div>\
 </div>`; // MODIFY: must be a template from the database
 
-                    const email = {
-                        uuid: uuidv4(),
-                        user_pk: application.created_by,
-                        from: process.env.SEND_FROM,
-                        from_name: process.env.SENDER,
-                        to: partner.email_address,
-                        to_name: '',
-                        subject: 'Thank you for submitting your application',
-                        body: body,
-                    };
+                const email = {
+                    uuid: uuidv4(),
+                    user_pk: application.created_by,
+                    from: process.env.SEND_FROM,
+                    from_name: process.env.SENDER,
+                    to: partner.email_address,
+                    to_name: '',
+                    subject: 'Thank you for submitting your application',
+                    body: body,
+                };
 
-                    // this.emailService.uuid = uuidv4();
-                    // this.emailService.user_pk = application.created_by;
-                    // this.emailService.from = process.env.SEND_FROM;
-                    // this.emailService.from_name = process.env.SENDER;
-                    // this.emailService.to = partner.email_address;
-                    // this.emailService.to_name = '';
-                    // this.emailService.subject = 'Thank you for submitting your application';
-                    // this.emailService.body = body;
-                    // await this.emailService.create();
-
-                    await dataSource.manager
-                        .getRepository(Email)
-                        .createQueryBuilder('email')
-                        .createQueryBuilder()
-                        .insert()
-                        .into(Email)
-                        .values([email])
-                        .returning('pk')
-                        .execute();
-
-                    await EntityManager.update(Application, { pk: application.pk }, { email_sent: true });
-                }
-            });
+                await dataSource.manager
+                    .getRepository(Email)
+                    .createQueryBuilder('email')
+                    .createQueryBuilder()
+                    .insert()
+                    .into(Email)
+                    .values([email])
+                    .returning('pk')
+                    .execute();
+            })
         } catch (err) {
             this.saveError({});
             console.log(err);

@@ -81,6 +81,11 @@ export class ApplicationController {
         return this.applicationService.sendSuccessEmail(pk);
     }
 
+    @Post(':pk/email')
+    sendEmail(@Param('pk') pk: number, @Body() body: any) {
+        return this.applicationService.sendEmail(body);
+    }
+
     @UseGuards(JwtAuthGuard)
     @Get()
     async fetch(@Request() req: any) {
