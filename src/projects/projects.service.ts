@@ -35,6 +35,7 @@ import { ProjectCapDev } from './entities/project-capdev.entity';
 import { ProjectCapDevSkill } from './entities/project-capdev-skill.entity';
 import { ProjectCapDevObserve } from './entities/project-capdev-observe.entity';
 import { ProjectLesson } from './entities/project-lesson.entity';
+import { ProjectLink } from './entities/project-link.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -1857,6 +1858,103 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             console.log(err);
             this.saveError({});
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async findDocuments(filters: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(
+                async (EntityManager) => {
+                    // DANGER and documents.mime_type like '${filters.mimetype}%' is vulnerable to sql injection
+                    const data = await EntityManager.query(
+                        `select
+                            projects.pk as project_pk,
+                            documents.*
+                        from projects
+                        left join document_project_relation on (projects.pk = document_project_relation.project_pk)
+                        left join documents on (document_project_relation.document_pk = documents.pk)
+                        where projects.pk = $1
+                        and documents.type = 'documentation'
+                        and documents.mime_type like '${filters.mimetype}%'
+                        order by documents.pk desc
+                        ;`,
+                        [filters.project_pk],
+                    );
+
+                    return {
+                        status: data ? true : false,
+                        data: data,
+                        total: data.length,
+                    };
+                }
+            );
+
+        } catch (err) {
+            console.log(err);
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
+
+    async findLinks(filters: any) {
+        const data = await dataSource
+            .manager
+            .getRepository(ProjectLink)
+            .createQueryBuilder()
+            .andWhere(
+                filters.hasOwnProperty('archived') && filters.archived != '' ?
+                    "archived = :archived" :
+                    '1=1', { archived: `${filters.archived}` }
+            )
+            .orderBy('pk', 'DESC')
+            .skip(filters.skip)
+            .take(filters.take)
+            .getManyAndCount()
+            ;
+
+        return {
+            status: true,
+            data: data[0],
+            total: data[1],
+        };
+    }
+
+    async saveLink(pk: number, body: any, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            const saveProjLink = await queryRunner.manager.transaction(async (EntityManager) => {
+                const link = new ProjectLink();
+                link.project_pk = pk;
+                link.link = body.link;
+                link.created_by = user.pk;
+
+                const savedItem = await EntityManager.save(ProjectLink, {
+                    ...link,
+                });
+
+                return {
+                    ...savedItem,
+                };
+            });
+
+            return {
+                status: true,
+                data: {
+                    ...saveProjLink,
+                },
+            };
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
             return { status: false, code: err.code };
         } finally {
             await queryRunner.release();

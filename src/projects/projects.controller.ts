@@ -22,7 +22,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) {}
+    constructor(private readonly projectService: ProjectsService) { }
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -102,7 +102,7 @@ export class ProjectsController {
 
     @UseGuards(JwtAuthGuard)
     @Get(':pk/review')
-    async fetchReview(@Param('pk') pk: number, @Request() req: any) {
+    async fetchReview(@Param('pk') pk: number) {
         const project: any = await this.projectService.find({ pk });
 
         // Application
@@ -475,5 +475,25 @@ export class ProjectsController {
             },
             req.user,
         );
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':pk/documents')
+    async fetchDocuments(@Param('pk') pk: number, @Request() req: any) {
+        const project: any = await this.projectService.findDocuments(req.query);
+
+        return project;
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':pk/links')
+    async fetchLinks(@Param('pk') pk: number, @Request() req: any) {
+        return await this.projectService.findLinks(req.query);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/links')
+    async saveLink(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
+        return await this.projectService.saveLink(pk, body, req.user);
     }
 }
