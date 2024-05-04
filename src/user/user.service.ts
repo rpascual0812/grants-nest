@@ -167,6 +167,8 @@ export class UserService extends GlobalService {
             .select('users')
             .leftJoinAndSelect("users.account", "accounts")
             .addSelect(["accounts.pk", "accounts.username", "accounts.active", "accounts.verified"])
+            .leftJoinAndSelect("users.user_role", "user_roles")
+            .leftJoinAndSelect("user_roles.role", "roles")
             // .leftJoinAndMapOne(
             //     'users.documentable',
             //     Documentable,
