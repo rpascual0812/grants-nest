@@ -47,19 +47,22 @@ export class RoleService extends GlobalService {
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const role = await dataSource
-                    .createQueryBuilder()
-                    .insert()
-                    .into(Role)
-                    .values([{
-                        name: data.name,
-                        details: data.details,
-                    }])
-                    .returning('*')
-                    .execute();
+                const existing = await EntityManager.findOne(Role, {
+                    where: {
+                        pk: data.pk
+                    },
+                });
+
+                const role = existing ? existing : new Role();
+                role.name = data.name;
+                role.details = data.details;
+
+                const saved = await EntityManager.save(Role, {
+                    ...role,
+                });
 
                 // save logs
-                const model = { pk: role.generatedMaps[0].pk, name: 'roles', status: 'Added' };
+                const model = { pk: role.pk, name: 'roles', status: existing ? 'Updated' : 'Added', data: role };
                 await this.saveLog({ model, user });
 
                 return { status: role ? true : false };
