@@ -1869,11 +1869,10 @@ export class ProjectsService extends GlobalService {
         await queryRunner.connect();
 
         try {
-            return await queryRunner.manager.transaction(
-                async (EntityManager) => {
-                    // DANGER and documents.mime_type like '${filters.mimetype}%' is vulnerable to sql injection
-                    const data = await EntityManager.query(
-                        `select
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                // DANGER and documents.mime_type like '${filters.mimetype}%' is vulnerable to sql injection
+                const data = await EntityManager.query(
+                    `select
                             projects.pk as project_pk,
                             documents.*
                         from projects
@@ -1884,42 +1883,37 @@ export class ProjectsService extends GlobalService {
                         and documents.mime_type like '${filters.mimetype}%'
                         order by documents.pk desc
                         ;`,
-                        [filters.project_pk],
-                    );
+                    [filters.project_pk],
+                );
 
-                    return {
-                        status: data ? true : false,
-                        data: data,
-                        total: data.length,
-                    };
-                }
-            );
-
+                return {
+                    status: data ? true : false,
+                    data: data,
+                    total: data.length,
+                };
+            });
         } catch (err) {
             console.log(err);
             return {
                 status: false,
                 code: 500,
             };
+        } finally {
+            await queryRunner.release();
         }
     }
 
     async findLinks(filters: any) {
-        const data = await dataSource
-            .manager
+        const data = await dataSource.manager
             .getRepository(ProjectLink)
-            .createQueryBuilder()
-            .andWhere(
-                filters.hasOwnProperty('archived') && filters.archived != '' ?
-                    "archived = :archived" :
-                    '1=1', { archived: `${filters.archived}` }
-            )
+            .createQueryBuilder('project_links')
+            .andWhere(filters.hasOwnProperty('archived') && filters.archived != '' ? 'archived = :archived' : '1=1', {
+                archived: `${filters.archived}`,
+            })
             .orderBy('pk', 'DESC')
             .skip(filters.skip)
             .take(filters.take)
-            .getManyAndCount()
-            ;
-
+            .getManyAndCount();
         return {
             status: true,
             data: data[0],
