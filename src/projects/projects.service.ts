@@ -1954,4 +1954,28 @@ export class ProjectsService extends GlobalService {
             await queryRunner.release();
         }
     }
+
+    async findGroupProjectType() {
+        try {
+            const groupProjectType = await dataSource
+                .getRepository(Project)
+                .createQueryBuilder('projects')
+                .select('projects.type_pk', 'type_pk')
+                .addSelect('COUNT(projects.pk)', 'total')
+                .groupBy('projects.type_pk')
+                .andWhere('projects.archived = :archived', { archived: false })
+                .getRawMany();
+
+            return {
+                status: true,
+                data: groupProjectType ?? [],
+            };
+        } catch (error) {
+            console.log(error);
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
 }

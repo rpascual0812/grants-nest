@@ -22,7 +22,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) { }
+    constructor(private readonly projectService: ProjectsService) {}
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -495,5 +495,11 @@ export class ProjectsController {
     @Post(':pk/links')
     async saveLink(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
         return await this.projectService.saveLink(pk, body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('group_project_type')
+    async findGroupProjectType(@Request() req: any) {
+        return await this.projectService.findGroupProjectType();
     }
 }
