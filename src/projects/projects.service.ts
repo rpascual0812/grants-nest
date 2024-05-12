@@ -36,6 +36,7 @@ import { ProjectCapDevSkill } from './entities/project-capdev-skill.entity';
 import { ProjectCapDevObserve } from './entities/project-capdev-observe.entity';
 import { ProjectLesson } from './entities/project-lesson.entity';
 import { ProjectLink } from './entities/project-link.entity';
+import { ProjectLocation } from './entities/project-location.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -1969,6 +1970,57 @@ export class ProjectsService extends GlobalService {
             return {
                 status: true,
                 data: groupProjectType ?? [],
+            };
+        } catch (error) {
+            console.log(error);
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
+
+    async findGroupProjectDateCreated(filter: { to_date?: string }) {
+        try {
+            const groupProjectDateCreated = await dataSource
+                .getRepository(Project)
+                .createQueryBuilder('projects')
+                .select(`DATE_TRUNC('year',projects.date_created)`, `date_created`)
+                .addSelect('COUNT(projects.pk)', 'total')
+                .groupBy(`DATE_TRUNC('year',projects.date_created)`)
+                .where('projects.archived = :archived', { archived: false })
+                .andWhere(filter?.to_date ? `DATE_TRUNC('year',projects.date_created) <= :date` : `1=1`, {
+                    date: filter?.to_date,
+                })
+                .getRawMany();
+
+            return {
+                status: true,
+                data: groupProjectDateCreated ?? [],
+            };
+        } catch (error) {
+            console.log(error);
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
+
+    async findGroupProjectCountry() {
+        try {
+            const groupedProjectCountry = await dataSource
+                .getRepository(ProjectLocation)
+                .createQueryBuilder('project_locations')
+                .select(['country_pk', 'countries.name AS country_name'])
+                .addSelect('COUNT(project_locations.project_pk)', 'total')
+                .leftJoin('countries', 'countries', 'countries.pk = project_locations.country_pk')
+                .groupBy('project_locations.country_pk, countries.name')
+                .getRawMany();
+
+            return {
+                status: true,
+                data: groupedProjectCountry ?? [],
             };
         } catch (error) {
             console.log(error);

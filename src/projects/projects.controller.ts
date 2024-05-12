@@ -502,4 +502,18 @@ export class ProjectsController {
     async findGroupProjectType(@Request() req: any) {
         return await this.projectService.findGroupProjectType();
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('group_project_date_created')
+    async findGroupProjectDateCreated(@Query() query: { to_date?: string }, @Request() req: any) {
+        return await this.projectService.findGroupProjectDateCreated({
+            to_date: query?.to_date,
+        });
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('group_project_country')
+    async findGroupProjectCountry(@Request() req: any) {
+        return await this.projectService.findGroupProjectCountry();
+    }
 }
