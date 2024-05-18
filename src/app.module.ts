@@ -24,6 +24,7 @@ import { DonorModule } from './donor/donor.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TypeModule } from './type/type.module';
 import { ReviewModule } from './review/review.module';
+import { TemplateModule } from './template/template.module';
 
 @Module({
     imports: [
@@ -46,7 +47,8 @@ import { ReviewModule } from './review/review.module';
         DonorModule,
         ProjectsModule,
         TypeModule,
-        ReviewModule
+        ReviewModule,
+        TemplateModule
     ],
     controllers: [AppController],
     providers: [AppService, CheckService, MailerService, DestroyerService],
