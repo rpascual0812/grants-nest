@@ -22,7 +22,7 @@ export class ApplicationController {
         return this.applicationService.save(body, req.user);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Post('partner')
     savePartner(@Body() body: any, @Request() req: any) {
         return this.applicationService.savePartner(body, req.user);
@@ -231,7 +231,6 @@ export class ApplicationController {
     @Get(':number/review')
     async review(@Param('number') number: string, @Request() req: any) {
         const application: any = await this.applicationService.find({ number, reviews: req.query.reviews });
-
         // Partner
         const partner = await this.applicationService.getPartner([application.data.partner_pk]);
         if (!application.data.hasOwnProperty('partner')) {
