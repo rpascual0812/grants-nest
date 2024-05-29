@@ -451,13 +451,15 @@ export class ApplicationService extends GlobalService {
                     ...partner,
                 });
 
-                const model = {
-                    pk: savedPartner?.pk,
-                    name: 'partner',
-                    status: existingPartner ? 'update' : 'insert',
-                };
+                if (user) {
+                    const model = {
+                        pk: savedPartner?.pk,
+                        name: 'partner',
+                        status: existingPartner ? 'update' : 'insert',
+                    };
 
-                await this.saveLog({ model, user });
+                    await this.saveLog({ model, user });
+                }
 
                 let savedPartnerContacts = undefined;
                 const existingContact = await EntityManager.findOne(PartnerContact, {
@@ -484,16 +486,18 @@ export class ApplicationService extends GlobalService {
                     });
                 }
 
-                const modelPartnerContact = {
-                    pk: savedPartnerContacts?.pk,
-                    name: 'partner_contacts',
-                    status: existingContact ? 'update' : 'insert',
-                };
+                if (user) {
+                    const modelPartnerContact = {
+                        pk: savedPartnerContacts?.pk,
+                        name: 'partner_contacts',
+                        status: existingContact ? 'update' : 'insert',
+                    };
 
-                await this.saveLog({
-                    model: modelPartnerContact,
-                    user,
-                });
+                    await this.saveLog({
+                        model: modelPartnerContact,
+                        user,
+                    });
+                }
 
                 const dataDocuments = Array.isArray(data?.documents) ? data?.documents ?? [] : [];
                 if (existingContact || dataDocuments?.length > 0) {
