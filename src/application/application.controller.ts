@@ -2,11 +2,13 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseGuards, 
 import { ApplicationService } from './application.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ApplicationQueryHelpersService } from './utilities/lib/application-query-helpers/application-query-helpers.service';
+import { ProjectsService } from 'src/projects/projects.service';
 
 @Controller('application')
 export class ApplicationController {
     constructor(
         private readonly applicationService: ApplicationService,
+        private readonly projectService: ProjectsService,
         private readonly applicationQueryHelpersService: ApplicationQueryHelpersService,
     ) { }
 
@@ -223,6 +225,9 @@ export class ApplicationController {
         // Reviews
         const applicationReviews: any = await this.applicationService.getReviews([application?.data?.pk]);
         application.data['reviews'] = applicationReviews[0]?.['reviews'] ?? [];
+
+        const projectReviews: any = await this.projectService.getReviews([application?.data?.project?.pk]);
+        application.data.project['reviews'] = projectReviews[0]?.['reviews'] ?? [];
 
         return application;
     }
