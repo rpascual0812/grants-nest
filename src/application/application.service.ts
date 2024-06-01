@@ -94,6 +94,7 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
+                .leftJoinAndSelect('projects.recommendations', 'project_recommendations')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
                 .leftJoinAndSelect('projects.type', 'types')
                 .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
