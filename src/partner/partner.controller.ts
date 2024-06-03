@@ -69,8 +69,14 @@ export class PartnerController {
 
     @UseGuards(JwtAuthGuard)
     @Post('assessment')
-    savePartner(@Body() body: any, @Request() req: any) {
+    saveAssessment(@Body() body: any, @Request() req: any) {
         return this.partnerService.saveAssessment(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':pk/assessment/:assessment_pk')
+    deleteAssessment(@Param('assessment_pk') assessment_pk, @Request() req: any) {
+        return this.partnerService.deleteAssessment(assessment_pk, req.user);
     }
 
     @UseGuards(JwtAuthGuard)
