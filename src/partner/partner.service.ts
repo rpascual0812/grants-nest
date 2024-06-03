@@ -255,6 +255,45 @@ export class PartnerService extends GlobalService {
         }
     }
 
+    async deleteAssessment(assessment_pk: number, user: Partial<User>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const assessment = await EntityManager.update(
+                    PartnerAssessment,
+                    {
+                        pk: assessment_pk,
+                    },
+                    { archived: true },
+                );
+
+                // save logs
+                const model = {
+                    pk: assessment_pk,
+                    name: 'partner_assessments',
+                    status: 'deleted',
+                };
+                await this.saveLog({
+                    model,
+                    user: {
+                        pk: user?.pk,
+                    },
+                });
+
+                return {
+                    status: assessment ? true : false,
+                };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
     async save(data: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
