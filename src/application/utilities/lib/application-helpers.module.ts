@@ -4,10 +4,12 @@ import { ApplicationQueryHelpersService } from './application-query-helpers/appl
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Application } from 'src/application/entities/application.entity';
 import { Email } from 'src/email/entities/email.entity';
+import { Template } from 'src/template/entities/template.entity';
+import { TemplateService } from 'src/template/template.service';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Application, Email])],
-    providers: [ApplicationService, ApplicationQueryHelpersService],
+    imports: [TypeOrmModule.forFeature([Application, Email, Template])],
+    providers: [ApplicationService, ApplicationQueryHelpersService, TemplateService],
     exports: [ApplicationQueryHelpersService],
 })
-export class ApplicationHelpersModule {}
+export class ApplicationHelpersModule { }

@@ -31,6 +31,7 @@ import { PartnerOrganizationBank } from 'src/partner/entities/partner-organizati
 import { PartnerOrganizationOtherInformation } from 'src/partner/entities/partner-organization-other-information.entity';
 import { PartnerOrganizationOtherInformationFinancialHumanResources } from 'src/partner/entities/partner-organization-other-information-financial-human-resources.entity';
 import { Email } from 'src/email/entities/email.entity';
+import { TemplateService } from 'src/template/template.service';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -39,6 +40,7 @@ export class ApplicationService extends GlobalService {
     constructor(
         @InjectRepository(Application)
         private emailService: EmailService,
+        private templateService: TemplateService
     ) {
         super();
     }
@@ -93,7 +95,10 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('applications.recommendations', 'application_recommendations')
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
+                // .leftJoinAndSelect('project_locations.country', 'countries')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
+                .leftJoinAndSelect('projects.project_funding', 'project_fundings')
+                .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
                 .leftJoinAndSelect('projects.recommendations', 'project_recommendations')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
                 .leftJoinAndSelect('projects.type', 'types')
@@ -355,29 +360,42 @@ export class ApplicationService extends GlobalService {
                     .execute();
                 const new_application_pk = new_application.generatedMaps[0].pk;
 
-                // send email
-                this.emailService.uuid = uuidv4();
-                this.emailService.user_pk = user.pk;
-                this.emailService.from = process.env.SEND_FROM;
-                this.emailService.from_name = process.env.SENDER;
-                this.emailService.to = data.email_address;
-                this.emailService.to_name = '';
-                this.emailService.subject = 'Grants Application';
-                this.emailService.body = '<a href="' + data.link + '">Please follow this link</a>'; // MODIFY: must be a template from the database
+                const templateObj = await this.templateService.find('application');
+                let template: string = '';
 
-                await this.emailService.create();
-                const application = await this.find({ pk: new_application_pk });
-                const partnerPks = [application?.data?.partner_pk as number];
-                // partner
-                const partner = await this.getPartner(partnerPks);
-                application.data['partner'] = partner[0];
+                if (templateObj.status) {
 
-                return {
-                    status: true,
-                    data: {
-                        ...application,
-                    },
-                };
+                    const application = await this.find({ pk: new_application_pk });
+                    const partnerPks = [application?.data?.partner_pk as number];
+                    // partner
+                    const partner = await this.getPartner(partnerPks);
+                    application.data['partner'] = partner[0];
+
+                    template = templateObj?.data?.template;
+
+                    template = template.replace(/{partner_name}/g, application?.data?.partner?.name);
+                    template = template.replace(/{email_address}/g, application?.data?.partner?.email_address);
+                    template = template.replace(/{application_url}/g, data.link);
+
+                    // send email
+                    this.emailService.uuid = uuidv4();
+                    this.emailService.user_pk = user.pk;
+                    this.emailService.from = process.env.SEND_FROM;
+                    this.emailService.from_name = process.env.SENDER;
+                    this.emailService.to = data.email_address;
+                    this.emailService.to_name = '';
+                    this.emailService.subject = templateObj?.data?.subject ?? 'Grants Application';
+                    this.emailService.body = template;
+
+                    await this.emailService.create();
+
+                    return {
+                        status: true,
+                        data: {
+                            ...application,
+                        },
+                    };
+                }
             });
         } catch (err) {
             this.saveError(err);
@@ -1840,13 +1858,13 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    async sendSuccessEmail(pk: number) {
+    async sendSuccessEmail(uuid: string, body: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const data = await this.find({ pk });
+                const data = await this.find({ uuid });
                 const application = data.data;
 
                 if (!application.status) {
@@ -1869,7 +1887,7 @@ export class ApplicationService extends GlobalService {
                         .getOne();
 
                     // send email
-                    await this.successEmail(application, partner);
+                    await this.successEmail(application, partner, body.url);
                     await EntityManager.update(Application, { pk: application.pk }, { email_sent: true });
                 }
             });
@@ -1903,7 +1921,7 @@ export class ApplicationService extends GlobalService {
                         .getOne();
 
                     // send email
-                    await this.successEmail(application, partner);
+                    await this.successEmail(application, partner, filter.url);
                 }
             });
         } catch (err) {
@@ -1915,86 +1933,60 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    async successEmail(application: any, partner: any) {
-        console.log(application);
+    async successEmail(application: any, partner: any, url: string) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const body = `<div style="width: 100%;">\
-    <div style="width: 40%; float: left;">\
-        <div>\
-            <p>Proponent</p>\
-            <h3>${partner.name}</h3>\
-        </div>\
-        <div>\
-            <p>ID Number</p>\
-            <h3>${partner.partner_id}</h3>\
-        </div>\
-        <div>\
-            <p>Date of submission</p>\
-            <h3>${DateTime.fromISO(application.date_created.toLocaleString()).toFormat('y-LL-dd HH:mm:ss')}</h3>\
-        </div>\
-    </div>\
-    <div style="width: 60%; float: left; text-align: left;">\
-        <div style="width: 100%;">\
-            <div style="width: 50%; float: left;">\
-                <div>\
-                    <p>Grantee Project</p>\
-                    <p>${application.project.title}</p>\
-                </div>\
-                <div>\
-                    <p>Thematic Area</p>\
-                    <p></p>\
-                </div>\
-                <div>\
-                    <p>Country</p>\
-                    <p>${partner['partner_organization']['country']['name']}</p>\
-                </div>\
-            </div>\
-            <div style="width: 50%; float: left;">\
-                <div>\
-                    <p>Duration</p>\
-                    <p>${application.project.duration}</p>\
-                </div>\
-                <div>\
-                    <p>Local Currency</p>\
-                    <p>${application.project.project_proposal.budget_request_other_currency}</p>\
-                </div>\
-                <div>\
-                    <p>Amount Requested (USD)</p>\
-                    <p>${application.project.project_proposal.budget_request_usd}</p>\
-                </div>\
-            </div>\
-        </div>\
-        <div style="width: 100%; text-align: center;">\
-            <a href="http://3.0.54.110/public/application/${application.uuid}/status">http://3.0.54.110/public/${application.uuid
-                    }/status</a>\
-        </div>\
-    </div>\
-</div>`; // MODIFY: must be a template from the database
+                const templateObj = await this.templateService.find('applicationSubmitted');
 
-                const email = {
-                    uuid: uuidv4(),
-                    user_pk: application.created_by,
-                    from: process.env.SEND_FROM,
-                    from_name: process.env.SENDER,
-                    to: partner.email_address,
-                    to_name: '',
-                    subject: 'Thank you for submitting your application',
-                    body: body,
-                };
+                const country = await Country.findOneBy({ pk: application?.project?.project_location[0].country_pk });
 
-                await dataSource.manager
-                    .getRepository(Email)
-                    .createQueryBuilder('email')
-                    .createQueryBuilder()
-                    .insert()
-                    .into(Email)
-                    .values([email])
-                    .returning('pk')
-                    .execute();
+                let template: string = '';
+                if (templateObj.status) {
+                    template = templateObj?.data?.template;
+
+                    template = template.replace(/{application_date}/g, DateTime.fromJSDate(application?.date_created).toFormat('LLLL dd, yyyy'));
+                    template = template.replace(/{application_donor}/g, application?.donor ?? '');
+                    template = template.replace(/{application_number}/g, application?.number);
+                    template = template.replace(/{application_url}/g, url + `/public/application/${application.uuid}/status`);
+                    template = template.replace(/{application_uuid}/g, application.uuid);
+                    template = template.replace(/{proponent_address}/g, partner?.address);
+                    template = template.replace(/{proponent_contact_number}/g, partner?.contact_number);
+                    template = template.replace(/{proponent_email}/g, partner?.email_address);
+                    template = template.replace(/{proponent_id}/g, partner?.partner_id);
+                    template = template.replace(/{proponent_name}/g, partner?.name);
+                    template = template.replace(/{proponent_website}/g, partner?.website);
+                    template = template.replace(/{project_background}/g, application?.project?.background);
+                    template = template.replace(/{project_country}/g, country.name);
+                    template = template.replace(/{project_local_currency}/g, application?.project?.project_proposal.budget_request_other_currency);
+                    template = template.replace(/{project_local_amount}/g, application?.project?.project_proposal.budget_request_other);
+                    template = template.replace(/{project_usd_amount}/g, application?.project?.project_proposal.budget_request_usd);
+                    template = template.replace(/{project_duration}/g, application?.project?.duration);
+                    template = template.replace(/{project_title}/g, application?.project?.title);
+
+                    const email = {
+                        uuid: uuidv4(),
+                        user_pk: application.created_by,
+                        from: process.env.SEND_FROM,
+                        from_name: process.env.SENDER,
+                        to: partner.email_address,
+                        to_name: '',
+                        subject: templateObj?.data?.subject ?? 'Thank you for submitting your application',
+                        body: template,
+                    };
+
+                    await dataSource.manager
+                        .getRepository(Email)
+                        .createQueryBuilder('email')
+                        .createQueryBuilder()
+                        .insert()
+                        .into(Email)
+                        .values([email])
+                        .returning('pk')
+                        .execute();
+                }
             })
         } catch (err) {
             this.saveError({});

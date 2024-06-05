@@ -10,7 +10,7 @@ export class ApplicationController {
         private readonly applicationService: ApplicationService,
         private readonly projectService: ProjectsService,
         private readonly applicationQueryHelpersService: ApplicationQueryHelpersService,
-    ) {}
+    ) { }
 
     @UseGuards(JwtAuthGuard)
     @Post('generate')
@@ -78,9 +78,9 @@ export class ApplicationController {
         return this.applicationService.saveOrganizationOtherInfo(body, req.user);
     }
 
-    @Post(':pk/success/email')
-    sendSuccessEmail(@Param('pk') pk: number) {
-        return this.applicationService.sendSuccessEmail(pk);
+    @Post(':uuid/success/email')
+    sendSuccessEmail(@Param('uuid') uuid: string, @Body() body) {
+        return this.applicationService.sendSuccessEmail(uuid, body);
     }
 
     @Post(':pk/email')
