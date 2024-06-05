@@ -29,6 +29,31 @@ export class TemplateService extends GlobalService {
         }
     }
 
+    async find(type: string) {
+        try {
+            const template = await dataSource
+                .manager
+                .getRepository(Template)
+                .createQueryBuilder('templates')
+                .select('templates')
+                .where("type = :type", { type })
+                .getOne()
+                ;
+
+            return {
+                status: true,
+                data: template,
+            }
+
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false
+            }
+        }
+    }
+
     async save(data: any, user: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
