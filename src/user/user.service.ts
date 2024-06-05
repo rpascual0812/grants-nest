@@ -13,6 +13,7 @@ import { SessionService } from 'src/session/session.service';
 import { Document } from 'src/document/entities/document.entity';
 import { UserRole } from './entities/user-role.entity';
 import { GlobalService } from 'src/utilities/global.service';
+import { TemplateService } from 'src/template/template.service';
 
 // import { Document } from 'src/documents/entities/document.entity';
 // import { UserDocument } from './entities/user-document.entity';
@@ -41,7 +42,8 @@ export class UserService extends GlobalService {
         private userRepository: Repository<User>,
         private accountService: AccountService,
         private emailService: EmailService,
-        private sessionService: SessionService
+        private sessionService: SessionService,
+        private templateService: TemplateService
     ) {
         super();
     }
@@ -405,29 +407,42 @@ export class UserService extends GlobalService {
             await this.accountService.clearPassword(selectedUser.account_pk);
             await this.sessionService.removeByAccount(selectedUser.account_pk);
 
-            // console.log('uuid', uuid);
             const fields = { password_reset: { token: uuid, expiration: DateTime.now().plus({ hours: 1 }) } };
             const updated = await this.accountService.update(user, user.account_pk, fields);
 
             if (updated) {
-                this.emailService.account_pk = user.account_pk;
-                this.emailService.user_pk = user.pk;
-                this.emailService.from = process.env.SEND_FROM;
-                this.emailService.from_name = process.env.SENDER;
-                this.emailService.to = selectedUser.email_address;
-                this.emailService.to_name = user.first_name + ' ' + user.last_name;
-                this.emailService.subject = 'Password Reset';
-                this.emailService.body = '<a href="' + body.url + '/reset-password/' + uuid + '">Please follow this link to reset your password</a>'; // MODIFY: must be a template from the database
+                const templateObj = await this.templateService.find('passwordReset');
 
-                const newEmail = await this.emailService.create();
-                if (newEmail) {
+                let template: string = '';
+                if (templateObj.status) {
+                    template = templateObj?.data?.template;
+
+                    template = template.replace(/{first_name}/g, user.first_name);
+                    template = template.replace(/{middle_name}/g, user.middle_name);
+                    template = template.replace(/{last_name}/g, user.last_name);
+                    template = template.replace(/{email_address}/g, user.email_address);
+                    template = template.replace(/{unique_id}/g, user.unique_id);
+                    template = template.replace(/{reset_password_url}/g, body.url + '/reset-password/' + uuid);
+
+                    this.emailService.account_pk = user.account_pk;
+                    this.emailService.user_pk = user.pk;
+                    this.emailService.from = process.env.SEND_FROM;
+                    this.emailService.from_name = process.env.SENDER;
+                    this.emailService.to = selectedUser.email_address;
+                    this.emailService.to_name = user.first_name + ' ' + user.last_name;
+                    this.emailService.subject = templateObj?.data?.subject ?? 'Password Reset';
+                    this.emailService.body = template;
+
+                    const newEmail = await this.emailService.create();
+                    if (newEmail) {
+                        return {
+                            status: true, data: fields
+                        };
+                    }
                     return {
                         status: true, data: fields
                     };
                 }
-                return {
-                    status: true, data: fields
-                };
             }
             return false;
         }

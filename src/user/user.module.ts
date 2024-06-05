@@ -10,13 +10,15 @@ import { EmailService } from 'src/email/email.service';
 import { Email } from 'src/email/entities/email.entity';
 import { Session } from 'src/session/entities/session.entity';
 import { SessionService } from 'src/session/session.service';
+import { Template } from 'src/template/entities/template.entity';
+import { TemplateService } from 'src/template/template.service';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([User, Account, Email, Session]),
+        TypeOrmModule.forFeature([User, Account, Email, Session, Template]),
     ],
     controllers: [UserController],
-    providers: [UserService, AccountService, EmailService, SessionService],
+    providers: [UserService, AccountService, EmailService, SessionService, TemplateService],
     exports: [UserService]
 })
 export class UserModule { }
