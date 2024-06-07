@@ -440,7 +440,6 @@ export class ProjectsService extends GlobalService {
     }
 
     async saveReview(data: any, user: any) {
-        console.log(data);
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
@@ -1067,6 +1066,8 @@ export class ProjectsService extends GlobalService {
                 .getRepository(ProjectEvent)
                 .createQueryBuilder('project_events')
                 .andWhere('project_pk = :pk', { pk })
+                .andWhere('archived = false')
+                .orderBy('pk')
                 .getMany();
         } catch (error) {
             console.log(error);
@@ -1100,11 +1101,15 @@ export class ProjectsService extends GlobalService {
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                event.created_by = user.pk;
-                event.archived = event.archived ?? false;
-                event = await EntityManager.insert(ProjectEvent, event);
+                const existing = event.pk ? await EntityManager.findOne(ProjectEvent, { where: { pk: event.pk } }) : null;
+                const output = existing ? existing : new ProjectEvent();
 
-                return { status: event ? true : false, data: event.raw[0] };
+                output.name = event.name;
+                output.project_pk = event.project_pk;
+                output.created_by = existing ? event.created_by : user.pk;
+                await dataSource.manager.save(output);
+
+                return { status: output ? true : false, data: output };
             });
         } catch (err) {
             this.saveError({});
@@ -1150,6 +1155,24 @@ export class ProjectsService extends GlobalService {
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 await EntityManager.update(ProjectEventAttendee, { pk: pk }, { archived: true });
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async destroyEvent(project_pk: number, pk: number, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                console.log(project_pk, pk);
+                await EntityManager.update(ProjectEvent, { pk, project_pk }, { archived: true });
             });
         } catch (err) {
             this.saveError({});
@@ -1237,7 +1260,6 @@ export class ProjectsService extends GlobalService {
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 data.project_pk = project_pk;
-                console.log(project_pk, data);
                 const existing = await EntityManager.findOne(ProjectOutput, {
                     where: { project_pk },
                 });
