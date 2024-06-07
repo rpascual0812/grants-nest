@@ -2012,10 +2012,10 @@ export class ProjectsService extends GlobalService {
             const groupedProjectCountry = await dataSource
                 .getRepository(ProjectLocation)
                 .createQueryBuilder('project_locations')
-                .select(['country_pk', 'countries.name AS country_name'])
+                .select(['country_pk', 'countries.name AS country_name', 'countries.code AS country_code'])
                 .addSelect('COUNT(project_locations.project_pk)', 'total')
                 .leftJoin('countries', 'countries', 'countries.pk = project_locations.country_pk')
-                .groupBy('project_locations.country_pk, countries.name')
+                .groupBy('project_locations.country_pk, countries.name, countries.code')
                 .getRawMany();
 
             return {

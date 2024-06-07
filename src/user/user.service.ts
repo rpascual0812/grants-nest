@@ -50,6 +50,7 @@ export class UserService extends GlobalService {
 
     async findAll(data: any, filters: any) {
         try {
+
             let orderByColumn,
                 orderByDirection;
             if (filters.hasOwnProperty('orderBy')) {
@@ -239,6 +240,8 @@ export class UserService extends GlobalService {
                         // delete existing user roles
                         await this.deleteRoles(data.pk);
 
+
+
                         const user = await EntityManager.findOne(User, { where: { pk: data.pk } });
                         user.first_name = data.first_name;
                         user.last_name = data.last_name;
@@ -285,10 +288,15 @@ export class UserService extends GlobalService {
                         account.verified = false;
                         const newAccount = await EntityManager.save(account);
 
+                        // generate unique_id
+                        const lastUser = await this.findLast(data);
+                        let uniqueId = parseInt(lastUser.unique_id) + 1;
+
                         // create user
                         const user = new User();
                         user.account_pk = newAccount.pk;
                         user.uuid = uuidv4();
+                        user.unique_id = uniqueId.toString();
                         user.last_name = data.last_name;
                         user.first_name = data.first_name;
                         user.middle_name = data.middle_name;
