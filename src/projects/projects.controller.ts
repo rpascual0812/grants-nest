@@ -22,7 +22,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) {}
+    constructor(private readonly projectService: ProjectsService) { }
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -310,6 +310,12 @@ export class ProjectsController {
     @Delete('attendee/:pk')
     destroyAttendee(@Param('pk') pk: number, @Request() req: any) {
         return this.projectService.destroyAttendee(pk, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':project_pk/events/:pk')
+    destroyEvent(@Param('project_pk') project_pk: number, @Param('pk') pk: number, @Request() req: any) {
+        return this.projectService.destroyEvent(project_pk, pk, req.user);
     }
 
     @UseGuards(JwtAuthGuard)
