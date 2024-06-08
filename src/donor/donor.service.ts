@@ -18,7 +18,9 @@ export class DonorService extends GlobalService {
                         "donors.name ILIKE :keyword" :
                         '1=1', { keyword: `%${filters.keyword}%` }
                 )
+                .andWhere(filters.showInactive == 'true' ? '1=1' : "donors.active = true")
                 .andWhere("archived = false")
+                .orderBy('pk')
                 .skip(filters.skip)
                 .take(filters.take)
                 .getManyAndCount()
