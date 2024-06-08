@@ -226,7 +226,7 @@ export class UserService extends GlobalService {
             ;
     }
 
-    async save(data: any) {
+    async save(data: any, user: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
@@ -240,16 +240,14 @@ export class UserService extends GlobalService {
                         // delete existing user roles
                         await this.deleteRoles(data.pk);
 
-
-
-                        const user = await EntityManager.findOne(User, { where: { pk: data.pk } });
-                        user.first_name = data.first_name;
-                        user.last_name = data.last_name;
-                        user.gender_pk = data.gender;
-                        user.birthdate = data.birthdate;
-                        user.email_address = data.email_address;
-                        user.mobile_number = data.mobile;
-                        userData = await EntityManager.save(user);
+                        const _user = await EntityManager.findOne(User, { where: { pk: data.pk } });
+                        _user.first_name = data.first_name;
+                        _user.last_name = data.last_name;
+                        _user.gender_pk = data.gender;
+                        _user.birthdate = data.birthdate;
+                        _user.email_address = data.email_address;
+                        _user.mobile_number = data.mobile;
+                        userData = await EntityManager.save(_user);
 
                         // update the profile photo
                         if (data.image) {
@@ -281,11 +279,21 @@ export class UserService extends GlobalService {
                         }
                     }
                     else { // add new user
+                        let result = '';
+                        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                        const charactersLength = characters.length;
+                        let counter = 0;
+                        while (counter < 6) {
+                            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+                            counter += 1;
+                        }
+                        const password = await this.accountService.getHash(result);
+
                         const account = new Account();
                         account.username = data.email_address;
-                        account.password = '';
-                        account.active = false;
-                        account.verified = false;
+                        account.password = password;
+                        account.active = true;
+                        account.verified = true;
                         const newAccount = await EntityManager.save(account);
 
                         // generate unique_id
@@ -293,17 +301,46 @@ export class UserService extends GlobalService {
                         let uniqueId = parseInt(lastUser.unique_id) + 1;
 
                         // create user
-                        const user = new User();
-                        user.account_pk = newAccount.pk;
-                        user.uuid = uuidv4();
-                        user.unique_id = uniqueId.toString();
-                        user.last_name = data.last_name;
-                        user.first_name = data.first_name;
-                        user.middle_name = data.middle_name;
-                        user.birthdate = data.birthdate;
-                        user.mobile_number = data.mobile;
-                        user.email_address = data.email_address;
-                        const newUser = await EntityManager.save(user);
+                        const _user = new User();
+                        _user.account_pk = newAccount.pk;
+                        _user.uuid = uuidv4();
+                        _user.unique_id = uniqueId.toString();
+                        _user.last_name = data.last_name;
+                        _user.first_name = data.first_name;
+                        _user.middle_name = data.middle_name;
+                        _user.birthdate = data.birthdate;
+                        _user.mobile_number = data.mobile;
+                        _user.email_address = data.email_address;
+
+
+                        const templateObj = await this.templateService.find('newAccountCreated');
+                        let template: string = '';
+
+                        if (templateObj.status) {
+                            template = templateObj?.data?.template;
+                            console.log(result);
+                            template = template.replace(/{first_name}/g, data.first_name);
+                            template = template.replace(/{last_name}/g, data.last_name);
+                            template = template.replace(/{middle_name}/g, data.middle_name);
+                            template = template.replace(/{email_address}/g, data.email_address);
+                            template = template.replace(/{unique_id}/g, uniqueId.toString());
+                            template = template.replace(/{temporary_password}/g, result);
+                            template = template.replace(/{app_url}/g, data.link);
+
+                            // send email
+                            this.emailService.uuid = uuidv4();
+                            this.emailService.user_pk = user.pk;
+                            this.emailService.from = process.env.SEND_FROM;
+                            this.emailService.from_name = process.env.SENDER;
+                            this.emailService.to = data.email_address;
+                            this.emailService.to_name = '';
+                            this.emailService.subject = templateObj?.data?.subject ?? 'Grants Application';
+                            this.emailService.body = template;
+
+                            await this.emailService.create();
+                        }
+
+                        const newUser = await EntityManager.save(_user);
                         userData = newUser;
 
                         // create user document
