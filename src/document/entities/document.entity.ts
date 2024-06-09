@@ -9,6 +9,7 @@ import { ProjectFunding } from 'src/projects/entities/project-funding.entity';
 import { ProjectFundingLiquidation } from 'src/projects/entities/project-funding-liquidation.entity';
 import { ProjectFundingReport } from 'src/projects/entities/project-funding-report.entity';
 import { Project } from 'src/projects/entities/project.entity';
+import { User } from 'src/user/entities/user.entity';
 
 @Entity({ name: 'documents' })
 @Unique(['filename'])
@@ -175,4 +176,18 @@ export class Document {
         }
     })
     projects: Project[];
+
+    @ManyToMany(() => User, user => user.documents)
+    @JoinTable({
+        name: 'document_user_relation',
+        joinColumn: {
+            name: 'document_pk',
+            referencedColumnName: 'pk',
+        },
+        inverseJoinColumn: {
+            name: 'user_pk',
+            referencedColumnName: 'pk',
+        }
+    })
+    users: User[];
 }
