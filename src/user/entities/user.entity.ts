@@ -32,6 +32,7 @@ import { ProjectCapDevObserve } from 'src/projects/entities/project-capdev-obser
 import { ProjectLesson } from 'src/projects/entities/project-lesson.entity';
 import { ProjectLink } from 'src/projects/entities/project-link.entity';
 import { Template } from 'src/template/entities/template.entity';
+import { Document } from 'src/document/entities/document.entity';
 
 @Entity({ name: 'users' })
 @Unique(['unique_id'])
@@ -169,4 +170,7 @@ export class User extends BaseEntity {
     @OneToMany('Template', (template: Template) => template.user)
     @JoinColumn({ name: 'pk' })
     template: Array<Template>;
+
+    @ManyToMany(() => Document, (document) => document.users, { cascade: ['insert', 'update'] })
+    documents: Document[];
 }
