@@ -76,6 +76,7 @@ export class UserService extends GlobalService {
                 .select('users')
                 .leftJoinAndSelect("users.account", "accounts")
                 .addSelect(["accounts.pk", "accounts.username", "accounts.active", "accounts.verified"])
+                .leftJoinAndSelect('users.documents', 'documents')
                 .leftJoinAndSelect("users.gender", "genders")
                 .addSelect(['genders.pk', 'genders.name'])
                 .leftJoinAndSelect("users.user_role", "user_roles")
@@ -136,6 +137,7 @@ export class UserService extends GlobalService {
             .select('users')
             .leftJoinAndSelect("users.account", "accounts")
             .addSelect(["accounts.pk", "accounts.username", "accounts.active", "accounts.verified"])
+            .leftJoinAndSelect('users.documents', 'documents')
             .leftJoinAndSelect("users.gender", "genders")
             .addSelect(['genders.pk', 'genders.name'])
             .leftJoinAndSelect("users.user_role", "user_roles")
@@ -170,6 +172,7 @@ export class UserService extends GlobalService {
             .select('users')
             .leftJoinAndSelect("users.account", "accounts")
             .addSelect(["accounts.pk", "accounts.username", "accounts.active", "accounts.verified"])
+            .leftJoinAndSelect('users.documents', 'documents')
             .leftJoinAndSelect("users.user_role", "user_roles")
             .leftJoinAndSelect("user_roles.role", "roles")
             // .leftJoinAndMapOne(
@@ -251,6 +254,10 @@ export class UserService extends GlobalService {
 
                         // update the profile photo
                         if (data.image) {
+                            EntityManager.query(
+                                'insert into document_user_relation (document_pk, user_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
+                                [data.image.pk, data.pk],
+                            );
                             // let profilePhoto = await EntityManager.findOne(Documentable, { where: { table_name: 'users', table_pk: data.pk, type: 'profile_photo' } });
                             // if (profilePhoto) {
                             //     await EntityManager.update(Documentable, { pk: profilePhoto.pk }, { document_pk: data.image.pk });
@@ -345,6 +352,10 @@ export class UserService extends GlobalService {
 
                         // create user document
                         if (data.image) {
+                            EntityManager.query(
+                                'insert into document_user_relation (document_pk, user_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
+                                [data.image.pk, data.pk],
+                            );
                             // const documentable = new Documentable();
                             // documentable.table_name = 'users';
                             // documentable.table_pk = newUser.pk;
