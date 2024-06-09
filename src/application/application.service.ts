@@ -40,7 +40,7 @@ export class ApplicationService extends GlobalService {
     constructor(
         @InjectRepository(Application)
         private emailService: EmailService,
-        private templateService: TemplateService
+        private templateService: TemplateService,
     ) {
         super();
     }
@@ -364,7 +364,6 @@ export class ApplicationService extends GlobalService {
                 let template: string = '';
 
                 if (templateObj.status) {
-
                     const application = await this.find({ pk: new_application_pk });
                     const partnerPks = [application?.data?.partner_pk as number];
                     // partner
@@ -1269,43 +1268,130 @@ export class ApplicationService extends GlobalService {
                     });
                 }
 
-                if (data?.human_resources) {
-                    data?.human_resources.forEach((hr: any) => {
-                        if (hr.hasOwnProperty('pk')) {
-                            EntityManager.update(
-                                PartnerOrganizationOtherInformationFinancialHumanResources,
-                                { pk: hr.pk },
-                                hr,
-                            );
-                        } else {
-                            dataSource
-                                .createQueryBuilder()
-                                .insert()
-                                .into(PartnerOrganizationOtherInformationFinancialHumanResources)
-                                .values([
-                                    {
-                                        partner_organization_other_information_pk: savedPartnerOrgOtherInfo.pk,
-                                        name: hr.name,
-                                        designation: hr.designation,
-                                        created_by: user.pk,
-                                    },
-                                ])
-                                .returning('*')
-                                .execute();
-                        }
-                    });
-                }
+                let savedFinancialHumanResource = [];
+                const financialHumanResource = data?.organization_other_information_financial_human_resources ?? [];
+                const resFinancialHumanResource: any = await this.saveOtherInfoHumanResources({
+                    partner_organization_other_information_pk: savedPartnerOrgOtherInfo.pk,
+                    organization_other_information_financial_human_resources: financialHumanResource,
+                    created_by: user?.pk,
+                });
+                savedFinancialHumanResource =
+                    resFinancialHumanResource?.data?.organization_other_information_financial_human_resources;
 
                 return {
                     status: true,
                     data: {
                         ...savedPartnerOrgOtherInfo,
+                        organization_other_information_financial_human_resources: savedFinancialHumanResource,
                     },
                 };
             });
         } catch (err) {
             this.saveError({});
             console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveOtherInfoHumanResources(data: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const partnerOrgOtherInfoPk = data?.partner_organization_other_information_pk;
+                const createdBy = data?.created_by;
+                const orgOtherInfoFinancialHumanResources =
+                    data?.organization_other_information_financial_human_resources;
+
+                const tmpFinancialHumanResources = orgOtherInfoFinancialHumanResources?.map(async (item) => {
+                    const financialHumanResourcePk = getParsedPk(item?.pk);
+                    const existingFinancialHumanResource = await EntityManager.findOneBy(
+                        PartnerOrganizationOtherInformationFinancialHumanResources,
+                        {
+                            pk: Equal(financialHumanResourcePk),
+                            partner_organization_other_information_pk: Equal(partnerOrgOtherInfoPk),
+                        },
+                    );
+
+                    const humanResource = existingFinancialHumanResource
+                        ? existingFinancialHumanResource
+                        : new PartnerOrganizationOtherInformationFinancialHumanResources();
+
+                    humanResource.partner_organization_other_information_pk = partnerOrgOtherInfoPk;
+                    humanResource.name = getDefaultValue(item?.name, existingFinancialHumanResource?.name);
+                    humanResource.designation = getDefaultValue(
+                        item?.designation,
+                        existingFinancialHumanResource?.designation,
+                    );
+                    humanResource.created_by = getDefaultValue(createdBy, existingFinancialHumanResource?.created_by);
+
+                    const savedItem = await EntityManager.save(
+                        PartnerOrganizationOtherInformationFinancialHumanResources,
+                        {
+                            ...humanResource,
+                        },
+                    );
+
+                    return {
+                        ...savedItem,
+                    };
+                });
+
+                await Promise.all(tmpFinancialHumanResources);
+
+                const existingFinancialHumanResource =
+                    (await EntityManager.findBy(PartnerOrganizationOtherInformationFinancialHumanResources, {
+                        partner_organization_other_information_pk: Equal(partnerOrgOtherInfoPk),
+                    })) ?? [];
+
+                const allItem = [...existingFinancialHumanResource];
+
+                return {
+                    status: true,
+                    data: {
+                        organization_other_information_financial_human_resources: allItem,
+                    },
+                };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async removeFinancialHumanResource(
+        organization_other_information_pk: number,
+        organization_other_information_financial_human_resources_pk: number,
+        user: any,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (_EntityManager) => {
+                const financialResources = await PartnerOrganizationOtherInformationFinancialHumanResources.findOneBy({
+                    pk: Equal(organization_other_information_financial_human_resources_pk),
+                });
+                await financialResources.remove();
+
+                // save logs
+                const model = {
+                    pk: organization_other_information_financial_human_resources_pk,
+                    name: 'organization_other_information_financial_human_resources',
+                    status: 'deleted',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: true };
+            });
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
             return { status: false, code: err.code };
         } finally {
             await queryRunner.release();
@@ -1947,10 +2033,16 @@ export class ApplicationService extends GlobalService {
                 if (templateObj.status) {
                     template = templateObj?.data?.template;
 
-                    template = template.replace(/{application_date}/g, DateTime.fromJSDate(application?.date_created).toFormat('LLLL dd, yyyy'));
+                    template = template.replace(
+                        /{application_date}/g,
+                        DateTime.fromJSDate(application?.date_created).toFormat('LLLL dd, yyyy'),
+                    );
                     template = template.replace(/{application_donor}/g, application?.donor ?? '');
                     template = template.replace(/{application_number}/g, application?.number);
-                    template = template.replace(/{application_url}/g, url + `/public/application/${application.uuid}/status`);
+                    template = template.replace(
+                        /{application_url}/g,
+                        url + `/public/application/${application.uuid}/status`,
+                    );
                     template = template.replace(/{application_uuid}/g, application.uuid);
                     template = template.replace(/{proponent_address}/g, partner?.address);
                     template = template.replace(/{proponent_contact_number}/g, partner?.contact_number);
@@ -1960,9 +2052,18 @@ export class ApplicationService extends GlobalService {
                     template = template.replace(/{proponent_website}/g, partner?.website);
                     template = template.replace(/{project_background}/g, application?.project?.background);
                     template = template.replace(/{project_country}/g, country.name);
-                    template = template.replace(/{project_local_currency}/g, application?.project?.project_proposal.budget_request_other_currency);
-                    template = template.replace(/{project_local_amount}/g, application?.project?.project_proposal.budget_request_other);
-                    template = template.replace(/{project_usd_amount}/g, application?.project?.project_proposal.budget_request_usd);
+                    template = template.replace(
+                        /{project_local_currency}/g,
+                        application?.project?.project_proposal.budget_request_other_currency,
+                    );
+                    template = template.replace(
+                        /{project_local_amount}/g,
+                        application?.project?.project_proposal.budget_request_other,
+                    );
+                    template = template.replace(
+                        /{project_usd_amount}/g,
+                        application?.project?.project_proposal.budget_request_usd,
+                    );
                     template = template.replace(/{project_duration}/g, application?.project?.duration);
                     template = template.replace(/{project_title}/g, application?.project?.title);
 
@@ -1987,7 +2088,7 @@ export class ApplicationService extends GlobalService {
                         .returning('pk')
                         .execute();
                 }
-            })
+            });
         } catch (err) {
             this.saveError({});
             console.log(err);

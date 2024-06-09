@@ -10,7 +10,7 @@ export class ApplicationController {
         private readonly applicationService: ApplicationService,
         private readonly projectService: ProjectsService,
         private readonly applicationQueryHelpersService: ApplicationQueryHelpersService,
-    ) { }
+    ) {}
 
     @UseGuards(JwtAuthGuard)
     @Post('generate')
@@ -76,6 +76,23 @@ export class ApplicationController {
     @Post('organization_other_information')
     saveOrganizationOtherInfo(@Body() body: any, @Request() req: any) {
         return this.applicationService.saveOrganizationOtherInfo(body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(
+        'organization_other_information/:organization_other_information_pk/organization_other_information_financial_human_resources/:organization_other_information_financial_human_resources_pk',
+    )
+    removeFinancialHumanResource(
+        @Param('organization_other_information_pk') organization_other_information_pk: number,
+        @Param('organization_other_information_financial_human_resources_pk')
+        organization_other_information_financial_human_resources_pk: number,
+        @Request() req: any,
+    ) {
+        return this.applicationService.removeFinancialHumanResource(
+            +organization_other_information_pk,
+            +organization_other_information_financial_human_resources_pk,
+            req.user,
+        );
     }
 
     @Post(':uuid/success/email')
@@ -227,7 +244,7 @@ export class ApplicationController {
         application.data['reviews'] = applicationReviews[0]?.['reviews'] ?? [];
 
         if (!application?.data?.project) {
-            application.data.project = {}
+            application.data.project = {};
         }
 
         const projectReviews: any = await this.projectService.getReviews([application?.data?.project?.pk]);
