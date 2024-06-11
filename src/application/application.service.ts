@@ -2031,41 +2031,43 @@ export class ApplicationService extends GlobalService {
 
                 let template: string = '';
                 if (templateObj.status) {
-                    template = templateObj?.data?.template;
+                    template = templateObj?.data?.template ?? '';
 
-                    template = template.replace(
-                        /{application_date}/g,
-                        DateTime.fromJSDate(application?.date_created).toFormat('LLLL dd, yyyy'),
-                    );
-                    template = template.replace(/{application_donor}/g, application?.donor ?? '');
-                    template = template.replace(/{application_number}/g, application?.number);
-                    template = template.replace(
-                        /{application_url}/g,
-                        url + `/public/application/${application.uuid}/status`,
-                    );
-                    template = template.replace(/{application_uuid}/g, application.uuid);
-                    template = template.replace(/{proponent_address}/g, partner?.address);
-                    template = template.replace(/{proponent_contact_number}/g, partner?.contact_number);
-                    template = template.replace(/{proponent_email}/g, partner?.email_address);
-                    template = template.replace(/{proponent_id}/g, partner?.partner_id);
-                    template = template.replace(/{proponent_name}/g, partner?.name);
-                    template = template.replace(/{proponent_website}/g, partner?.website);
-                    template = template.replace(/{project_background}/g, application?.project?.background);
-                    template = template.replace(/{project_country}/g, country.name);
-                    template = template.replace(
-                        /{project_local_currency}/g,
-                        application?.project?.project_proposal.budget_request_other_currency,
-                    );
-                    template = template.replace(
-                        /{project_local_amount}/g,
-                        application?.project?.project_proposal.budget_request_other,
-                    );
-                    template = template.replace(
-                        /{project_usd_amount}/g,
-                        application?.project?.project_proposal.budget_request_usd,
-                    );
-                    template = template.replace(/{project_duration}/g, application?.project?.duration);
-                    template = template.replace(/{project_title}/g, application?.project?.title);
+                    if (template) {
+                        template = template.replace(
+                            /{application_date}/g,
+                            DateTime.fromJSDate(application?.date_created).toFormat('LLLL dd, yyyy'),
+                        );
+                        template = template.replace(/{application_donor}/g, application?.donor ?? '');
+                        template = template.replace(/{application_number}/g, application?.number);
+                        template = template.replace(
+                            /{application_url}/g,
+                            url + `/public/application/${application.uuid}/status`,
+                        );
+                        template = template.replace(/{application_uuid}/g, application.uuid);
+                        template = template.replace(/{proponent_address}/g, partner?.address);
+                        template = template.replace(/{proponent_contact_number}/g, partner?.contact_number);
+                        template = template.replace(/{proponent_email}/g, partner?.email_address);
+                        template = template.replace(/{proponent_id}/g, partner?.partner_id);
+                        template = template.replace(/{proponent_name}/g, partner?.name);
+                        template = template.replace(/{proponent_website}/g, partner?.website);
+                        template = template.replace(/{project_background}/g, application?.project?.background);
+                        template = template.replace(/{project_country}/g, country.name);
+                        template = template.replace(
+                            /{project_local_currency}/g,
+                            application?.project?.project_proposal.budget_request_other_currency,
+                        );
+                        template = template.replace(
+                            /{project_local_amount}/g,
+                            application?.project?.project_proposal.budget_request_other,
+                        );
+                        template = template.replace(
+                            /{project_usd_amount}/g,
+                            application?.project?.project_proposal.budget_request_usd,
+                        );
+                        template = template.replace(/{project_duration}/g, application?.project?.duration);
+                        template = template.replace(/{project_title}/g, application?.project?.title);
+                    }
 
                     const email = {
                         uuid: uuidv4(),
