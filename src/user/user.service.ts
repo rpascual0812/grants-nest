@@ -318,21 +318,25 @@ export class UserService extends GlobalService {
                         _user.birthdate = data.birthdate;
                         _user.mobile_number = data.mobile;
                         _user.email_address = data.email_address;
+                        _user.gender_pk = data.gender;
 
+                        const newUser = await EntityManager.save(_user);
+                        userData = newUser;
 
                         const templateObj = await this.templateService.find('newAccountCreated');
                         let template: string = '';
 
                         if (templateObj.status) {
-                            template = templateObj?.data?.template;
-                            console.log(result);
-                            template = template.replace(/{first_name}/g, data.first_name);
-                            template = template.replace(/{last_name}/g, data.last_name);
-                            template = template.replace(/{middle_name}/g, data.middle_name);
-                            template = template.replace(/{email_address}/g, data.email_address);
-                            template = template.replace(/{unique_id}/g, uniqueId.toString());
-                            template = template.replace(/{temporary_password}/g, result);
-                            template = template.replace(/{app_url}/g, data.link);
+                            template = templateObj?.data?.template ?? '';
+                            if (template) {
+                                template = template.replace(/{first_name}/g, data.first_name);
+                                template = template.replace(/{last_name}/g, data.last_name);
+                                template = template.replace(/{middle_name}/g, data.middle_name);
+                                template = template.replace(/{email_address}/g, data.email_address);
+                                template = template.replace(/{unique_id}/g, uniqueId.toString());
+                                template = template.replace(/{temporary_password}/g, result);
+                                template = template.replace(/{app_url}/g, data.link);
+                            }
 
                             // send email
                             this.emailService.uuid = uuidv4();
@@ -347,20 +351,31 @@ export class UserService extends GlobalService {
                             await this.emailService.create();
                         }
 
-                        const newUser = await EntityManager.save(_user);
-                        userData = newUser;
-
                         // create user document
                         if (data.image) {
                             EntityManager.query(
                                 'insert into document_user_relation (document_pk, user_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
-                                [data.image.pk, data.pk],
+                                [data.image.pk, newUser.pk],
                             );
                             // const documentable = new Documentable();
                             // documentable.table_name = 'users';
                             // documentable.table_pk = newUser.pk;
                             // documentable.document_pk = data.image.pk;
                             // await EntityManager.save(documentable);
+                        }
+
+                        // update the roles
+                        if (data.roles.length > 0) {
+                            let roles = [];
+                            data.roles.forEach(role => {
+                                roles.push({
+                                    user_pk: newUser.pk,
+                                    role_pk: role.pk
+                                });
+                            });
+
+                            // insert new roles
+                            await EntityManager.insert(UserRole, roles);
                         }
                     }
 
@@ -379,7 +394,6 @@ export class UserService extends GlobalService {
     }
 
     async update(user, pk: any, data: any) {
-        console.log(user, pk, data);
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
@@ -471,14 +485,16 @@ export class UserService extends GlobalService {
 
                 let template: string = '';
                 if (templateObj.status) {
-                    template = templateObj?.data?.template;
+                    template = templateObj?.data?.template ?? '';
 
-                    template = template.replace(/{first_name}/g, user.first_name);
-                    template = template.replace(/{middle_name}/g, user.middle_name);
-                    template = template.replace(/{last_name}/g, user.last_name);
-                    template = template.replace(/{email_address}/g, user.email_address);
-                    template = template.replace(/{unique_id}/g, user.unique_id);
-                    template = template.replace(/{reset_password_url}/g, body.url + '/reset-password/' + uuid);
+                    if (template) {
+                        template = template.replace(/{first_name}/g, user.first_name);
+                        template = template.replace(/{middle_name}/g, user.middle_name);
+                        template = template.replace(/{last_name}/g, user.last_name);
+                        template = template.replace(/{email_address}/g, user.email_address);
+                        template = template.replace(/{unique_id}/g, user.unique_id);
+                        template = template.replace(/{reset_password_url}/g, body.url + '/reset-password/' + uuid);
+                    }
 
                     this.emailService.account_pk = user.account_pk;
                     this.emailService.user_pk = user.pk;
