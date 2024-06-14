@@ -7,37 +7,32 @@ import { GlobalService } from 'src/utilities/global.service';
 
 @Injectable()
 export class RoleService extends GlobalService {
-
     async findAll(filters: any) {
         try {
-            const users = await dataSource
-                .manager
+            const users = await dataSource.manager
                 .getRepository(Role)
                 .createQueryBuilder('roles')
                 .select('roles')
                 .andWhere(
-                    filters.hasOwnProperty('keyword') && filters.keyword != '' ?
-                        "roles.name ILIKE :keyword" :
-                        '1=1', { keyword: `%${filters.keyword}%` }
+                    filters.hasOwnProperty('keyword') && filters.keyword != '' ? 'roles.name ILIKE :keyword' : '1=1',
+                    { keyword: `%${filters.keyword}%` },
                 )
-                .andWhere("archived = false")
+                .andWhere('archived = false')
                 .skip(filters.skip)
                 .take(filters.take)
                 .orderBy('roles.name', 'ASC')
-                .getManyAndCount()
-                ;
-
+                .getManyAndCount();
             return {
                 status: true,
                 data: users[0],
-                total: users[1]
-            }
+                total: users[1],
+            };
         } catch (error) {
             console.log(error);
             // SAVE ERROR
             return {
-                status: false
-            }
+                status: false,
+            };
         }
     }
 
@@ -49,7 +44,7 @@ export class RoleService extends GlobalService {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const existing = await EntityManager.findOne(Role, {
                     where: {
-                        pk: data.pk
+                        pk: data.pk,
                     },
                 });
 
@@ -71,8 +66,10 @@ export class RoleService extends GlobalService {
             console.log(error);
             // SAVE ERROR
             return {
-                status: false
-            }
+                status: false,
+            };
+        } finally {
+            await queryRunner.release();
         }
     }
 
@@ -88,8 +85,10 @@ export class RoleService extends GlobalService {
             console.log(error);
             // SAVE ERROR
             return {
-                status: false
-            }
+                status: false,
+            };
+        } finally {
+            await queryRunner.release();
         }
     }
 
@@ -100,31 +99,29 @@ export class RoleService extends GlobalService {
                     .createQueryBuilder()
                     .insert()
                     .into(UserRole)
-                    .values([{
-                        user_pk: data.user_pk,
-                        role_pk: data.role_pk,
-                    }])
+                    .values([
+                        {
+                            user_pk: data.user_pk,
+                            role_pk: data.role_pk,
+                        },
+                    ])
                     .returning('*')
                     .execute();
-            }
-            else {
-                return await dataSource
-                    .manager
+            } else {
+                return await dataSource.manager
                     .getRepository(UserRole)
                     .createQueryBuilder()
                     .delete()
                     .from('user_roles')
                     .where({ user_pk: data.user_pk, role_pk: data.role_pk })
-                    .execute()
-                    ;
+                    .execute();
             }
         } catch (error) {
             console.log(error);
             // SAVE ERROR
             return {
-                status: false
-            }
+                status: false,
+            };
         }
     }
-
 }
