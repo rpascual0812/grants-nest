@@ -42,11 +42,14 @@ export class RoleService extends GlobalService {
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const existing = await EntityManager.findOne(Role, {
-                    where: {
-                        pk: data.pk,
-                    },
-                });
+                let existing = null;
+                if (data.pk) {
+                    existing = await EntityManager.findOne(Role, {
+                        where: {
+                            pk: data.pk,
+                        },
+                    });
+                }
 
                 const role = existing ? existing : new Role();
                 role.name = data.name;
@@ -55,12 +58,11 @@ export class RoleService extends GlobalService {
                 const saved = await EntityManager.save(Role, {
                     ...role,
                 });
-
                 // save logs
-                const model = { pk: role.pk, name: 'roles', status: existing ? 'Updated' : 'Added', data: role };
+                const model = { pk: saved.pk, name: 'roles', status: existing ? 'Updated' : 'Added', data: saved };
                 await this.saveLog({ model, user });
 
-                return { status: role ? true : false };
+                return { status: saved ? true : false };
             });
         } catch (error) {
             console.log(error);
