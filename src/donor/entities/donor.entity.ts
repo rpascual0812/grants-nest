@@ -1,3 +1,4 @@
+import { ProjectFunding } from 'src/projects/entities/project-funding.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
 
@@ -35,4 +36,12 @@ export class Donor extends BaseEntity {
     @ManyToOne((type) => User, (user) => user.donor, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'created_by' })
     user: User;
+
+    @OneToMany(
+        'ProjectFunding',
+        (projectFunding: ProjectFunding) => projectFunding.donor,
+        { onDelete: 'CASCADE', onUpdate: 'CASCADE' },
+    )
+    @JoinColumn({ name: 'pk' })
+    project_funding: ProjectFunding;
 }

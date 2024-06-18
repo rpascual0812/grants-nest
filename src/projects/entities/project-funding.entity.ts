@@ -14,11 +14,15 @@ import { Project } from './project.entity';
 import { Document } from 'src/document/entities/document.entity';
 import { ProjectFundingReport } from './project-funding-report.entity';
 import { ProjectFundingLiquidation } from './project-funding-liquidation.entity';
+import { Donor } from 'src/donor/entities/donor.entity';
 
 @Entity({ name: 'project_fundings' })
 export class ProjectFunding extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
+
+    @Column({ name: 'donor_pk', nullable: true })
+    donor_pk: number;
 
     @Column({ type: 'text', nullable: false })
     title: string;
@@ -59,6 +63,10 @@ export class ProjectFunding extends BaseEntity {
     /**
      * Relationship
      */
+
+    @ManyToOne((type) => Donor, (donor) => donor.project_funding, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'donor_pk' })
+    donor: Donor;
 
     @ManyToOne((type) => Project, (project) => project.project_funding, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'project_pk' })
