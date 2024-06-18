@@ -37,6 +37,7 @@ import { ProjectCapDevObserve } from './entities/project-capdev-observe.entity';
 import { ProjectLesson } from './entities/project-lesson.entity';
 import { ProjectLink } from './entities/project-link.entity';
 import { ProjectLocation } from './entities/project-location.entity';
+import { Donor } from 'src/donor/entities/donor.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -47,7 +48,7 @@ export class ProjectsService extends GlobalService {
         super();
     }
 
-    async findAll(filters: any) {
+    async findAll(filter: any) {
         try {
             const data = await dataSource
                 .getRepository(Project)
@@ -56,7 +57,9 @@ export class ProjectsService extends GlobalService {
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
                 .leftJoinAndSelect('projects.type', 'types')
+                .leftJoinAndSelect('projects.project_funding', 'project_fundings')
                 .where('projects.archived = false')
+                .andWhere(filter.hasOwnProperty('donors') ? 'project_fundings.donor_pk IN (:...pk)' : '1=1', { pk: filter.donors && Array.isArray(filter.donors) ? filter.donors : [filter.donors] })
                 .orderBy('projects.date_created', 'DESC')
                 .getManyAndCount();
 
@@ -281,6 +284,7 @@ export class ProjectsService extends GlobalService {
                 .getRepository(ProjectFunding)
                 .createQueryBuilder('project_fundings')
                 .select('project_fundings')
+                .leftJoinAndSelect('project_fundings.donor', 'donors')
                 .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
                 .leftJoinAndMapMany(
                     'project_fundings.project_funding_report',
@@ -643,6 +647,7 @@ export class ProjectsService extends GlobalService {
                 projectFunding.project_pk = projectPk;
 
                 projectFunding.title = getDefaultValue(data?.title, existingProjectFunding?.title);
+                projectFunding.donor_pk = getDefaultValue(data?.donor_pk, existingProjectFunding?.donor_pk);
                 projectFunding.released_amount_usd = getDefaultValue(
                     data?.released_amount_usd,
                     existingProjectFunding?.released_amount_usd,
@@ -685,8 +690,15 @@ export class ProjectsService extends GlobalService {
                     projectFunding.grantee_acknowledgement = null;
                 }
 
+                const donor = await EntityManager.findOne(Donor, {
+                    where: {
+                        pk: Equal(data?.donor_pk),
+                    },
+                });
+
                 const savedProjectFunding = await EntityManager.save(ProjectFunding, {
                     ...projectFunding,
+                    donor: donor
                 });
 
                 // 2 bank_receipt_pk is not updating if value is null
