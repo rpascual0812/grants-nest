@@ -1,28 +1,10 @@
-import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Patch,
-    Param,
-    Delete,
-    UseGuards,
-    Request,
-    UseInterceptors,
-    UploadedFile,
-    Response,
-    HttpStatus,
-    UnauthorizedException,
-    InternalServerErrorException,
-    Put,
-    Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
 import { PartnerService } from './partner.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('partner')
 export class PartnerController {
-    constructor(private readonly partnerService: PartnerService) { }
+    constructor(private readonly partnerService: PartnerService) {}
 
     @Get()
     async fetch(@Query() query: { organization_pk?: number; type_pk?: number; keyword?: string }) {
