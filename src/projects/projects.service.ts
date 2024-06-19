@@ -298,7 +298,7 @@ export class ProjectsService extends GlobalService {
                     'report_document',
                     'report_document.pk=project_funding_reports.attachment_pk',
                 )
-                .leftJoinAndMapOne(
+                .leftJoinAndMapMany(
                     'project_fundings.project_funding_liquidation',
                     ProjectFundingLiquidation,
                     'project_funding_liquidations',
