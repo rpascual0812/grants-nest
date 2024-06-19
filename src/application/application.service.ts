@@ -98,6 +98,7 @@ export class ApplicationService extends GlobalService {
                 // .leftJoinAndSelect('project_locations.country', 'countries')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('projects.project_funding', 'project_fundings')
+                .leftJoinAndSelect('project_fundings.project_funding_liquidation', 'project_funding_liquidations')
                 .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
                 .leftJoinAndSelect('projects.recommendations', 'project_recommendations')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
