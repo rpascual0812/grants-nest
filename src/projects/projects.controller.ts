@@ -1,28 +1,10 @@
-import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Patch,
-    Param,
-    Delete,
-    UseGuards,
-    Request,
-    UseInterceptors,
-    UploadedFile,
-    Response,
-    HttpStatus,
-    UnauthorizedException,
-    InternalServerErrorException,
-    Put,
-    Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) { }
+    constructor(private readonly projectService: ProjectsService) {}
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -98,6 +80,20 @@ export class ProjectsController {
         }
 
         return projects;
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/project_details')
+    async updateProjectDetails(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.updateProjectDetails(
+            {
+                pk: +pk,
+                partner_pk: body?.partner_pk,
+                objective: body?.objective,
+                duration: body?.duration,
+            },
+            req.user,
+        );
     }
 
     @UseGuards(JwtAuthGuard)

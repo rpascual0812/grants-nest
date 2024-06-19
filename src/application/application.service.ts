@@ -740,8 +740,9 @@ export class ApplicationService extends GlobalService {
             let savedProjBeneficiary = {};
             const projBeneficiary = data?.project_beneficiary;
             const resBeneficiary: any = await this.saveProjBeneficiary({
-                project_pk: projPk,
                 ...projBeneficiary,
+                pk: data?.project_beneficiary?.pk,
+                project_pk: projPk,
             });
             savedProjBeneficiary = resBeneficiary?.data;
 
