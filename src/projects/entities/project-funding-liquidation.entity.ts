@@ -46,9 +46,8 @@ export class ProjectFundingLiquidation extends BaseEntity {
     /**
      * Relationship
      */
-    @OneToOne(type => ProjectFunding, project_funding => project_funding.project_funding_liquidation, { eager: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @ManyToOne((type) => ProjectFunding, (project_funding) => project_funding.project_funding_liquidation, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'project_funding_pk' })
-    @JoinTable()
     project_funding: ProjectFunding;
 
     @ManyToMany(() => Document, (document) => document.project_funding_liquidations, { cascade: ['insert', 'update'] })

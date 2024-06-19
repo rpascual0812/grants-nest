@@ -94,10 +94,6 @@ export class ProjectFunding extends BaseEntity {
     @JoinColumn({ name: 'pk' })
     project_funding_report: ProjectFundingReport;
 
-    @OneToOne(
-        (type) => ProjectFundingLiquidation,
-        (project_funding_liquidation) => project_funding_liquidation.project_funding,
-        { cascade: true },
-    )
+    @OneToMany((type) => ProjectFundingLiquidation, (project_funding_liquidation) => project_funding_liquidation.project_funding, { cascade: true })
     project_funding_liquidation: ProjectFundingLiquidation;
 }
