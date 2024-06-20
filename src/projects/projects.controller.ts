@@ -88,6 +88,7 @@ export class ProjectsController {
         return this.projectService.updateProjectDetails(
             {
                 pk: +pk,
+                application_pk: body?.application_pk,
                 partner_pk: body?.partner_pk,
                 objective: body?.objective,
                 duration: body?.duration,

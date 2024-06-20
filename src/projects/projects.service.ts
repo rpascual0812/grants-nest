@@ -149,7 +149,7 @@ export class ProjectsService extends GlobalService {
     }
 
     async updateProjectDetails(
-        data: { pk?: number; partner_pk?: number; objective?: string; duration?: string },
+        data: { pk?: number; application_pk?: number; partner_pk?: number; objective?: string; duration?: string },
         user: Partial<User>,
     ) {
         const queryRunner = dataSource.createQueryRunner();
@@ -158,11 +158,11 @@ export class ProjectsService extends GlobalService {
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const projectPk = data?.pk;
-
+                const applicationPk = data?.application_pk;
                 const newPartnerPk = data?.partner_pk;
 
-                if (!projectPk || !newPartnerPk) {
-                    throw new Error(`missing fields project pk or partner_pk`);
+                if (!projectPk || !newPartnerPk || !applicationPk) {
+                    throw new Error(`missing fields project pk or partner_pk or applicationPk`);
                 }
 
                 await EntityManager.update(
@@ -174,6 +174,16 @@ export class ProjectsService extends GlobalService {
                         partner_pk: newPartnerPk,
                         objective: data?.objective,
                         duration: data?.duration,
+                    },
+                );
+
+                await EntityManager.update(
+                    Application,
+                    {
+                        pk: applicationPk,
+                    },
+                    {
+                        partner_pk: newPartnerPk,
                     },
                 );
 
