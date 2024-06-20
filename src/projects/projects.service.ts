@@ -2064,4 +2064,25 @@ export class ProjectsService extends GlobalService {
             };
         }
     }
+
+    async getTotalPerDonor() {
+        try {
+            return await dataSource
+                .getRepository(Project)
+                .createQueryBuilder('projects')
+                .select('projects')
+                .leftJoinAndSelect('projects.project_funding', 'project_fundings')
+                .leftJoinAndSelect('project_fundings.donor', 'donors')
+                .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
+                .andWhere('projects.archived = false')
+                .andWhere('projects.status IS NOT NULL')
+                .getMany();
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false,
+            };
+        }
+    }
 }
