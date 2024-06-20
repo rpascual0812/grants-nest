@@ -522,4 +522,10 @@ export class ProjectsController {
     async findGroupProjectCountry(@Request() req: any) {
         return await this.projectService.findGroupProjectCountry();
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('total_per_donor')
+    fetchTotalPerDonor(@Request() req: any) {
+        return this.projectService.getTotalPerDonor();
+    }
 }
