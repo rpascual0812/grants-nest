@@ -59,7 +59,9 @@ export class ProjectsService extends GlobalService {
                 .leftJoinAndSelect('projects.type', 'types')
                 .leftJoinAndSelect('projects.project_funding', 'project_fundings')
                 .where('projects.archived = false')
-                .andWhere(filter.hasOwnProperty('donors') ? 'project_fundings.donor_pk IN (:...pk)' : '1=1', { pk: filter.donors && Array.isArray(filter.donors) ? filter.donors : [filter.donors] })
+                .andWhere(filter.hasOwnProperty('donors') ? 'project_fundings.donor_pk IN (:...pk)' : '1=1', {
+                    pk: filter.donors && Array.isArray(filter.donors) ? filter.donors : [filter.donors],
+                })
                 .orderBy('projects.date_created', 'DESC')
                 .getManyAndCount();
 
@@ -146,6 +148,70 @@ export class ProjectsService extends GlobalService {
         }
     }
 
+    async updateProjectDetails(
+        data: { pk?: number; application_pk?: number; partner_pk?: number; objective?: string; duration?: string },
+        user: Partial<User>,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectPk = data?.pk;
+                const applicationPk = data?.application_pk;
+                const newPartnerPk = data?.partner_pk;
+
+                if (!projectPk || !newPartnerPk || !applicationPk) {
+                    throw new Error(`missing fields project pk or partner_pk or applicationPk`);
+                }
+
+                await EntityManager.update(
+                    Project,
+                    {
+                        pk: projectPk,
+                    },
+                    {
+                        partner_pk: newPartnerPk,
+                        objective: data?.objective,
+                        duration: data?.duration,
+                    },
+                );
+
+                await EntityManager.update(
+                    Application,
+                    {
+                        pk: applicationPk,
+                    },
+                    {
+                        partner_pk: newPartnerPk,
+                    },
+                );
+
+                // save logs
+                const model = {
+                    pk: projectPk,
+                    name: 'project',
+                    status: 'updated',
+                };
+
+                await this.saveLog({
+                    model,
+                    user: {
+                        pk: user?.pk,
+                    },
+                });
+                return {
+                    status: true,
+                };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
     async getPartnerOrganization(pks: any) {
         try {
             return await dataSource
@@ -698,7 +764,7 @@ export class ProjectsService extends GlobalService {
 
                 const savedProjectFunding = await EntityManager.save(ProjectFunding, {
                     ...projectFunding,
-                    donor: donor
+                    donor: donor,
                 });
 
                 // 2 bank_receipt_pk is not updating if value is null
@@ -1113,7 +1179,9 @@ export class ProjectsService extends GlobalService {
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const existing = event.pk ? await EntityManager.findOne(ProjectEvent, { where: { pk: event.pk } }) : null;
+                const existing = event.pk
+                    ? await EntityManager.findOne(ProjectEvent, { where: { pk: event.pk } })
+                    : null;
                 const output = existing ? existing : new ProjectEvent();
 
                 output.name = event.name;
