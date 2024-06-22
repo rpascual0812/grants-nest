@@ -13,7 +13,7 @@ import { Partner } from 'src/partner/entities/partner.entity';
 import { PartnerContact } from 'src/partner/entities/partner-contacts.entity';
 import { PartnerOrganization } from 'src/partner/entities/partner-organization.entity';
 import { Country } from 'src/country/entities/country.entity';
-import { getDefaultValue } from './utilities/get-default-value.utils';
+import { getDefaultValue } from '../utilities/get-default-value.utils';
 import { Project } from 'src/projects/entities/project.entity';
 import { ProjectBeneficiary } from 'src/projects/entities/project-beneficiary.entity';
 import { ProjectLocation } from 'src/projects/entities/project-location.entity';
@@ -21,7 +21,7 @@ import { Review } from 'src/review/entities/review.entity';
 import { Type } from 'src/type/entities/type.entity';
 import { Document } from 'src/document/entities/document.entity';
 import { ApplicationRecommendation } from './entities/application-recommendation.entity';
-import { getParsedPk } from './utilities/get-parsed-pk.utils';
+import { getParsedPk } from '../utilities/get-parsed-pk.utils';
 import { PartnerFiscalSponsor } from 'src/partner/entities/partner-fiscal-sponsor.entity';
 import { ProjectProposal } from 'src/projects/entities/project-proposal.entity';
 import { ProjectProposalActivity } from 'src/projects/entities/project-proposal-activity.entity';
@@ -32,6 +32,7 @@ import { PartnerOrganizationOtherInformation } from 'src/partner/entities/partne
 import { PartnerOrganizationOtherInformationFinancialHumanResources } from 'src/partner/entities/partner-organization-other-information-financial-human-resources.entity';
 import { Email } from 'src/email/entities/email.entity';
 import { TemplateService } from 'src/template/template.service';
+import { AvailableApplicationStatus } from 'src/utilities/constants';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -2097,6 +2098,41 @@ export class ApplicationService extends GlobalService {
             this.saveError({});
             console.log(err);
             return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async findCountApplicationStatus(status_option?: 'all' | AvailableApplicationStatus) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            const count = await dataSource
+                .getRepository(Application)
+                .createQueryBuilder('applications')
+                .where(
+                    status_option === 'all' ? 'applications.status is not null' : 'applications.status=:status_option',
+                    {
+                        status_option,
+                    },
+                )
+                .getCount();
+
+            return {
+                status: true,
+                data: {
+                    status_option,
+                    count,
+                },
+            };
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return {
+                status: false,
+                code: err?.code,
+            };
         } finally {
             await queryRunner.release();
         }

@@ -20,9 +20,9 @@ import { Review } from 'src/review/entities/review.entity';
 import { ProjectRecommendation } from './entities/project-recommendation.entity';
 import { ProjectFunding } from './entities/project-funding.entity';
 import { User } from 'src/user/entities/user.entity';
-import { getParsedPk } from 'src/application/utilities/get-parsed-pk.utils';
+import { getParsedPk } from '../utilities/get-parsed-pk.utils';
 import { Equal } from 'typeorm';
-import { getDefaultValue } from 'src/application/utilities/get-default-value.utils';
+import { getDefaultValue } from '../utilities/get-default-value.utils';
 import { ProjectFundingReport } from './entities/project-funding-report.entity';
 import { ProjectFundingLiquidation } from './entities/project-funding-liquidation.entity';
 import { ProjectSite } from './entities/project-site.entity';
@@ -38,6 +38,7 @@ import { ProjectLesson } from './entities/project-lesson.entity';
 import { ProjectLink } from './entities/project-link.entity';
 import { ProjectLocation } from './entities/project-location.entity';
 import { Donor } from 'src/donor/entities/donor.entity';
+import { AvailableProjectStatus } from 'src/utilities/constants';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -2151,6 +2152,59 @@ export class ProjectsService extends GlobalService {
             return {
                 status: false,
             };
+        }
+    }
+
+    async findCountProjectStatus(status_option?: 'all' | AvailableProjectStatus, include_tranche?: boolean) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        const NOT_INCLUDED_STATUS = ['Fund Release', 'Completed'];
+        try {
+            let count = 0;
+            if (!include_tranche) {
+                count = await dataSource
+                    .getRepository(Project)
+                    .createQueryBuilder('projects')
+                    .where(
+                        status_option === 'all'
+                            ? `projects.status IS NOT NULL AND projects.status NOT IN (:...NOT_INCLUDED_STATUS)`
+                            : 'projects.status=:status_option',
+                        {
+                            status_option,
+                            NOT_INCLUDED_STATUS,
+                        },
+                    )
+                    .getCount();
+            } else {
+                count = await dataSource
+                    .getRepository(ProjectFunding)
+                    .createQueryBuilder('project_fundings')
+                    .leftJoinAndMapMany(
+                        'project_fundings.project',
+                        Project,
+                        'projects',
+                        'projects.pk=project_fundings.project_pk',
+                    )
+                    .where('projects.status=:status', { status: 'Fund Release' })
+                    .getCount();
+            }
+
+            return {
+                status: true,
+                data: {
+                    status_option,
+                    count,
+                },
+            };
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return {
+                status: false,
+                code: err?.code,
+            };
+        } finally {
+            await queryRunner.release();
         }
     }
 }
