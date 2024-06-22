@@ -1,4 +1,4 @@
-import { getParsedPk } from './../application/utilities/get-parsed-pk.utils';
+import { getParsedPk } from '../utilities/get-parsed-pk.utils';
 import { Injectable } from '@nestjs/common';
 import dataSource from 'db/data-source';
 import { Partner } from './entities/partner.entity';
@@ -13,7 +13,7 @@ import { PartnerOrganizationOtherInformation } from './entities/partner-organiza
 import { PartnerAssessment } from './entities/partner-assessment.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Equal } from 'typeorm';
-import { getDefaultValue } from 'src/application/utilities/get-default-value.utils';
+import { getDefaultValue } from '../utilities/get-default-value.utils';
 import { GlobalService } from 'src/utilities/global.service';
 
 @Injectable()

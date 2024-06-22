@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Request, UseGuards, Query } from '@nestjs/common';
 import { ApplicationService } from './application.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ApplicationQueryHelpersService } from './utilities/lib/application-query-helpers/application-query-helpers.service';
 import { ProjectsService } from 'src/projects/projects.service';
+import { AVAILABLE_APPLICATION_STATUS, AvailableApplicationStatus } from 'src/utilities/constants';
 
 @Controller('application')
 export class ApplicationController {
@@ -11,6 +12,19 @@ export class ApplicationController {
         private readonly projectService: ProjectsService,
         private readonly applicationQueryHelpersService: ApplicationQueryHelpersService,
     ) {}
+
+    @UseGuards(JwtAuthGuard)
+    @Get('status_count')
+    async fetchApplicationCount(@Query() query: { status: 'all' | AvailableApplicationStatus }, @Request() req: any) {
+        let statusOption: undefined | 'all' | AvailableApplicationStatus = 'all';
+        if (
+            query?.status &&
+            AVAILABLE_APPLICATION_STATUS.includes((query?.status ?? '') as AvailableApplicationStatus)
+        ) {
+            statusOption = query?.status;
+        }
+        return this.applicationService.findCountApplicationStatus(statusOption);
+    }
 
     @UseGuards(JwtAuthGuard)
     @Post('generate')
