@@ -411,4 +411,15 @@ export class ApplicationController {
     ) {
         return this.applicationService.deleteReviewAttachment(application_pk, review_pk, document_pk, req.user);
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/save_date_submitted')
+    saveApplicationDateSubmitted(@Param('pk') application_pk: number, @Request() req: any) {
+        return this.applicationService.saveApplicationDateSubmitted(
+            {
+                pk: +application_pk,
+            },
+            req?.user,
+        );
+    }
 }
