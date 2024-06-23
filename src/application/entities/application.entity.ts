@@ -55,6 +55,9 @@ export class Application extends BaseEntity {
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_updated: Date;
 
+    @Column({ type: 'timestamptz', nullable: true })
+    date_submitted: Date;
+
     @Column({ default: false })
     archived: boolean;
 
