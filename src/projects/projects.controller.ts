@@ -5,7 +5,7 @@ import { AVAILABLE_PROJECT_STATUS, AvailableProjectStatus } from 'src/utilities/
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) {}
+    constructor(private readonly projectService: ProjectsService) { }
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -31,6 +31,9 @@ export class ProjectsController {
             const partner_nonprofit_equivalency_determinations: any =
                 await this.projectService.getPartnerNonprofitEquivalencyDetermination(partner_pks);
 
+            // Partner Assessment
+            const partner_assessments: any = await this.projectService.getPartnerAssessments(partner_pks);
+
             // Reviews
             const projectReviews: any = await this.projectService.getReviews(pks);
 
@@ -54,6 +57,12 @@ export class ProjectsController {
                 }
                 const partner_contact = partner_contacts.filter((contact) => contact.partner_pk == project.partner_pk);
                 project['partner']['contacts'] = partner_contact;
+
+                if (!project['partner'].hasOwnProperty('assessments')) {
+                    project['partner']['contacts'] = {};
+                }
+                const partner_assessment = partner_assessments.filter((assessment) => assessment.partner_pk == project.partner_pk);
+                project['partner']['assessments'] = partner_assessment;
 
                 if (!project['partner'].hasOwnProperty('partner_fiscal_sponsor')) {
                     project['partner']['partner_fiscal_sponsor'] = {};
@@ -540,5 +549,23 @@ export class ProjectsController {
             statusOption = query?.status;
         }
         return this.projectService.findCountProjectStatus(statusOption, includeTranche);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/overall_grant_status')
+    async updateProjectOverallGrantStatus(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectOverallGrantStatus(pk, body?.overall_grant_status, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/closing_status')
+    async updateProjectClosingStatus(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectClosingStatus(pk, body?.closing_status, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/pending_document')
+    async updateProjectPendingDocument(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectPendingDocument(pk, body?.pending_document, req.user);
     }
 }
