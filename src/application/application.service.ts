@@ -33,6 +33,7 @@ import { PartnerOrganizationOtherInformationFinancialHumanResources } from 'src/
 import { Email } from 'src/email/entities/email.entity';
 import { TemplateService } from 'src/template/template.service';
 import { AvailableApplicationStatus } from 'src/utilities/constants';
+import { User } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -55,7 +56,6 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('projects.project_location', 'project_location')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activities')
-
                 .leftJoinAndSelect('projects.type', 'types')
                 .where('applications.archived = false')
                 // .andWhere(
@@ -70,7 +70,14 @@ export class ApplicationService extends GlobalService {
                         : '1=1',
                     { type_pk: +filters.type_pk },
                 )
+                .andWhere(
+                    filters.hasOwnProperty('status') && filters?.status && filters?.status?.trim() !== ''
+                        ? 'applications.status = :status'
+                        : '1=1',
+                    { status: filters?.status },
+                )
                 .orderBy('applications.date_created', 'DESC')
+                .limit(filters?.limit ? +filters?.limit : null)
                 .getManyAndCount();
 
             return {
@@ -2133,6 +2140,49 @@ export class ApplicationService extends GlobalService {
                 status: false,
                 code: err?.code,
             };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveApplicationDateSubmitted(data: Partial<Application>, user: Partial<User>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const pk = getParsedPk(data?.pk);
+                let message = `date submitted for application_pk: ${pk} already been saved`;
+                const existingApplication = await Application.findOne({
+                    where: {
+                        pk: Equal(pk),
+                    },
+                });
+                if (!existingApplication?.date_submitted) {
+                    await EntityManager.update(Application, { pk: pk }, { date_submitted: DateTime.now() });
+                    // save logs
+                    const model = {
+                        pk: pk,
+                        name: 'application',
+                        status: 'updated',
+                    };
+                    await this.saveLog({
+                        model,
+                        user: {
+                            pk: user?.pk,
+                        },
+                    });
+                    message = `new date submitted for application_pk: ${pk} saved`;
+                }
+                return {
+                    status: true,
+                    message,
+                };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err?.code };
         } finally {
             await queryRunner.release();
         }
