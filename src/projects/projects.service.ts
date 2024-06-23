@@ -39,6 +39,7 @@ import { ProjectLink } from './entities/project-link.entity';
 import { ProjectLocation } from './entities/project-location.entity';
 import { Donor } from 'src/donor/entities/donor.entity';
 import { AvailableProjectStatus } from 'src/utilities/constants';
+import { PartnerAssessment } from 'src/partner/entities/partner-assessment.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -55,13 +56,21 @@ export class ProjectsService extends GlobalService {
                 .getRepository(Project)
                 .createQueryBuilder('projects')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
+                .leftJoinAndSelect('project_location.country', 'countries')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
                 .leftJoinAndSelect('projects.type', 'types')
                 .leftJoinAndSelect('projects.project_funding', 'project_fundings')
+                .leftJoinAndSelect('project_fundings.donor', 'donors')
+                .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
+                .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
+                .leftJoinAndSelect('projects.application', 'applications')
                 .where('projects.archived = false')
                 .andWhere(filter.hasOwnProperty('donors') ? 'project_fundings.donor_pk IN (:...pk)' : '1=1', {
                     pk: filter.donors && Array.isArray(filter.donors) ? filter.donors : [filter.donors],
+                })
+                .andWhere(filter.hasOwnProperty('overall_grant_status') ? 'projects.overall_grant_status = :status' : '1=1', {
+                    status: filter.overall_grant_status,
                 })
                 .orderBy('projects.date_created', 'DESC')
                 .getManyAndCount();
@@ -313,6 +322,24 @@ export class ProjectsService extends GlobalService {
                     'documents as partner_nonprofit_equivalency_determinations_documents',
                 )
                 .where('partner_nonprofit_equivalency_determinations.partner_pk IN (:...pk)', { pk: pks })
+                .getMany();
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false,
+            };
+        }
+    }
+
+    async getPartnerAssessments(pks: any) {
+        try {
+            return await dataSource
+                .getRepository(PartnerAssessment)
+                .createQueryBuilder('partner_assessments')
+                .select('partner_assessments')
+                .leftJoinAndSelect('partner_assessments.user', 'users')
+                .where('partner_assessments.partner_pk IN (:...pk)', { pk: pks })
                 .getMany();
         } catch (error) {
             console.log(error);
@@ -2203,6 +2230,87 @@ export class ProjectsService extends GlobalService {
                 status: false,
                 code: err?.code,
             };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveProjectOverallGrantStatus(project_pk: number, status: string, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const project = EntityManager.update(Project, { pk: project_pk }, { overall_grant_status: status });
+
+                // save logs
+                const model = {
+                    pk: project_pk,
+                    name: 'overall_grant_status',
+                    status: 'update',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: project ? true : false, data: project };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveProjectClosingStatus(project_pk: number, status: string, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const project = EntityManager.update(Project, { pk: project_pk }, { closing_status: status });
+
+                // save logs
+                const model = {
+                    pk: project_pk,
+                    name: 'closing_status',
+                    status: 'update',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: project ? true : false, data: project };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveProjectPendingDocument(project_pk: number, status: string, user: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const project = EntityManager.update(Project, { pk: project_pk }, { pending_document: status });
+
+                // save logs
+                const model = {
+                    pk: project_pk,
+                    name: 'pending_document',
+                    status: 'update',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: project ? true : false, data: project };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err.code };
         } finally {
             await queryRunner.release();
         }

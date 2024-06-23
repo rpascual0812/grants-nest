@@ -70,6 +70,15 @@ export class Project extends BaseEntity {
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     date_created: Date;
 
+    @Column({ type: 'text', nullable: true })
+    overall_grant_status: string;
+
+    @Column({ type: 'text', nullable: true })
+    closing_status: string;
+
+    @Column({ type: 'text', nullable: true })
+    pending_document: string;
+
     @Column({ default: false })
     archived: boolean;
 
