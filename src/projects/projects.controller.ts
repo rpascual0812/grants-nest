@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { AVAILABLE_PROJECT_STATUS, AvailableProjectStatus } from 'src/utilities/constants';
 
 @Controller('projects')
 export class ProjectsController {
@@ -524,5 +525,20 @@ export class ProjectsController {
     @Get('total_per_donor')
     fetchTotalPerDonor(@Request() req: any) {
         return this.projectService.getTotalPerDonor();
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('status_count')
+    @Get('status_count')
+    async fetchProjectCount(
+        @Query() query: { status: 'all' | AvailableProjectStatus; include_tranche: boolean },
+        @Request() req: any,
+    ) {
+        let statusOption: undefined | 'all' | AvailableProjectStatus = 'all';
+        const includeTranche = query?.include_tranche;
+        if (query?.status && AVAILABLE_PROJECT_STATUS.includes((query?.status ?? '') as AvailableProjectStatus)) {
+            statusOption = query?.status;
+        }
+        return this.projectService.findCountProjectStatus(statusOption, includeTranche);
     }
 }
