@@ -5,7 +5,7 @@ import { AVAILABLE_PROJECT_STATUS, AvailableProjectStatus } from 'src/utilities/
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) {}
+    constructor(private readonly projectService: ProjectsService) { }
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -581,5 +581,11 @@ export class ProjectsController {
     @Get('overdue_reports')
     async fetchProjectOverdueReports(@Request() req: any) {
         return this.projectService.fetchProjectOverdueReports();
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/assessment')
+    saveAssessment(@Body() body: any, @Request() req: any) {
+        return this.projectService.saveAssessment(body, req.user);
     }
 }
