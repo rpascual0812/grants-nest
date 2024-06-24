@@ -5,7 +5,7 @@ import { AVAILABLE_PROJECT_STATUS, AvailableProjectStatus } from 'src/utilities/
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) { }
+    constructor(private readonly projectService: ProjectsService) {}
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -61,7 +61,9 @@ export class ProjectsController {
                 if (!project['partner'].hasOwnProperty('assessments')) {
                     project['partner']['contacts'] = {};
                 }
-                const partner_assessment = partner_assessments.filter((assessment) => assessment.partner_pk == project.partner_pk);
+                const partner_assessment = partner_assessments.filter(
+                    (assessment) => assessment.partner_pk == project.partner_pk,
+                );
                 project['partner']['assessments'] = partner_assessment;
 
                 if (!project['partner'].hasOwnProperty('partner_fiscal_sponsor')) {
@@ -567,5 +569,17 @@ export class ProjectsController {
     @Post(':pk/pending_document')
     async updateProjectPendingDocument(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
         return this.projectService.saveProjectPendingDocument(pk, body?.pending_document, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('overdue_tranches')
+    async fetchProjectFundingOverdueTranches(@Request() req: any) {
+        return this.projectService.fetchProjectFundingOverdueTranches();
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('overdue_reports')
+    async fetchProjectOverdueReports(@Request() req: any) {
+        return this.projectService.fetchProjectOverdueReports();
     }
 }
