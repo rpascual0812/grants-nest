@@ -69,9 +69,12 @@ export class ProjectsService extends GlobalService {
                 .andWhere(filter.hasOwnProperty('donors') ? 'project_fundings.donor_pk IN (:...pk)' : '1=1', {
                     pk: filter.donors && Array.isArray(filter.donors) ? filter.donors : [filter.donors],
                 })
-                .andWhere(filter.hasOwnProperty('overall_grant_status') ? 'projects.overall_grant_status = :status' : '1=1', {
-                    status: filter.overall_grant_status,
-                })
+                .andWhere(
+                    filter.hasOwnProperty('overall_grant_status') ? 'projects.overall_grant_status = :status' : '1=1',
+                    {
+                        status: filter.overall_grant_status,
+                    },
+                )
                 .orderBy('projects.date_created', 'DESC')
                 .getManyAndCount();
 
@@ -2311,6 +2314,67 @@ export class ProjectsService extends GlobalService {
             this.saveError({});
             console.log(err);
             return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async fetchProjectFundingOverdueTranches() {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            const data = await dataSource
+                .getRepository(ProjectFunding)
+                .createQueryBuilder('project_fundings')
+                .leftJoinAndSelect('project_fundings.project', 'projects')
+                .leftJoinAndSelect('projects.application', 'applications')
+                .andWhere('projects.archived = false')
+                .andWhere('applications.archived = false')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: data[0],
+                total: data[1],
+            };
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return {
+                status: false,
+                code: err?.code,
+            };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async fetchProjectOverdueReports() {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            const data = await dataSource
+                .getRepository(Project)
+                .createQueryBuilder('projects')
+                .leftJoinAndSelect('projects.application', 'applications')
+                .leftJoinAndSelect('projects.project_funding', 'project_fundings')
+                .addOrderBy('project_fundings.date_created', 'DESC')
+                .andWhere('projects.archived = false')
+                .andWhere('applications.archived = false')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: data[0],
+                total: data[1],
+            };
+        } catch (err) {
+            console.log(err);
+            this.saveError({});
+            return {
+                status: false,
+                code: err?.code,
+            };
         } finally {
             await queryRunner.release();
         }
