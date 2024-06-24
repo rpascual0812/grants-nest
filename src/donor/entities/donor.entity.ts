@@ -1,3 +1,4 @@
+import { ProjectAssessment } from 'src/projects/entities/project-assessment.entity';
 import { ProjectFunding } from 'src/projects/entities/project-funding.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
@@ -44,4 +45,7 @@ export class Donor extends BaseEntity {
     )
     @JoinColumn({ name: 'pk' })
     project_funding: ProjectFunding;
+
+    @OneToMany((type) => ProjectAssessment, (project_assessment) => project_assessment.donor, { cascade: true })
+    project_assessment: ProjectAssessment;
 }

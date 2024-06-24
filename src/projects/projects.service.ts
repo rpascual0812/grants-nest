@@ -40,6 +40,7 @@ import { ProjectLocation } from './entities/project-location.entity';
 import { Donor } from 'src/donor/entities/donor.entity';
 import { AvailableProjectStatus } from 'src/utilities/constants';
 import { PartnerAssessment } from 'src/partner/entities/partner-assessment.entity';
+import { ProjectAssessment } from './entities/project-assessment.entity';
 
 @Injectable()
 export class ProjectsService extends GlobalService {
@@ -60,6 +61,9 @@ export class ProjectsService extends GlobalService {
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
                 .leftJoinAndSelect('projects.type', 'types')
+                .leftJoinAndSelect('projects.project_assessment', 'project_assessments')
+                .leftJoinAndSelect('project_assessments.donor', 'donors as assessment_donor')
+                .leftJoinAndSelect('project_assessments.user', 'users')
                 .leftJoinAndSelect('projects.project_funding', 'project_fundings')
                 .leftJoinAndSelect('project_fundings.donor', 'donors')
                 .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
@@ -103,6 +107,12 @@ export class ProjectsService extends GlobalService {
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
                 .leftJoinAndSelect('projects.type', 'types')
+                .leftJoinAndSelect('projects.project_assessment', 'project_assessments')
+                .leftJoinAndSelect('projects.project_funding', 'project_fundings')
+                .leftJoinAndSelect('project_fundings.donor', 'donors')
+                .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
+                .leftJoinAndSelect('project_assessments.donor', 'donors as assessment_donors')
+                .leftJoinAndSelect('project_assessments.user', 'users')
                 .andWhere(filter.hasOwnProperty('pk') ? 'projects.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere('projects.archived = :archived', { archived: false })
                 .getOne();
@@ -2375,6 +2385,60 @@ export class ProjectsService extends GlobalService {
                 status: false,
                 code: err?.code,
             };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async saveAssessment(data: Partial<ProjectAssessment>, user: Partial<User>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const projectPk = getParsedPk(data?.project_pk);
+                const partnerAssessmentPk = getParsedPk(data?.pk);
+                const donorPk = getParsedPk(data?.donor_pk);
+                const userPk = getParsedPk(user?.pk);
+                const existingAssessment = await EntityManager.findOne(ProjectAssessment, {
+                    where: {
+                        pk: Equal(partnerAssessmentPk),
+                        project_pk: Equal(projectPk),
+                        created_by: Equal(userPk),
+                    },
+                });
+
+                const assessment = existingAssessment ? existingAssessment : new ProjectAssessment();
+                assessment.project_pk = projectPk;
+                assessment.donor_pk = userPk;
+                assessment.created_by = userPk;
+                assessment.message = getDefaultValue(data?.message, existingAssessment?.message);
+
+                const savedAssessment = await EntityManager.save(ProjectAssessment, {
+                    ...assessment,
+                });
+
+                const model = {
+                    name: 'project_assessments',
+                    pk: savedAssessment?.pk,
+                    status: existingAssessment ? 'update' : 'insert',
+                };
+                await this.saveLog({
+                    model,
+                    user: {
+                        pk: userPk,
+                    },
+                });
+
+                return {
+                    status: true,
+                    data: {
+                        ...savedAssessment,
+                    },
+                };
+            });
+        } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
         } finally {
             await queryRunner.release();
         }
