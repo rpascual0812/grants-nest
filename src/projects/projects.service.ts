@@ -64,10 +64,10 @@ export class ProjectsService extends GlobalService {
                 .leftJoinAndSelect('projects.project_assessment', 'project_assessments')
                 .leftJoinAndSelect('project_assessments.donor', 'donors as assessment_donor')
                 .leftJoinAndSelect('project_assessments.user', 'users')
-                .leftJoinAndSelect('projects.project_funding', 'project_fundings')
-                .leftJoinAndSelect('project_fundings.donor', 'donors')
-                .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
-                .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
+                // .leftJoinAndSelect('projects.project_funding', 'project_fundings')
+                // .leftJoinAndSelect('project_fundings.donor', 'donors')
+                // .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
+                // .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
                 .leftJoinAndSelect('projects.application', 'applications')
                 .where('projects.archived = false')
                 .andWhere(filter.hasOwnProperty('donors') ? 'project_fundings.donor_pk IN (:...pk)' : '1=1', {
@@ -387,12 +387,36 @@ export class ProjectsService extends GlobalService {
 
     async getProjectFunding(filters: { project_pk?: number }) {
         try {
-            const data = await dataSource
+            const data = await this.queryProjectFunding([filters?.project_pk]);
+            return {
+                status: true,
+                data: {
+                    project_funding: data,
+                },
+            };
+        } catch (error) {
+            console.log(error);
+            // SAVE ERROR
+            return {
+                status: false,
+            };
+        }
+    }
+
+    async queryProjectFunding(project_pks: any) {
+        try {
+            return await dataSource
                 .getRepository(ProjectFunding)
                 .createQueryBuilder('project_fundings')
                 .select('project_fundings')
                 .leftJoinAndSelect('project_fundings.donor', 'donors')
                 .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
+
+                // .leftJoinAndSelect('projects.project_funding', 'project_fundings')
+                // .leftJoinAndSelect('project_fundings.donor', 'donors')
+                // .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
+                // .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
+
                 .leftJoinAndMapMany(
                     'project_fundings.project_funding_report',
                     ProjectFundingReport,
@@ -413,16 +437,10 @@ export class ProjectsService extends GlobalService {
                 )
                 .leftJoinAndSelect('project_funding_liquidations.documents', 'documents as liquidation_documents')
                 .andWhere('project_funding_reports.archived = false')
-                .where('project_fundings.project_pk = :project_pk', { project_pk: filters?.project_pk })
+                .where('project_fundings.project_pk IN (:...project_pks)', { project_pks: project_pks })
                 .orderBy('project_funding_reports.date_created', 'ASC')
                 .orderBy('project_fundings.date_created', 'ASC')
                 .getMany();
-            return {
-                status: true,
-                data: {
-                    project_funding: data,
-                },
-            };
         } catch (error) {
             console.log(error);
             // SAVE ERROR
