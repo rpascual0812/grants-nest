@@ -15,6 +15,9 @@ export class ProjectsController {
             const pks = projects.data.map((application) => application.pk);
             const partner_pks = projects.data.map((application) => application.partner_pk);
 
+            // Funding
+            const fundings: any = await this.projectService.queryProjectFunding(pks);
+
             // Partner
             const partners: any = await this.projectService.getPartner(partner_pks);
 
@@ -38,10 +41,16 @@ export class ProjectsController {
             const projectReviews: any = await this.projectService.getReviews(pks);
 
             projects.data.forEach((project) => {
+                if (!project.hasOwnProperty('project_funding')) {
+                    project['project_funding'] = [];
+                }
+
+                const project_funding = fundings.filter((funding) => funding.project_pk == project.pk);
+                project['project_funding'] = project_funding;
+
                 if (!project.hasOwnProperty('partner')) {
                     project['partner'] = {};
                 }
-
                 const partner = partners.filter((partner) => partner.pk == project.partner_pk);
                 project['partner'] = partner[0] ?? {};
                 if (!project.partner.hasOwnProperty('organization')) {
