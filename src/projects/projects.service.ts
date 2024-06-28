@@ -2357,6 +2357,7 @@ export class ProjectsService extends GlobalService {
                 .leftJoinAndSelect('project_fundings.project', 'projects')
                 .leftJoinAndSelect('projects.application', 'applications')
                 .leftJoinAndSelect('applications.partner', 'partners')
+                .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
                 .andWhere('projects.archived = false')
                 .andWhere('applications.archived = false')
                 .getManyAndCount();
@@ -2387,6 +2388,7 @@ export class ProjectsService extends GlobalService {
                 .createQueryBuilder('projects')
                 .leftJoinAndSelect('projects.application', 'applications')
                 .leftJoinAndSelect('projects.project_funding', 'project_fundings')
+                .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
                 .addOrderBy('project_fundings.date_created', 'DESC')
                 .andWhere('projects.archived = false')
                 .andWhere('applications.archived = false')
