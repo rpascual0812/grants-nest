@@ -31,7 +31,7 @@ export class DocumentController {
         return this.documentService.findAll(req.query);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Post()
     async save(@Body() body: any, @Request() req: any) {
         return this.documentService.save(body, req.user);
