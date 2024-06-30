@@ -2464,4 +2464,57 @@ export class ProjectsService extends GlobalService {
             await queryRunner.release();
         }
     }
+
+    async fetchProjectTitles(req: any) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const data = await dataSource
+                    .getRepository(Project)
+                    .createQueryBuilder('projects')
+                    .where('projects.archived = false')
+                    .orderBy('projects.title', 'ASC')
+                    .getMany();
+
+                return {
+                    status: true,
+                    data: data
+                };
+            });
+        } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async fetchProjectReports(req: any) {
+        const query: any = req.query;
+        try {
+            const data = await dataSource
+                .getRepository(Project)
+                .createQueryBuilder('projects')
+                .leftJoinAndSelect('projects.project_beneficiary', 'project_beneficiaries')
+                .where('projects.archived = false')
+                .andWhere("to_char(projects.date_created, 'YYYY-MM') >= :from", { from: query.date_from })
+                .andWhere("to_char(projects.date_created, 'YYYY - MM') <= :to", { to: query.date_to })
+                .andWhere(query.hasOwnProperty('project_pk') ? 'projects.pk = :pk' : '1=1', { pk: query.project_pk })
+                .orderBy('projects.date_created', 'DESC')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: data[0],
+                total: data[1],
+            };
+        } catch (error) {
+            console.log(error);
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
 }
