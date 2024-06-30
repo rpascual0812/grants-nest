@@ -2500,7 +2500,7 @@ export class ProjectsService extends GlobalService {
                 .where('projects.archived = false')
                 .andWhere("to_char(projects.date_created, 'YYYY-MM') >= :from", { from: query.date_from })
                 .andWhere("to_char(projects.date_created, 'YYYY - MM') <= :to", { to: query.date_to })
-                .andWhere(query.hasOwnProperty('project_pk') ? 'projects.pk = :pk' : '1=1', { pk: query.project_pk })
+                .andWhere(query.hasOwnProperty('project_pk') && query.project_pk !== 'null' ? 'projects.pk = :pk' : '1=1', { pk: query.project_pk })
                 .orderBy('projects.date_created', 'DESC')
                 .getManyAndCount();
 
