@@ -581,15 +581,9 @@ export class ProjectsController {
     }
 
     @UseGuards(JwtAuthGuard)
-    @Get('overdue_tranches')
+    @Get('tranches')
     async fetchProjectFundingOverdueTranches(@Request() req: any) {
-        return this.projectService.fetchProjectFundingOverdueTranches();
-    }
-
-    @UseGuards(JwtAuthGuard)
-    @Get('overdue_reports')
-    async fetchProjectOverdueReports(@Request() req: any) {
-        return this.projectService.fetchProjectOverdueReports();
+        return this.projectService.fetchProjectTranches();
     }
 
     @UseGuards(JwtAuthGuard)
