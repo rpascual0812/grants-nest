@@ -597,4 +597,16 @@ export class ProjectsController {
     saveAssessment(@Body() body: any, @Request() req: any) {
         return this.projectService.saveAssessment(body, req.user);
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('title')
+    projectTitles(@Request() req: any) {
+        return this.projectService.fetchProjectTitles(req);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('reports')
+    projectReports(@Request() req: any) {
+        return this.projectService.fetchProjectReports(req);
+    }
 }
