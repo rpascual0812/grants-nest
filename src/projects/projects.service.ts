@@ -2347,7 +2347,7 @@ export class ProjectsService extends GlobalService {
         }
     }
 
-    async fetchProjectFundingOverdueTranches() {
+    async fetchProjectTranches() {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
         try {
@@ -2358,38 +2358,6 @@ export class ProjectsService extends GlobalService {
                 .leftJoinAndSelect('projects.application', 'applications')
                 .leftJoinAndSelect('applications.partner', 'partners')
                 .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
-                .andWhere('projects.archived = false')
-                .andWhere('applications.archived = false')
-                .getManyAndCount();
-
-            return {
-                status: true,
-                data: data[0],
-                total: data[1],
-            };
-        } catch (err) {
-            console.log(err);
-            this.saveError({});
-            return {
-                status: false,
-                code: err?.code,
-            };
-        } finally {
-            await queryRunner.release();
-        }
-    }
-
-    async fetchProjectOverdueReports() {
-        const queryRunner = dataSource.createQueryRunner();
-        await queryRunner.connect();
-        try {
-            const data = await dataSource
-                .getRepository(Project)
-                .createQueryBuilder('projects')
-                .leftJoinAndSelect('projects.application', 'applications')
-                .leftJoinAndSelect('projects.project_funding', 'project_fundings')
-                .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
-                .addOrderBy('project_fundings.date_created', 'DESC')
                 .andWhere('projects.archived = false')
                 .andWhere('applications.archived = false')
                 .getManyAndCount();
