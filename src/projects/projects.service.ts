@@ -2469,6 +2469,7 @@ export class ProjectsService extends GlobalService {
                 .andWhere("to_char(projects.date_created, 'YYYY-MM') >= :from", { from: query.date_from })
                 .andWhere("to_char(projects.date_created, 'YYYY - MM') <= :to", { to: query.date_to })
                 .andWhere(query.hasOwnProperty('project_pk') && query.project_pk !== 'null' ? 'projects.pk = :pk' : '1=1', { pk: query.project_pk })
+                .andWhere(query.hasOwnProperty('status') && query.status !== 'null' ? 'projects.status = :status' : '1=1', { status: query.status })
                 .orderBy('projects.date_created', 'DESC')
                 .getManyAndCount();
 
