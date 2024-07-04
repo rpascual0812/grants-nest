@@ -2187,4 +2187,35 @@ export class ApplicationService extends GlobalService {
             await queryRunner.release();
         }
     }
+
+    async fetchApplicationReports(req: any) {
+        const query: any = req.query;
+        try {
+            const data = await dataSource
+                .getRepository(Application)
+                .createQueryBuilder('applications')
+                .leftJoinAndSelect('applications.project', 'projects')
+                .leftJoinAndSelect('projects.type', 'types')
+                .where('applications.archived = false')
+                .andWhere('applications.status is not null')
+                .andWhere("to_char(applications.date_created, 'YYYY-MM') >= :from", { from: query.date_from })
+                .andWhere("to_char(applications.date_created, 'YYYY - MM') <= :to", { to: query.date_to })
+                .andWhere(query.hasOwnProperty('application_pk') && query.application_pk !== 'null' ? 'applications.pk = :pk' : '1=1', { pk: query.application_pk })
+                .andWhere(query.hasOwnProperty('status') && query.status !== 'null' ? 'applications.status = :status' : '1=1', { status: query.status })
+                .orderBy('applications.date_created', 'DESC')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: data[0],
+                total: data[1],
+            };
+        } catch (error) {
+            console.log(error);
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
 }

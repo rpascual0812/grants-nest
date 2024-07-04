@@ -11,7 +11,7 @@ export class ApplicationController {
         private readonly applicationService: ApplicationService,
         private readonly projectService: ProjectsService,
         private readonly applicationQueryHelpersService: ApplicationQueryHelpersService,
-    ) {}
+    ) { }
 
     @UseGuards(JwtAuthGuard)
     @Get('status_count')
@@ -195,6 +195,12 @@ export class ApplicationController {
         }
 
         return applications;
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('reports')
+    projectReports(@Request() req: any) {
+        return this.applicationService.fetchApplicationReports(req);
     }
 
     // @UseGuards(JwtAuthGuard)
@@ -422,4 +428,6 @@ export class ApplicationController {
             req?.user,
         );
     }
+
+
 }
