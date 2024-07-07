@@ -289,7 +289,7 @@ export class ProjectsController {
         return this.projectService.updateFinancialManagementTraining(body, req.user);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Get(':project_pk/events')
     async getEvents(@Param('project_pk') project_pk: number, @Request() req: any) {
         let events: any = await this.projectService.getEvents(project_pk, req.user);
@@ -313,7 +313,7 @@ export class ProjectsController {
         return this.projectService.saveEvent(project_pk, body, req.user);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Post(':project_pk/events/:event_pk/attendee')
     saveAttendee(
         @Param('project_pk') project_pk: number,
