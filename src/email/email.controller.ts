@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, Response, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, Response, HttpStatus, UseGuards } from '@nestjs/common';
 import { EmailService } from './email.service';
 import { CreateEmailDto } from './dto/create-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
 import { ValidationService } from 'src/validation/validation.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 const axios = require('axios');
 
@@ -54,5 +55,21 @@ export class EmailController {
                     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error);
                 });
         }
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post()
+    async save(@Body() body: any, @Request() req: any) {
+        console.log(body);
+        // send email
+        this.emailService.user_pk = req.user.pk;
+        this.emailService.from = process.env.SEND_FROM;
+        this.emailService.from_name = process.env.SENDER;
+        this.emailService.to = body.recipients;
+        this.emailService.to_name = '';
+        this.emailService.subject = body.subject ?? 'Grants Application';
+        this.emailService.body = body.body;
+
+        await this.emailService.create();
     }
 }
