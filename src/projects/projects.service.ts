@@ -1414,7 +1414,7 @@ export class ProjectsService extends GlobalService {
                 output.household_income = data.household_income;
                 output.individual = data.individual;
                 output.household = data.household;
-                output.disability_rights = data.disability_rights;
+                output.disability_rights = data.disability_rights == 'yes' ? true : false;
                 output.intervention_type = data.intervention_type;
                 output.created_by = user.pk;
 
