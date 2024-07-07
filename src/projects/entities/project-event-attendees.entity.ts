@@ -24,7 +24,7 @@ export class ProjectEventAttendee extends BaseEntity {
     @Column({ type: 'text', nullable: false })
     mobile_number: string;
 
-    @Column({ name: 'created_by', nullable: false })
+    @Column({ name: 'created_by', nullable: true })
     created_by: number;
 
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })

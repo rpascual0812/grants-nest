@@ -1271,7 +1271,7 @@ export class ProjectsService extends GlobalService {
                 } else {
                     delete data.pk;
                     let attendee = data;
-                    attendee.created_by = user.pk;
+                    attendee.created_by = user ? user.pk : null;
                     attendee.archived = attendee.archived ?? false;
                     attendee = await EntityManager.insert(ProjectEventAttendee, attendee);
                 }
