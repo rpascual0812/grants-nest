@@ -4,7 +4,7 @@ import { User } from 'src/user/entities/user.entity';
 import { ProjectEvent } from './project-event.entity';
 
 @Entity({ name: 'project_event_attendees' })
-@Unique(['project_event_pk', 'name'])
+@Unique(['project_event_pk', 'name', 'birthday'])
 export class ProjectEventAttendee extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
