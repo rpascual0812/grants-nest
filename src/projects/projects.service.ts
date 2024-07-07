@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import dataSource from 'db/data-source';
 import { GlobalService } from 'src/utilities/global.service';
@@ -1281,7 +1281,8 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            throw new InternalServerErrorException();
+            // return { status: false, code: err.code };
         } finally {
             await queryRunner.release();
         }
