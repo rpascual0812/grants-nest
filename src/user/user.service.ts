@@ -331,7 +331,7 @@ export class UserService extends GlobalService {
                             if (template) {
                                 template = template.replace(/{first_name}/g, data.first_name);
                                 template = template.replace(/{last_name}/g, data.last_name);
-                                template = template.replace(/{middle_name}/g, data.middle_name);
+                                template = template.replace(/{middle_name}/g, data.middle_name ?? '');
                                 template = template.replace(/{email_address}/g, data.email_address);
                                 template = template.replace(/{unique_id}/g, uniqueId.toString());
                                 template = template.replace(/{temporary_password}/g, result);
@@ -489,7 +489,7 @@ export class UserService extends GlobalService {
 
                     if (template) {
                         template = template.replace(/{first_name}/g, user.first_name);
-                        template = template.replace(/{middle_name}/g, user.middle_name);
+                        template = template.replace(/{middle_name}/g, user.middle_name ?? '');
                         template = template.replace(/{last_name}/g, user.last_name);
                         template = template.replace(/{email_address}/g, user.email_address);
                         template = template.replace(/{unique_id}/g, user.unique_id);
