@@ -54,6 +54,7 @@ export class ApplicationService extends GlobalService {
                 .createQueryBuilder('applications')
                 .leftJoinAndSelect('applications.project', 'projects')
                 .leftJoinAndSelect('projects.project_location', 'project_location')
+                .leftJoinAndSelect('project_location.country', 'countries')
                 .leftJoinAndSelect('projects.project_proposal', 'project_proposals')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activities')
                 .leftJoinAndSelect('projects.type', 'types')
@@ -2046,7 +2047,7 @@ export class ApplicationService extends GlobalService {
                     if (template) {
                         template = template.replace(
                             /{application_date}/g,
-                            DateTime.fromJSDate(application?.date_created).toFormat('LLLL dd, yyyy'),
+                            DateTime.fromJSDate(application?.date_submitted).toFormat('LLLL dd, yyyy'),
                         );
                         template = template.replace(/{application_donor}/g, application?.donor ?? '');
                         template = template.replace(/{application_number}/g, application?.number);

@@ -51,12 +51,14 @@ export class MailerService {
 
         request
             .then((result) => {
-                this.emailsService.update(email.pk, { sent: 'true' }).then((data: any) => {
-                    // console.log('updated... ', data);
-                }).catch((err: any) => {
-                    // save something on the error logs
-                    console.log(err);
-                });
+                if (result.status == 200) {
+                    this.emailsService.update(email.pk, { sent: 'true' }).then((data: any) => {
+
+                    }).catch((err: any) => {
+                        // save something on the error logs
+                        console.log(err);
+                    });
+                }
             })
             .catch((err) => {
                 // save something on the error logs
