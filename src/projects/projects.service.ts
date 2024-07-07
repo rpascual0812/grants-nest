@@ -51,7 +51,14 @@ export class ProjectsService extends GlobalService {
         super();
     }
 
-    async findAll(filter: any) {
+    async findAll(filter: {
+        overall_grant_status?: string;
+        donors?: number[];
+        country_pk?: number;
+        province_code?: number;
+        title?: string;
+        type_pk?: string;
+    }) {
         try {
             const data = await dataSource
                 .getRepository(Project)
@@ -79,6 +86,21 @@ export class ProjectsService extends GlobalService {
                         status: filter.overall_grant_status,
                     },
                 )
+                .andWhere(filter.hasOwnProperty('country_pk') ? 'project_location.country_pk = :country_pk' : '1=1', {
+                    country_pk: filter?.country_pk,
+                })
+                .andWhere(
+                    filter.hasOwnProperty('province_code') ? 'project_location.province_code = :province_code' : '1=1',
+                    {
+                        province_code: filter?.province_code,
+                    },
+                )
+                .andWhere(filter.hasOwnProperty('type_pk') ? 'types.pk = :type_pk' : '1=1', {
+                    type_pk: filter?.type_pk,
+                })
+                .andWhere(filter.hasOwnProperty('title') ? 'projects.title ILIKE :title' : '1=1', {
+                    title: `%${filter?.title}%`,
+                })
                 .orderBy('projects.date_created', 'DESC')
                 .getManyAndCount();
 
@@ -2169,7 +2191,7 @@ export class ProjectsService extends GlobalService {
         }
     }
 
-    async findGroupProjectCountry() {
+    async findGroupProjectCountry(filter?: { closing_status?: string; is_applied?: boolean }) {
         try {
             const groupedProjectCountry = await dataSource
                 .getRepository(ProjectLocation)
@@ -2177,7 +2199,17 @@ export class ProjectsService extends GlobalService {
                 .select(['country_pk', 'countries.name AS country_name', 'countries.code AS country_code'])
                 .addSelect('COUNT(project_locations.project_pk)', 'total')
                 .leftJoin('countries', 'countries', 'countries.pk = project_locations.country_pk')
+                .leftJoin('projects', 'projects', 'projects.pk = project_locations.project_pk')
                 .groupBy('project_locations.country_pk, countries.name, countries.code')
+                .andWhere(
+                    filter?.hasOwnProperty('closing_status') && filter?.closing_status
+                        ? 'projects.closing_status = :closing_status'
+                        : '1=1',
+                    {
+                        closing_status: filter?.closing_status,
+                    },
+                )
+                .andWhere(filter?.hasOwnProperty('is_applied') ? 'projects.status is not null' : '1=1')
                 .getRawMany();
 
             return {
@@ -2448,7 +2480,7 @@ export class ProjectsService extends GlobalService {
 
                 return {
                     status: true,
-                    data: data
+                    data: data,
                 };
             });
         } catch (err) {
@@ -2469,8 +2501,14 @@ export class ProjectsService extends GlobalService {
                 .where('projects.archived = false')
                 .andWhere("to_char(projects.date_created, 'YYYY-MM') >= :from", { from: query.date_from })
                 .andWhere("to_char(projects.date_created, 'YYYY - MM') <= :to", { to: query.date_to })
-                .andWhere(query.hasOwnProperty('project_pk') && query.project_pk !== 'null' ? 'projects.pk = :pk' : '1=1', { pk: query.project_pk })
-                .andWhere(query.hasOwnProperty('status') && query.status !== 'null' ? 'projects.status = :status' : '1=1', { status: query.status })
+                .andWhere(
+                    query.hasOwnProperty('project_pk') && query.project_pk !== 'null' ? 'projects.pk = :pk' : '1=1',
+                    { pk: query.project_pk },
+                )
+                .andWhere(
+                    query.hasOwnProperty('status') && query.status !== 'null' ? 'projects.status = :status' : '1=1',
+                    { status: query.status },
+                )
                 .orderBy('projects.date_created', 'DESC')
                 .getManyAndCount();
 
@@ -2486,5 +2524,18 @@ export class ProjectsService extends GlobalService {
                 code: 500,
             };
         }
+    }
+
+    filterProjectByPartnerName(partner_name: string, projects: any) {
+        if (partner_name.trim() !== '') {
+            const filtered = projects?.data?.filter((proj) => proj?.partner?.name?.includes(partner_name)) ?? [];
+            return {
+                status: true,
+                data: filtered,
+                total: filtered?.length,
+            };
+        }
+
+        return projects;
     }
 }

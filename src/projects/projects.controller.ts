@@ -5,7 +5,7 @@ import { AVAILABLE_PROJECT_STATUS, AvailableProjectStatus } from 'src/utilities/
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) { }
+    constructor(private readonly projectService: ProjectsService) {}
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -99,6 +99,9 @@ export class ProjectsController {
                 project['reviews'] = projectReview[0]?.['reviews'] ?? [];
             });
         }
+
+        const partnerNameQuery = req?.query?.partner_name ?? '';
+        projects = this.projectService.filterProjectByPartnerName(partnerNameQuery, projects);
 
         return projects;
     }
@@ -538,7 +541,7 @@ export class ProjectsController {
     @UseGuards(JwtAuthGuard)
     @Get('group_project_country')
     async findGroupProjectCountry(@Request() req: any) {
-        return await this.projectService.findGroupProjectCountry();
+        return await this.projectService.findGroupProjectCountry(req?.query);
     }
 
     @UseGuards(JwtAuthGuard)
