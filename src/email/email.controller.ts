@@ -60,7 +60,6 @@ export class EmailController {
     @UseGuards(JwtAuthGuard)
     @Post()
     async save(@Body() body: any, @Request() req: any) {
-        console.log(body);
         // send email
         this.emailService.user_pk = req.user.pk;
         this.emailService.from = process.env.SEND_FROM;

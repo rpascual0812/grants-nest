@@ -51,7 +51,7 @@ export class MailerService {
 
         request
             .then((result) => {
-                if (result.status == 200) {
+                if (result.response.status == 200) {
                     this.emailsService.update(email.pk, { sent: 'true' }).then((data: any) => {
 
                     }).catch((err: any) => {
