@@ -17,7 +17,7 @@ export class MailerService {
     @Cron('*/15 * * * * *')
     runEvery15Seconds() {
         this.emailsService.findAll(this.pagination).then((emails: any) => {
-            console.log('Mailer started sending emails on ' + DateTime.now().toFormat('y-LL-dd HH:mm:ss'));
+            console.log('Mailer started sending (' + emails.length + ') emails on ' + DateTime.now().toFormat('y-LL-dd HH:mm:ss'));
             emails.forEach(email => {
                 this.sendEmail(email);
             });
