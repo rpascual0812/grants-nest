@@ -58,6 +58,8 @@ export class ProjectsService extends GlobalService {
         province_code?: number;
         title?: string;
         type_pk?: string;
+        date_from?: string;
+        date_to?: string;
     }) {
         try {
             const data = await dataSource
@@ -101,6 +103,14 @@ export class ProjectsService extends GlobalService {
                 .andWhere(filter.hasOwnProperty('title') ? 'projects.title ILIKE :title' : '1=1', {
                     title: `%${filter?.title}%`,
                 })
+                .andWhere(
+                    filter.hasOwnProperty('date_from') ? "to_char(projects.date_created, 'YYYY-MM') >= :from" : '1=1',
+                    { from: filter?.date_from },
+                )
+                .andWhere(
+                    filter.hasOwnProperty('date_to') ? "to_char(projects.date_created, 'YYYY-MM') <= :to" : '1=1',
+                    { to: filter?.date_to },
+                )
                 .orderBy('projects.date_created', 'DESC')
                 .getManyAndCount();
 
