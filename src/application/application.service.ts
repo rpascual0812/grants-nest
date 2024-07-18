@@ -2191,6 +2191,9 @@ export class ApplicationService extends GlobalService {
 
     async fetchApplicationReports(req: any) {
         const query: any = req.query;
+
+        query.status = query.status == 'Due Diligence (Medium Grants)' ? 'Due Diligence Final Review' : query.status;
+
         try {
             const data = await dataSource
                 .getRepository(Application)
