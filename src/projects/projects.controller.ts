@@ -2,10 +2,11 @@ import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request, Query }
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { AVAILABLE_PROJECT_STATUS, AvailableProjectStatus } from 'src/utilities/constants';
+import { generatePath } from 'src/utilities/generate-s3-path.utils';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) {}
+    constructor(private readonly projectService: ProjectsService) { }
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -126,6 +127,12 @@ export class ProjectsController {
     async fetchReview(@Param('pk') pk: number) {
         const project: any = await this.projectService.find({ pk });
 
+        project.data['documents'].forEach((document: any) => {
+            generatePath(document.path, (path: string) => {
+                document.path = path;
+            });
+        });
+
         // Application
         const application = await this.projectService.getApplication([project.data.application_pk]);
         if (!project.data.hasOwnProperty('partner')) {
@@ -225,8 +232,19 @@ export class ProjectsController {
 
     @UseGuards(JwtAuthGuard)
     @Get(':pk/project_funding')
-    fetchProjectFunding(@Param('pk') project_pk: number, @Request() req: any) {
-        return this.projectService.getProjectFunding({ project_pk });
+    async fetchProjectFunding(@Param('pk') project_pk: number, @Request() req: any) {
+        let fundings: any = await this.projectService.getProjectFunding({ project_pk });
+        fundings.data.project_funding.forEach((funding: any) => {
+            generatePath(funding.bank_receipt_document.path, (path: string) => {
+                funding.bank_receipt_document.path = path;
+            });
+            funding.project_funding_report.forEach((report: any) => {
+                generatePath(report.document.path, (path: string) => {
+                    report.document.path = path;
+                });
+            });
+        });
+        return fundings;
     }
 
     @UseGuards(JwtAuthGuard)
@@ -298,7 +316,10 @@ export class ProjectsController {
         let events: any = await this.projectService.getEvents(project_pk, req.user);
         const pks = events.map((event) => event.pk);
 
-        let attendees: any = await this.projectService.getAttendees(pks);
+        let attendees: any;
+        if (pks.length > 0) {
+            attendees = await this.projectService.getAttendees(pks);
+        }
         events.forEach((event: any) => {
             if (!event.hasOwnProperty('attendees')) {
                 event['attendees'] = [];
@@ -508,7 +529,11 @@ export class ProjectsController {
     @Get(':pk/documents')
     async fetchDocuments(@Param('pk') pk: number, @Request() req: any) {
         const project: any = await this.projectService.findDocuments(req.query);
-
+        project.data.forEach((document) => {
+            generatePath(document.path, (path: string) => {
+                document.path = path;
+            });
+        });
         return project;
     }
 
