@@ -714,7 +714,7 @@ export class ProjectsService extends GlobalService {
                         });
 
                         if (
-                            project.status == 'Initial Submission' &&
+                            (project.status == '' || project.status == 'Initial Submission') &&
                             data.recommendation == 'Approved for Next Stage'
                         ) {
                             project.status = 'Contract Preparation';

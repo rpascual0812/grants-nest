@@ -254,10 +254,8 @@ export class UserService extends GlobalService {
 
                         // update the profile photo
                         if (data.image) {
-                            EntityManager.query(
-                                'insert into document_user_relation (document_pk, user_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
-                                [data.image.pk, data.pk],
-                            );
+                            EntityManager.query('delete from document_user_relation where user_pk = $1;', [data.pk]);
+                            EntityManager.query('insert into document_user_relation (document_pk, user_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;', [data.image.pk, data.pk]);
                             // let profilePhoto = await EntityManager.findOne(Documentable, { where: { table_name: 'users', table_pk: data.pk, type: 'profile_photo' } });
                             // if (profilePhoto) {
                             //     await EntityManager.update(Documentable, { pk: profilePhoto.pk }, { document_pk: data.image.pk });

@@ -1,10 +1,11 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
 import { PartnerService } from './partner.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { generatePath } from 'src/utilities/generate-s3-path.utils';
 
 @Controller('partner')
 export class PartnerController {
-    constructor(private readonly partnerService: PartnerService) {}
+    constructor(private readonly partnerService: PartnerService) { }
 
     @Get()
     async fetch(@Query() query: { organization_pk?: number; type_pk?: number; keyword?: string }) {
@@ -40,8 +41,32 @@ export class PartnerController {
     }
 
     @Get(':partner_id')
-    fetchOne(@Param('partner_id') partner_id: string) {
-        return this.partnerService.find({ partner_id: +partner_id });
+    async fetchOne(@Param('partner_id') partner_id: string) {
+        let partner: any = await this.partnerService.find({ partner_id: +partner_id });
+        partner.data.documents.forEach((document: any) => {
+            generatePath(document.path, (path: string) => {
+                document.path = path;
+            });
+        });
+
+        partner.data.partner_nonprofit_equivalency_determination.documents.forEach((document: any) => {
+            generatePath(document.path, (path: string) => {
+                document.path = path;
+            });
+        });
+
+        partner.data.organization?.partner_organization_other_information?.documents.forEach((document: any) => {
+            generatePath(document.path, (path: string) => {
+                document.path = path;
+            });
+        });
+
+        partner.data.partner_fiscal_sponsor?.documents.forEach((document: any) => {
+            generatePath(document.path, (path: string) => {
+                document.path = path;
+            });
+        });
+        return partner;
     }
 
     @Post()

@@ -382,9 +382,11 @@ export class ApplicationService extends GlobalService {
 
                     template = templateObj?.data?.template;
 
-                    template = template.replace(/{partner_name}/g, application?.data?.partner?.name);
-                    template = template.replace(/{email_address}/g, application?.data?.partner?.email_address);
-                    template = template.replace(/{application_url}/g, data.link);
+                    if (template) {
+                        template = template.replace(/{partner_name}/g, application?.data?.partner?.name);
+                        template = template.replace(/{email_address}/g, application?.data?.partner?.email_address);
+                        template = template.replace(/{application_url}/g, data.link);
+                    }
 
                     // send email
                     this.emailService.uuid = uuidv4();
@@ -669,7 +671,6 @@ export class ApplicationService extends GlobalService {
                 fiscalSponsor.bank_branch = getDefaultValue(data?.bank_branch, existingFiscalSponsor?.bank_branch);
                 fiscalSponsor.bank_address = getDefaultValue(data?.bank_address, existingFiscalSponsor?.bank_address);
                 fiscalSponsor.swift_code = getDefaultValue(data?.swift_code, existingFiscalSponsor?.swift_code);
-                console.log('fiscalSponsor', fiscalSponsor);
                 const savedFiscalSponsor = await EntityManager.save(PartnerFiscalSponsor, {
                     ...fiscalSponsor,
                 });

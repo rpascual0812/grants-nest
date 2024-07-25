@@ -62,7 +62,7 @@ export class MailerService {
             })
             .catch((err) => {
                 // save something on the error logs
-                console.log(err.statusCode)
+                console.log(err.statusCode, err.message)
             });
     }
 

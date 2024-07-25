@@ -12,6 +12,9 @@ export const dataSourceOptions: DataSourceOptions = {
     database: env.DATABASE_NAME,
     entities: ['dist/**/*.entity.js'],
     migrations: ['dist/db/migrations/*.js'],
+    ssl: {
+        rejectUnauthorized: false
+    }
 };
 
 const dataSource = new DataSource(dataSourceOptions);
