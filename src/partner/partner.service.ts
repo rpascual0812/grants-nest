@@ -7,7 +7,6 @@ import { PartnerContact } from './entities/partner-contacts.entity';
 import { Country } from 'src/country/entities/country.entity';
 import { Application } from 'src/application/entities/application.entity';
 import { PartnerOrganizationReference } from './entities/partner-organization-references.entity';
-import { Project } from 'src/projects/entities/project.entity';
 import { PartnerOrganizationBank } from './entities/partner-organization-bank.entity';
 import { PartnerOrganizationOtherInformation } from './entities/partner-organization-other-information.entity';
 import { PartnerAssessment } from './entities/partner-assessment.entity';
@@ -18,11 +17,23 @@ import { GlobalService } from 'src/utilities/global.service';
 
 @Injectable()
 export class PartnerService extends GlobalService {
-    async findAll(filters?: { organization_pk: number; type_pk: number; keyword: string }) {
+    async findAll(filters?: {
+        organization_pk: number;
+        type_pk: number;
+        keyword: string;
+        partner_name_sort: 'ASC' | 'DESC';
+        partner_date_created_year: string;
+    }) {
         try {
             const organizationPk = filters?.organization_pk ?? null;
             const typePk = filters?.type_pk ?? null;
             const keyword = filters?.keyword ?? null;
+            const partner_name_sort = filters?.partner_name_sort ?? 'ASC';
+            const partner_date_created_year =
+                filters?.partner_date_created_year?.length > 0 || filters?.partner_date_created_year?.trim() !== ''
+                    ? filters?.partner_date_created_year
+                    : null;
+
             const partners = await dataSource.manager
                 .getRepository(Partner)
                 .createQueryBuilder('partners')
@@ -69,7 +80,10 @@ export class PartnerService extends GlobalService {
                 .andWhere(keyword ? 'partners.name ILIKE :keyword' : '1=1', {
                     keyword: `%${keyword}%`,
                 })
-                .orderBy('partners.name')
+                .andWhere(partner_date_created_year ? `to_char(partners.date_created,'YYYY') = :date` : '1=1', {
+                    date: partner_date_created_year,
+                })
+                .orderBy('partners.name', partner_name_sort)
                 .getManyAndCount();
 
             return {
