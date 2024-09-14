@@ -19,7 +19,7 @@ export interface SaveLogModel {
 
 @Injectable()
 export class GlobalService {
-    constructor() {}
+    constructor() { }
 
     async saveLog(data: Partial<SaveLogModel>): Promise<any> {
         return dataSource
@@ -48,21 +48,22 @@ export class GlobalService {
         console.log('Saving errors from the global service...');
     }
 
-    async setApplicationNumber() {
+    async setApplicationNumber(pk: number, country_code: string) {
         const date = DateTime.now();
-        const keyword = date.toFormat('yyLLdd');
+        const keyword = date.toFormat('yyyyLLdd');
         const latest = await dataSource.manager
             .getRepository(Application)
             .createQueryBuilder('applications')
-            .where('number like :number', { number: `${keyword}%` })
-            .where('archived = false')
+            .where('applications.pk != :pk', { pk: pk })
+            .andWhere('number like :number', { number: `${keyword}%` })
+            .andWhere('archived = false')
             .orderBy('number', 'DESC')
             .getOne();
 
-        let application_number = keyword + '00001';
-        if (latest) {
-            const new_number = parseInt(latest.number.slice(6)) + 1;
-            application_number = keyword + new_number.toString().padStart(5, '0');
+        let application_number = keyword + '-' + country_code + '-' + '0001';
+        if (latest && latest.number) {
+            const new_number = parseInt(latest.number.slice(-4)) + 1;
+            application_number = keyword + '-' + country_code + '-' + new_number.toString().padStart(4, '0');
         }
 
         return application_number;
