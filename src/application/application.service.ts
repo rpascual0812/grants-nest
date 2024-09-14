@@ -319,7 +319,7 @@ export class ApplicationService extends GlobalService {
             const date = DateTime.now();
 
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const application_number = await this.setApplicationNumber();
+                // const application_number = await this.setApplicationNumber();
 
                 if (!data.partner_pk) {
                     const new_partner_id = await this.setPartnerId();
@@ -353,7 +353,7 @@ export class ApplicationService extends GlobalService {
 
                 const obj: any = {
                     uuid: this.uuid,
-                    number: application_number,
+                    // number: application_number,
                     created_by: user.pk,
                     partner_pk: data.partner_pk,
                 };
@@ -2146,7 +2146,7 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    async saveApplicationDateSubmitted(data: Partial<Application>, user: Partial<User>) {
+    async saveApplicationDateSubmitted(data: Partial<Application>) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
@@ -2154,11 +2154,21 @@ export class ApplicationService extends GlobalService {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const pk = getParsedPk(data?.pk);
                 let message = `date submitted for application_pk: ${pk} already been saved`;
-                const existingApplication = await Application.findOne({
-                    where: {
-                        pk: Equal(pk),
-                    },
-                });
+
+                const existingApplication = await dataSource
+                    .getRepository(Application)
+                    .createQueryBuilder('applications')
+                    .leftJoinAndSelect('applications.partner', 'partners')
+                    .leftJoinAndSelect('partners.partner_organization', 'partner_organizations')
+                    .leftJoinAndSelect('partner_organizations.country', 'countries')
+                    .andWhere('applications.pk = :pk', { pk })
+                    .getOne();
+
+                const code = existingApplication.partner.partner_organization.country.code;
+
+                const application_number = await this.setApplicationNumber(pk, code.toUpperCase());
+                await EntityManager.update(Application, { pk: pk }, { number: application_number });
+
                 if (!existingApplication?.date_submitted) {
                     await EntityManager.update(Application, { pk: pk }, { date_submitted: DateTime.now() });
                     // save logs
@@ -2170,11 +2180,12 @@ export class ApplicationService extends GlobalService {
                     await this.saveLog({
                         model,
                         user: {
-                            pk: user?.pk,
+                            pk: null,
                         },
                     });
                     message = `new date submitted for application_pk: ${pk} saved`;
                 }
+
                 return {
                     status: true,
                     message,
