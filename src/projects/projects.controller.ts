@@ -226,7 +226,13 @@ export class ProjectsController {
     @UseGuards(JwtAuthGuard)
     @Get(':pk/project_funding')
     fetchProjectFunding(@Param('pk') project_pk: number, @Request() req: any) {
-        return this.projectService.getProjectFunding({ project_pk });
+        return this.projectService.getProjectFunding({ project_pks: [project_pk] });
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('project_funding')
+    fetchProjectFundingAll(@Request() req: any) {
+        return this.projectService.getProjectFunding();
     }
 
     @UseGuards(JwtAuthGuard)
