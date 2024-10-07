@@ -410,6 +410,7 @@ export class ProjectsService extends GlobalService {
                 .getMany();
         } catch (error) {
             console.log(error);
+            this.saveError({});
             // SAVE ERROR
             return {
                 status: false,
@@ -417,9 +418,10 @@ export class ProjectsService extends GlobalService {
         }
     }
 
-    async getProjectFunding(filters: { project_pk?: number }) {
+    async getProjectFunding(filters?: { project_pks?: number[] }) {
         try {
-            const data = await this.queryProjectFunding([filters?.project_pk]);
+            const projectPks = filters?.project_pks?.filter((value) => value !== null) ?? [];
+            const data = await this.queryProjectFunding(projectPks);
             return {
                 status: true,
                 data: {
@@ -428,14 +430,14 @@ export class ProjectsService extends GlobalService {
             };
         } catch (error) {
             console.log(error);
-            // SAVE ERROR
+            this.saveError({});
             return {
                 status: false,
             };
         }
     }
 
-    async queryProjectFunding(project_pks: any) {
+    async queryProjectFunding(project_pks?: number[]) {
         try {
             return await dataSource
                 .getRepository(ProjectFunding)
@@ -443,12 +445,6 @@ export class ProjectsService extends GlobalService {
                 .select('project_fundings')
                 .leftJoinAndSelect('project_fundings.donor', 'donors')
                 .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
-
-                // .leftJoinAndSelect('projects.project_funding', 'project_fundings')
-                // .leftJoinAndSelect('project_fundings.donor', 'donors')
-                // .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
-                // .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
-
                 .leftJoinAndMapMany(
                     'project_fundings.project_funding_report',
                     ProjectFundingReport,
@@ -469,13 +465,15 @@ export class ProjectsService extends GlobalService {
                 )
                 .leftJoinAndSelect('project_funding_liquidations.documents', 'documents as liquidation_documents')
                 .andWhere('project_funding_reports.archived = false')
-                .where('project_fundings.project_pk IN (:...project_pks)', { project_pks: project_pks })
+                .where(project_pks.length > 0 ? `project_fundings.project_pk IN (:...project_pks)` : `1=1`, {
+                    project_pks: project_pks,
+                })
                 .orderBy('project_funding_reports.date_created', 'ASC')
                 .orderBy('project_fundings.date_created', 'ASC')
                 .getMany();
         } catch (error) {
             console.log(error);
-            // SAVE ERROR
+            this.saveError({});
             return {
                 status: false,
             };
@@ -493,7 +491,7 @@ export class ProjectsService extends GlobalService {
                 .getOne();
         } catch (error) {
             console.log(error);
-            // SAVE ERROR
+            this.saveError({});
             return null;
         }
     }
