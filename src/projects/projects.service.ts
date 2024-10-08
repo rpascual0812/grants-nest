@@ -2336,6 +2336,45 @@ export class ProjectsService extends GlobalService {
         }
     }
 
+    async saveProjectGrantType(
+        project_pk: number,
+        grant_type: {
+            pk: number;
+        },
+        user: any,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const project = await EntityManager.update(
+                    Project,
+                    { pk: project_pk },
+                    {
+                        type_pk: typeof grant_type?.pk !== 'number' ? null : grant_type?.pk,
+                    },
+                );
+
+                // save logs
+                const model = {
+                    pk: project_pk,
+                    name: 'grant_type',
+                    status: 'update',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: project ? true : false };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
     async saveProjectClosingStatus(project_pk: number, status: string, user: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();

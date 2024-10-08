@@ -572,6 +572,18 @@ export class ProjectsController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @Post(':pk/grant_type')
+    async updateProjectGrantType(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectGrantType(
+            pk,
+            {
+                pk: body?.pk,
+            },
+            req.user,
+        );
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Post(':pk/closing_status')
     async updateProjectClosingStatus(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
         return this.projectService.saveProjectClosingStatus(pk, body?.closing_status, req.user);
