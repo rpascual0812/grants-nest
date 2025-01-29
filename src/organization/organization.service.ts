@@ -3,6 +3,7 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import dataSource from 'db/data-source';
 import { Organization } from './entities/organization.entity';
+import { OrganizationPartnerType } from './entities/organization-partner-type.entity';
 
 @Injectable()
 export class OrganizationService {
@@ -24,6 +25,29 @@ export class OrganizationService {
                 status: true,
                 data: organizations[0],
                 total: organizations[1],
+            };
+        } catch (error) {
+            return {
+                status: false,
+                code: 500,
+            };
+        }
+    }
+
+    async findOrganizationPartnerType() {
+        try {
+            const organizationPartnerTypes = await dataSource.manager
+                .getRepository(OrganizationPartnerType)
+                .createQueryBuilder('organization_partner_types')
+                .select('organization_partner_types')
+                .where('organization_partner_types.archived=false')
+                .orderBy('organization_partner_types.type')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: organizationPartnerTypes[0],
+                total: organizationPartnerTypes[1],
             };
         } catch (error) {
             return {
