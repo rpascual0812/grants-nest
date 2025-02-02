@@ -15,6 +15,7 @@ import { Partner } from './partner.entity';
 import { PartnerOrganizationReference } from './partner-organization-references.entity';
 import { PartnerOrganizationBank } from './partner-organization-bank.entity';
 import { PartnerOrganizationOtherInformation } from './partner-organization-other-information.entity';
+import { OrganizationPartnerType } from 'src/organization/entities/organization-partner-type.entity';
 
 @Entity({ name: 'partner_organizations' })
 export class PartnerOrganization extends BaseEntity {
@@ -26,6 +27,9 @@ export class PartnerOrganization extends BaseEntity {
 
     @Column({ name: 'organization_pk', nullable: true })
     organization_pk: number;
+
+    @Column({ name: 'organization_partner_type_pk', nullable: true })
+    organization_partner_type_pk: number;
 
     @Column({ type: 'text', nullable: true })
     tribe: string;
@@ -78,6 +82,17 @@ export class PartnerOrganization extends BaseEntity {
     })
     @JoinColumn({ name: 'organization_pk' })
     organization: Organization;
+
+    @ManyToOne(
+        'OrganizationPartnerType',
+        (organization_partner_type: OrganizationPartnerType) => organization_partner_type.partner_organization,
+        {
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE',
+        },
+    )
+    @JoinColumn({ name: 'organization_partner_type_pk' })
+    organization_partner_type: OrganizationPartnerType;
 
     @ManyToOne('Country', (country: Country) => country.partner_organization, {
         onDelete: 'CASCADE',

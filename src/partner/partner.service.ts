@@ -14,7 +14,7 @@ import { User } from 'src/user/entities/user.entity';
 import { Equal } from 'typeorm';
 import { getDefaultValue } from '../utilities/get-default-value.utils';
 import { GlobalService } from 'src/utilities/global.service';
-
+import { OrganizationPartnerType } from 'src/organization/entities/organization-partner-type.entity';
 @Injectable()
 export class PartnerService extends GlobalService {
     async findAll(filters?: {
@@ -43,6 +43,12 @@ export class PartnerService extends GlobalService {
                     PartnerOrganization,
                     'partner_organizations',
                     'partners.pk=partner_organizations.partner_pk',
+                )
+                .leftJoinAndMapOne(
+                    'partner_organizations.organization_partner_type',
+                    OrganizationPartnerType,
+                    'organization_partner_types',
+                    'partner_organizations.organization_partner_type_pk=organization_partner_types.pk',
                 )
                 .leftJoinAndMapOne(
                     'partner_organizations.country',
@@ -111,6 +117,12 @@ export class PartnerService extends GlobalService {
                     PartnerOrganization,
                     'partner_organizations',
                     'partners.pk=partner_organizations.partner_pk',
+                )
+                .leftJoinAndMapOne(
+                    'partner_organizations.organization_partner_type',
+                    OrganizationPartnerType,
+                    'organization_partner_types',
+                    'partner_organizations.organization_partner_type_pk=organization_partner_types.pk',
                 )
                 .leftJoinAndMapMany(
                     'partner_organizations.partner_organization_reference',
@@ -317,6 +329,56 @@ export class PartnerService extends GlobalService {
                 return { status: true, data: {} };
             });
         } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async generatePartnerId(data: Partial<Partner>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            const partnerPk = data?.pk;
+
+            const currentPartner = await dataSource.manager
+                .getRepository(Partner)
+                .createQueryBuilder('partners')
+                .where(`partners.pk = :pk`, { pk: partnerPk })
+                .limit(1)
+                .getOne();
+
+            if (currentPartner?.partner_id) {
+                return {
+                    status: true,
+                    data: {
+                        partner_id: currentPartner?.partner_id,
+                    },
+                    message: `partner already has an existing partner_id`,
+                };
+            }
+
+            const generated = await this.setPartnerId(partnerPk);
+
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const updatedPartner = await EntityManager.update(
+                    Partner,
+                    {
+                        pk: partnerPk,
+                    },
+                    { partner_id: generated },
+                );
+
+                return {
+                    status: updatedPartner ? true : false,
+                    data: {
+                        partner_id: generated,
+                    },
+                };
+            });
+        } catch (err) {
+            this.saveError({});
             console.log(err);
             return { status: false, code: err.code };
         } finally {
