@@ -51,3 +51,12 @@ npm run build
 forever start dist/src/main.js
 
 forever stopall
+
+// SERVER
+cd ~/api
+git pull origin master
+npm run typeorm schema:sync
+npm run typeorm migration:run
+npm run build
+# forever restart dist/src/main.js
+pm2 restart dist/src/main.js
