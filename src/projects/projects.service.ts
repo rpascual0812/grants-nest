@@ -41,7 +41,8 @@ import { Donor } from 'src/donor/entities/donor.entity';
 import { AvailableProjectStatus } from 'src/utilities/constants';
 import { PartnerAssessment } from 'src/partner/entities/partner-assessment.entity';
 import { ProjectAssessment } from './entities/project-assessment.entity';
-
+import { DateTime } from 'luxon';
+import { ProjectCode } from './entities/project-code.entity';
 @Injectable()
 export class ProjectsService extends GlobalService {
     constructor(
@@ -2584,5 +2585,120 @@ export class ProjectsService extends GlobalService {
         }
 
         return projects;
+    }
+
+    async generateProjectCode(
+        project_pk: number,
+        {
+            pk,
+            donor_code,
+            project_funding_pk,
+        }: {
+            pk?: number;
+            donor_code: string;
+            project_funding_pk: number;
+        },
+        user: Partial<User>,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const existingProjectCode = await dataSource
+                    .getRepository(ProjectCode)
+                    .createQueryBuilder('project_codes')
+                    .where('project_codes.project_pk = :projectPk', {
+                        projectPk: project_pk,
+                    })
+                    .andWhere('project_codes.code ILIKE :keyword', {
+                        keyword: `${donor_code}%`,
+                    })
+                    .getOne();
+                const userPk = getParsedPk(user?.pk);
+                const dateToBeReset = '1/1';
+                const dt = DateTime.now();
+                const currentDate = `${dt.day}/${dt.month}`;
+                const currentYear = dt.year;
+
+                let code = 0;
+                if (dateToBeReset !== currentDate) {
+                    const existingCode = existingProjectCode?.code;
+                    const splittedCode = existingCode?.split('-');
+                    const parsedCode = parseInt(splittedCode?.at(2));
+                    code = !isNaN(parsedCode) ? parsedCode : code;
+                }
+                const constructedCode = `${donor_code}-${currentYear}-${(code + 1).toString().padStart(2, '0')}`;
+
+                const projectCode = await dataSource.manager
+                    .getRepository(ProjectCode)
+                    .createQueryBuilder('project_codes')
+                    .createQueryBuilder()
+                    .insert()
+                    .into(ProjectCode)
+                    .values({
+                        project_pk,
+                        project_funding_pk,
+                        code: constructedCode,
+                        created_by: userPk,
+                    })
+                    .orUpdate(['code'], ['project_funding_pk'])
+                    .execute();
+                const generatedMaps = projectCode.generatedMaps[0];
+
+                const model = {
+                    name: 'project_codes',
+                    pk: generatedMaps?.pk,
+                    status: pk ? 'update' : 'insert',
+                };
+
+                await this.saveLog({
+                    model,
+                    user: {
+                        pk: userPk,
+                    },
+                });
+
+                return {
+                    status: true,
+                    data: {
+                        pk: generatedMaps.pk,
+                        project_pk,
+                        project_funding_pk,
+                        code: constructedCode,
+                        created_by: userPk,
+                        date_created: generatedMaps.date_created
+                    },
+                };
+            });
+
+        } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async fetchProjectCodes(project_pk: number) {
+        try {
+            const data = await dataSource
+                .getRepository(ProjectCode)
+                .createQueryBuilder('project_codes')
+                .where('project_codes.project_pk = :project_pk', { project_pk })
+                .orderBy('project_codes.date_created', 'DESC')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: data[0],
+                total: data[1],
+            };
+        } catch (error) {
+            console.log(error);
+            return {
+                status: false,
+                code: error.code ?? 500,
+            };
+        }
     }
 }
