@@ -5,7 +5,7 @@ import { AVAILABLE_PROJECT_STATUS, AvailableProjectStatus } from 'src/utilities/
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private readonly projectService: ProjectsService) {}
+    constructor(private readonly projectService: ProjectsService) { }
 
     @UseGuards(JwtAuthGuard)
     @Get()
@@ -623,5 +623,17 @@ export class ProjectsController {
     @Get('reports')
     projectReports(@Request() req: any) {
         return this.projectService.fetchProjectReports(req);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/generate/project_code')
+    async generateProjectCode(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.generateProjectCode(+pk, body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':pk/project_codes')
+    projectCodes(@Param('pk') pk: number, @Request() req: any) {
+        return this.projectService.fetchProjectCodes(+pk);
     }
 }
