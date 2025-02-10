@@ -1,5 +1,16 @@
 import { Application } from 'src/application/entities/application.entity';
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, ManyToOne, JoinColumn, BaseEntity, OneToMany, ManyToMany } from 'typeorm';
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    Unique,
+    OneToOne,
+    ManyToOne,
+    JoinColumn,
+    BaseEntity,
+    OneToMany,
+    ManyToMany,
+} from 'typeorm';
 import { PartnerContact } from './partner-contacts.entity';
 import { PartnerOrganization } from './partner-organization.entity';
 import { PartnerFiscalSponsor } from './partner-fiscal-sponsor.entity';
@@ -15,7 +26,7 @@ export class Partner extends BaseEntity {
     @PrimaryGeneratedColumn()
     pk: number;
 
-    @Column({ type: 'text', nullable: false })
+    @Column({ type: 'text', nullable: true })
     partner_id: string;
 
     @Column({ type: 'text', nullable: false })
@@ -50,28 +61,31 @@ export class Partner extends BaseEntity {
     @JoinColumn({ name: 'pk' })
     projects: Array<Project>;
 
-    @OneToMany('PartnerContact', (partner_contact: PartnerContact) => partner_contact.partner, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToMany('PartnerContact', (partner_contact: PartnerContact) => partner_contact.partner, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
     @JoinColumn({ name: 'pk' })
     contacts: PartnerContact;
 
-    @OneToMany('PartnerAssessment', (partner_assessment: PartnerAssessment) => partner_assessment.partner, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToMany('PartnerAssessment', (partner_assessment: PartnerAssessment) => partner_assessment.partner, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
     @JoinColumn({ name: 'pk' })
     assessments: PartnerAssessment;
 
-    @OneToOne(type => PartnerOrganization, partner_organization => partner_organization.partner, { cascade: true })
+    @OneToOne((type) => PartnerOrganization, (partner_organization) => partner_organization.partner, { cascade: true })
     partner_organization: PartnerOrganization;
 
-    @OneToOne(
-        (type) => PartnerFiscalSponsor,
-        (partner_fiscal_sponsor) => partner_fiscal_sponsor.partner,
-        { cascade: true },
-    )
+    @OneToOne((type) => PartnerFiscalSponsor, (partner_fiscal_sponsor) => partner_fiscal_sponsor.partner, {
+        cascade: true,
+    })
     partner_fiscal_sponsor: PartnerFiscalSponsor;
 
     @OneToOne(
         (type) => PartnerNonprofitEquivalencyDetermination,
-        (partner_nonprofit_equivalency_determination) =>
-            partner_nonprofit_equivalency_determination.partner,
+        (partner_nonprofit_equivalency_determination) => partner_nonprofit_equivalency_determination.partner,
         { cascade: true },
     )
     partner_nonprofit_equivalency_determination: PartnerNonprofitEquivalencyDetermination;
