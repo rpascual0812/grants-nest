@@ -4,7 +4,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('partner')
 export class PartnerController {
-    constructor(private readonly partnerService: PartnerService) {}
+    constructor(private readonly partnerService: PartnerService) { }
 
     @Get()
     async fetch(
@@ -50,9 +50,9 @@ export class PartnerController {
         return partners;
     }
 
-    @Get(':partner_id')
-    fetchOne(@Param('partner_id') partner_id: string) {
-        return this.partnerService.find({ partner_id: +partner_id });
+    @Get(':pk')
+    fetchOne(@Param('pk') pk: string) {
+        return this.partnerService.find({ pk: +pk });
     }
 
     @Post()
@@ -76,5 +76,10 @@ export class PartnerController {
     @Get(':pk/assessment')
     assessments(@Param('pk') pk: number, @Request() req: any) {
         return this.partnerService.findAssessments(+pk, req.query, req.user);
+    }
+
+    @Post('partner_id/generate')
+    async generatePartnerId(@Body() body: any, @Request() req: any) {
+        return await this.partnerService.generatePartnerId(body);
     }
 }
