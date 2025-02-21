@@ -15,7 +15,7 @@ export class Log extends BaseEntity {
     @Column({ type: 'jsonb', nullable: true })
     details: string;
 
-    @Column({ name: 'user_pk', nullable: false })
+    @Column({ name: 'user_pk', nullable: true })
     user_pk: number;
 
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })

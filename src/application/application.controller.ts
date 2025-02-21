@@ -157,7 +157,7 @@ export class ApplicationController {
                 if (!application['partner'].hasOwnProperty('organization')) {
                     application['partner']['organization'] = {};
                 }
-                const partner_organization = partner_organizations.filter(
+                const partner_organization = partner_organizations?.filter(
                     (organization) => organization.partner_pk == application.partner_pk,
                 );
                 application['partner']['organization'] = partner_organization;
@@ -433,16 +433,11 @@ export class ApplicationController {
         return this.applicationService.deleteReviewAttachment(application_pk, review_pk, document_pk, req.user);
     }
 
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Post(':pk/save_date_submitted')
     saveApplicationDateSubmitted(@Param('pk') application_pk: number, @Request() req: any) {
-        return this.applicationService.saveApplicationDateSubmitted(
-            {
-                pk: +application_pk,
-            },
-            req?.user,
-        );
+        return this.applicationService.saveApplicationDateSubmitted({
+            pk: +application_pk,
+        });
     }
-
-
 }

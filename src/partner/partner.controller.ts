@@ -8,11 +8,22 @@ export class PartnerController {
     constructor(private readonly partnerService: PartnerService) { }
 
     @Get()
-    async fetch(@Query() query: { organization_pk?: number; type_pk?: number; keyword?: string }) {
-        const { organization_pk, type_pk, keyword } = query;
+    async fetch(
+        @Query()
+        query: {
+            organization_pk?: number;
+            type_pk?: number;
+            keyword?: string;
+            partner_name_sort?: 'ASC' | 'DESC';
+            partner_date_created_year?: string;
+        },
+    ) {
+        const { organization_pk, type_pk, keyword, partner_name_sort, partner_date_created_year } = query;
         const partners = await this.partnerService.findAll({
             organization_pk: organization_pk ? +organization_pk : null,
             type_pk: type_pk ? +type_pk : null,
+            partner_date_created_year,
+            partner_name_sort,
             keyword,
         });
         // ugly hack to get the last status and count grand total
@@ -69,6 +80,11 @@ export class PartnerController {
         return partner;
     }
 
+    @Get(':pk')
+    fetchOne(@Param('pk') pk: string) {
+        return this.partnerService.find({ pk: +pk });
+    }
+
     @Post()
     async save(@Request() req: any, @Body() body: any) {
         return await this.partnerService.save(body);
@@ -90,5 +106,10 @@ export class PartnerController {
     @Get(':pk/assessment')
     assessments(@Param('pk') pk: number, @Request() req: any) {
         return this.partnerService.findAssessments(+pk, req.query, req.user);
+    }
+
+    @Post('partner_id/generate')
+    async generatePartnerId(@Body() body: any, @Request() req: any) {
+        return await this.partnerService.generatePartnerId(body);
     }
 }

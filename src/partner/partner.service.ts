@@ -7,7 +7,6 @@ import { PartnerContact } from './entities/partner-contacts.entity';
 import { Country } from 'src/country/entities/country.entity';
 import { Application } from 'src/application/entities/application.entity';
 import { PartnerOrganizationReference } from './entities/partner-organization-references.entity';
-import { Project } from 'src/projects/entities/project.entity';
 import { PartnerOrganizationBank } from './entities/partner-organization-bank.entity';
 import { PartnerOrganizationOtherInformation } from './entities/partner-organization-other-information.entity';
 import { PartnerAssessment } from './entities/partner-assessment.entity';
@@ -15,14 +14,26 @@ import { User } from 'src/user/entities/user.entity';
 import { Equal } from 'typeorm';
 import { getDefaultValue } from '../utilities/get-default-value.utils';
 import { GlobalService } from 'src/utilities/global.service';
-
+import { OrganizationPartnerType } from 'src/organization/entities/organization-partner-type.entity';
 @Injectable()
 export class PartnerService extends GlobalService {
-    async findAll(filters?: { organization_pk: number; type_pk: number; keyword: string }) {
+    async findAll(filters?: {
+        organization_pk: number;
+        type_pk: number;
+        keyword: string;
+        partner_name_sort: 'ASC' | 'DESC';
+        partner_date_created_year: string;
+    }) {
         try {
             const organizationPk = filters?.organization_pk ?? null;
             const typePk = filters?.type_pk ?? null;
             const keyword = filters?.keyword ?? null;
+            const partner_name_sort = filters?.partner_name_sort ?? 'ASC';
+            const partner_date_created_year =
+                filters?.partner_date_created_year?.length > 0 || filters?.partner_date_created_year?.trim() !== ''
+                    ? filters?.partner_date_created_year
+                    : null;
+
             const partners = await dataSource.manager
                 .getRepository(Partner)
                 .createQueryBuilder('partners')
@@ -32,6 +43,12 @@ export class PartnerService extends GlobalService {
                     PartnerOrganization,
                     'partner_organizations',
                     'partners.pk=partner_organizations.partner_pk',
+                )
+                .leftJoinAndMapOne(
+                    'partner_organizations.organization_partner_type',
+                    OrganizationPartnerType,
+                    'organization_partner_types',
+                    'partner_organizations.organization_partner_type_pk=organization_partner_types.pk',
                 )
                 .leftJoinAndMapOne(
                     'partner_organizations.country',
@@ -69,7 +86,10 @@ export class PartnerService extends GlobalService {
                 .andWhere(keyword ? 'partners.name ILIKE :keyword' : '1=1', {
                     keyword: `%${keyword}%`,
                 })
-                .orderBy('partners.name')
+                .andWhere(partner_date_created_year ? `to_char(partners.date_created,'YYYY') = :date` : '1=1', {
+                    date: partner_date_created_year,
+                })
+                .orderBy('partners.name', partner_name_sort)
                 .getManyAndCount();
 
             return {
@@ -97,6 +117,12 @@ export class PartnerService extends GlobalService {
                     PartnerOrganization,
                     'partner_organizations',
                     'partners.pk=partner_organizations.partner_pk',
+                )
+                .leftJoinAndMapOne(
+                    'partner_organizations.organization_partner_type',
+                    OrganizationPartnerType,
+                    'organization_partner_types',
+                    'partner_organizations.organization_partner_type_pk=organization_partner_types.pk',
                 )
                 .leftJoinAndMapMany(
                     'partner_organizations.partner_organization_reference',
@@ -303,6 +329,56 @@ export class PartnerService extends GlobalService {
                 return { status: true, data: {} };
             });
         } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async generatePartnerId(data: Partial<Partner>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            const partnerPk = data?.pk;
+
+            const currentPartner = await dataSource.manager
+                .getRepository(Partner)
+                .createQueryBuilder('partners')
+                .where(`partners.pk = :pk`, { pk: partnerPk })
+                .limit(1)
+                .getOne();
+
+            if (currentPartner?.partner_id) {
+                return {
+                    status: true,
+                    data: {
+                        partner_id: currentPartner?.partner_id,
+                    },
+                    message: `partner already has an existing partner_id`,
+                };
+            }
+
+            const generated = await this.setPartnerId(partnerPk);
+
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const updatedPartner = await EntityManager.update(
+                    Partner,
+                    {
+                        pk: partnerPk,
+                    },
+                    { partner_id: generated },
+                );
+
+                return {
+                    status: updatedPartner ? true : false,
+                    data: {
+                        partner_id: generated,
+                    },
+                };
+            });
+        } catch (err) {
+            this.saveError({});
             console.log(err);
             return { status: false, code: err.code };
         } finally {

@@ -29,6 +29,7 @@ import { ProjectCapDevSkill } from './project-capdev-skill.entity';
 import { ProjectCapDevObserve } from './project-capdev-observe.entity';
 import { ProjectLesson } from './project-lesson.entity';
 import { ProjectAssessment } from './project-assessment.entity';
+import { ProjectCode } from './project-code.entity';
 
 @Entity({ name: 'projects' })
 export class Project extends BaseEntity {
@@ -184,4 +185,7 @@ export class Project extends BaseEntity {
 
     @OneToMany((type) => ProjectAssessment, (project_assessment) => project_assessment.project, { cascade: true })
     project_assessment: ProjectAssessment;
+
+    @OneToMany((type) => ProjectCode, (project_code) => project_code.project, { cascade: true })
+    project_code: ProjectCode;
 }

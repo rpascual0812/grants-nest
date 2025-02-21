@@ -34,6 +34,7 @@ import { Email } from 'src/email/entities/email.entity';
 import { TemplateService } from 'src/template/template.service';
 import { AvailableApplicationStatus } from 'src/utilities/constants';
 import { User } from 'src/user/entities/user.entity';
+import { OrganizationPartnerType } from 'src/organization/entities/organization-partner-type.entity';
 
 @Injectable()
 export class ApplicationService extends GlobalService {
@@ -191,6 +192,12 @@ export class ApplicationService extends GlobalService {
                     'partner_organizations.pk=partner_organization_references.partner_organization_pk',
                 )
                 .leftJoinAndMapOne(
+                    'partner_organizations.organization_partner_type',
+                    OrganizationPartnerType,
+                    'organization_partner_types',
+                    'partner_organizations.organization_partner_type_pk=organization_partner_types.pk',
+                )
+                .leftJoinAndMapOne(
                     'partner_organizations.country',
                     Country,
                     'countries',
@@ -319,10 +326,10 @@ export class ApplicationService extends GlobalService {
             const date = DateTime.now();
 
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const application_number = await this.setApplicationNumber();
+                // const application_number = await this.setApplicationNumber();
 
                 if (!data.partner_pk) {
-                    const new_partner_id = await this.setPartnerId();
+                    // const new_partner_id = await this.setPartnerId();
 
                     // this is one better than the insert below. Once one of the queries here failed, everything will be rolled back.
                     // the only problem with this query is the new pk is still not visible when inserting the application below
@@ -341,7 +348,7 @@ export class ApplicationService extends GlobalService {
                         .into(Partner)
                         .values([
                             {
-                                partner_id: new_partner_id.toString(),
+                                // partner_id: new_partner_id.toString(),
                                 name: data.partner_name,
                                 email_address: data.email_address,
                             },
@@ -353,7 +360,7 @@ export class ApplicationService extends GlobalService {
 
                 const obj: any = {
                     uuid: this.uuid,
-                    number: application_number,
+                    // number: application_number,
                     created_by: user.pk,
                     partner_pk: data.partner_pk,
                 };
@@ -371,7 +378,7 @@ export class ApplicationService extends GlobalService {
                 const new_application_pk = new_application.generatedMaps[0].pk;
 
                 const templateObj = await this.templateService.find('application');
-                let template: string = '';
+                let template = '';
 
                 if (templateObj.status) {
                     const application = await this.find({ pk: new_application_pk });
@@ -457,20 +464,28 @@ export class ApplicationService extends GlobalService {
         await queryRunner.connect();
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const partnerID = data?.partner_id;
+                // const partnerID = data?.partner_id;
+
+                // const existingPartner = await EntityManager.findOne(Partner, {
+                //     where: {
+                //         partner_id: Equal(partnerID),
+                //     },
+                // });
+
+                const partnerPk = data?.pk;
 
                 const existingPartner = await EntityManager.findOne(Partner, {
                     where: {
-                        partner_id: Equal(partnerID),
+                        pk: Equal(partnerPk),
                     },
                 });
 
                 const partner = existingPartner ? existingPartner : new Partner();
-                const generatedPartnerId = existingPartner?.partner_id
-                    ? existingPartner?.partner_id
-                    : await this.setPartnerId();
-
-                partner.partner_id = getDefaultValue(generatedPartnerId, existingPartner?.partner_id);
+                // const generatedPartnerId = existingPartner?.partner_id
+                //     ? existingPartner?.partner_id
+                //     : await this.setPartnerId();
+                // partner.partner_id = getDefaultValue(generatedPartnerId, existingPartner?.partner_id);
+                partner.partner_id = existingPartner?.partner_id ?? null;
                 partner.name = getDefaultValue(data?.name, existingPartner?.name);
                 partner.email_address = getDefaultValue(data?.email_address, existingPartner?.email_address);
                 partner.address = getDefaultValue(data?.address, existingPartner?.address);
@@ -562,17 +577,23 @@ export class ApplicationService extends GlobalService {
         await queryRunner.connect();
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                const partner_id = data?.partner_id;
+                // const partner_id = data?.partner_id;
 
-                const existingPartner = await EntityManager.findOne(Partner, {
-                    where: {
-                        partner_id,
-                    },
-                });
-                const partner_pk = existingPartner.pk;
+                // const existingPartner = await EntityManager.findOne(Partner, {
+                //     where: {
+                //         partner_id,
+                //     },
+                // });
+                // const partner_pk = existingPartner.pk;
+                const partner_pk = data?.partner_pk;
+                // const existingPartnerOrg = await EntityManager.findOne(PartnerOrganization, {
+                //     where: {
+                //         partner_pk: existingPartner?.pk,
+                //     },
+                // });
                 const existingPartnerOrg = await EntityManager.findOne(PartnerOrganization, {
                     where: {
-                        partner_pk: existingPartner?.pk,
+                        partner_pk,
                     },
                 });
                 const partnerOrg = existingPartnerOrg ? existingPartnerOrg : new PartnerOrganization();
@@ -580,6 +601,10 @@ export class ApplicationService extends GlobalService {
                 partnerOrg.organization_pk = getDefaultValue(
                     data?.organization_pk,
                     existingPartnerOrg?.organization_pk,
+                );
+                partnerOrg.organization_partner_type_pk = getDefaultValue(
+                    data.organization_partner_type_pk,
+                    existingPartnerOrg?.organization_partner_type_pk,
                 );
                 partnerOrg.tribe = getDefaultValue(data?.tribe, existingPartnerOrg?.tribe);
                 partnerOrg.womens_organization = getDefaultValue(
@@ -2147,7 +2172,7 @@ export class ApplicationService extends GlobalService {
         }
     }
 
-    async saveApplicationDateSubmitted(data: Partial<Application>, user: Partial<User>) {
+    async saveApplicationDateSubmitted(data: Partial<Application>) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
 
@@ -2155,11 +2180,21 @@ export class ApplicationService extends GlobalService {
             return await queryRunner.manager.transaction(async (EntityManager) => {
                 const pk = getParsedPk(data?.pk);
                 let message = `date submitted for application_pk: ${pk} already been saved`;
-                const existingApplication = await Application.findOne({
-                    where: {
-                        pk: Equal(pk),
-                    },
-                });
+
+                const existingApplication = await dataSource
+                    .getRepository(Application)
+                    .createQueryBuilder('applications')
+                    .leftJoinAndSelect('applications.partner', 'partners')
+                    .leftJoinAndSelect('partners.partner_organization', 'partner_organizations')
+                    .leftJoinAndSelect('partner_organizations.country', 'countries')
+                    .andWhere('applications.pk = :pk', { pk })
+                    .getOne();
+
+                const code = existingApplication.partner.partner_organization.country.code;
+
+                const application_number = await this.setApplicationNumber(pk, code.toUpperCase());
+                await EntityManager.update(Application, { pk: pk }, { number: application_number });
+
                 if (!existingApplication?.date_submitted) {
                     await EntityManager.update(Application, { pk: pk }, { date_submitted: DateTime.now() });
                     // save logs
@@ -2171,11 +2206,12 @@ export class ApplicationService extends GlobalService {
                     await this.saveLog({
                         model,
                         user: {
-                            pk: user?.pk,
+                            pk: null,
                         },
                     });
                     message = `new date submitted for application_pk: ${pk} saved`;
                 }
+
                 return {
                     status: true,
                     message,
@@ -2205,8 +2241,16 @@ export class ApplicationService extends GlobalService {
                 .andWhere('applications.status is not null')
                 .andWhere("to_char(applications.date_created, 'YYYY-MM') >= :from", { from: query.date_from })
                 .andWhere("to_char(applications.date_created, 'YYYY - MM') <= :to", { to: query.date_to })
-                .andWhere(query.hasOwnProperty('application_pk') && query.application_pk !== 'null' ? 'applications.pk = :pk' : '1=1', { pk: query.application_pk })
-                .andWhere(query.hasOwnProperty('status') && query.status !== 'null' ? 'applications.status = :status' : '1=1', { status: query.status })
+                .andWhere(
+                    query.hasOwnProperty('application_pk') && query.application_pk !== 'null'
+                        ? 'applications.pk = :pk'
+                        : '1=1',
+                    { pk: query.application_pk },
+                )
+                .andWhere(
+                    query.hasOwnProperty('status') && query.status !== 'null' ? 'applications.status = :status' : '1=1',
+                    { status: query.status },
+                )
                 .orderBy('applications.date_created', 'DESC')
                 .getManyAndCount();
 

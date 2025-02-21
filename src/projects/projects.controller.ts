@@ -57,7 +57,7 @@ export class ProjectsController {
                 if (!project.partner.hasOwnProperty('organization')) {
                     project['partner']['organization'] = {};
                 }
-                const partner_organization = partner_organizations.filter(
+                const partner_organization = partner_organizations?.filter(
                     (organization) => organization.partner_pk == project.partner_pk,
                 );
                 project['partner']['organization'] = partner_organization;
@@ -245,6 +245,12 @@ export class ProjectsController {
             });
         });
         return fundings;
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('project_funding')
+    fetchProjectFundingAll(@Request() req: any) {
+        return this.projectService.getProjectFunding();
     }
 
     @UseGuards(JwtAuthGuard)
@@ -597,6 +603,18 @@ export class ProjectsController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @Post(':pk/grant_type')
+    async updateProjectGrantType(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.saveProjectGrantType(
+            pk,
+            {
+                pk: body?.pk,
+            },
+            req.user,
+        );
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Post(':pk/closing_status')
     async updateProjectClosingStatus(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
         return this.projectService.saveProjectClosingStatus(pk, body?.closing_status, req.user);
@@ -630,5 +648,17 @@ export class ProjectsController {
     @Get('reports')
     projectReports(@Request() req: any) {
         return this.projectService.fetchProjectReports(req);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':pk/generate/project_code')
+    async generateProjectCode(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
+        return this.projectService.generateProjectCode(+pk, body, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':pk/project_codes')
+    projectCodes(@Param('pk') pk: number, @Request() req: any) {
+        return this.projectService.fetchProjectCodes(+pk);
     }
 }
