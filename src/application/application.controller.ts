@@ -4,6 +4,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ApplicationQueryHelpersService } from './utilities/lib/application-query-helpers/application-query-helpers.service';
 import { ProjectsService } from 'src/projects/projects.service';
 import { AVAILABLE_APPLICATION_STATUS, AvailableApplicationStatus } from 'src/utilities/constants';
+import { generatePath } from 'src/utilities/generate-s3-path.utils';
 
 @Controller('application')
 export class ApplicationController {
@@ -236,6 +237,13 @@ export class ApplicationController {
     @Get(':uuid/generated')
     async generated(@Param('uuid') uuid: string) {
         const application: any = await this.applicationService.find({ uuid });
+
+        application.data['documents'].forEach((document: any) => {
+            generatePath(document.path, (path: string) => {
+                document.path = path;
+            });
+        });
+
         const partnerPks = [application?.data?.partner_pk as number];
         // partner
         const partner = await this.applicationQueryHelpersService.getPartner(partnerPks);
@@ -277,6 +285,13 @@ export class ApplicationController {
     @Get(':number/review')
     async review(@Param('number') number: string, @Request() req: any) {
         const application: any = await this.applicationService.find({ number, reviews: req.query.reviews });
+
+        application.data['documents'].forEach((document: any) => {
+            generatePath(document.path, (path: string) => {
+                document.path = path;
+            });
+        });
+
         // Partner
         const partner = await this.applicationService.getPartner([application.data.partner_pk]);
         if (!application.data.hasOwnProperty('partner')) {
