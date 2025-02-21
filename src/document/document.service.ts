@@ -1,32 +1,63 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import dataSource from 'db/data-source';
 import { Document } from './entities/document.entity';
 import { GlobalService } from 'src/utilities/global.service';
+import { ConfigService } from '@nestjs/config';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { generatePath } from 'src/utilities/generate-s3-path.utils';
 
 @Injectable()
 export class DocumentService extends GlobalService {
+    AWS_S3_BUCKET = 'grants-management-dev';
+
+    private readonly s3client = new S3Client({
+        region: this.configService.getOrThrow('AWS_S3_REGION')
+    });
 
     constructor(
         @InjectRepository(Document)
         private documentRepository: Repository<Document>,
+        private readonly configService: ConfigService
     ) {
         super();
     }
 
-    create(file: any) {
+    async create(fileName: string, file: any) {
         const obj = {
             original_name: file.originalname,
-            filename: file.filename,
-            path: file.path,
+            filename: fileName,
+            path: process.env.UPLOAD_DIR + '/' + fileName,
             mime_type: file.mimetype,
             size: file.size,
         }
 
         const newDocument = this.documentRepository.create(obj);
-        return this.documentRepository.save(newDocument);
+        const document = await this.documentRepository.save(newDocument);
+        generatePath(document.path, (path: string) => {
+            document.path = path;
+        });
+        return document;
+    }
+
+    async uploadFile(fileName: any, file: any) {
+        const result = await this.s3client.send(
+            new PutObjectCommand({
+                Bucket: process.env.AWS_S3_BUCKET_NAME,
+                Key: process.env.UPLOAD_DIR + '/' + fileName,
+                Body: file.buffer,
+                ACL: 'public-read'
+            })
+        );
+
+        if (result && result.$metadata && result.$metadata.httpStatusCode == 200) {
+            return await this.create(fileName, file);
+        }
+        else {
+            throw new InternalServerErrorException();
+        }
     }
 
     async findAll(filters: any) {
@@ -101,6 +132,10 @@ export class DocumentService extends GlobalService {
                         where: {
                             pk: data.document_pk
                         },
+                    });
+
+                    generatePath(document.path, (path: string) => {
+                        document.path = path;
                     });
 
                     return { status: output ? true : false, data: document };
