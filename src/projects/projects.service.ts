@@ -41,7 +41,8 @@ import { Donor } from 'src/donor/entities/donor.entity';
 import { AvailableProjectStatus } from 'src/utilities/constants';
 import { PartnerAssessment } from 'src/partner/entities/partner-assessment.entity';
 import { ProjectAssessment } from './entities/project-assessment.entity';
-
+import { DateTime } from 'luxon';
+import { ProjectCode } from './entities/project-code.entity';
 @Injectable()
 export class ProjectsService extends GlobalService {
     constructor(
@@ -410,6 +411,7 @@ export class ProjectsService extends GlobalService {
                 .getMany();
         } catch (error) {
             console.log(error);
+            this.saveError({});
             // SAVE ERROR
             return {
                 status: false,
@@ -417,9 +419,10 @@ export class ProjectsService extends GlobalService {
         }
     }
 
-    async getProjectFunding(filters: { project_pk?: number }) {
+    async getProjectFunding(filters?: { project_pks?: number[] }) {
         try {
-            const data = await this.queryProjectFunding([filters?.project_pk]);
+            const projectPks = filters?.project_pks?.filter((value) => value !== null) ?? [];
+            const data = await this.queryProjectFunding(projectPks);
             return {
                 status: true,
                 data: {
@@ -428,14 +431,14 @@ export class ProjectsService extends GlobalService {
             };
         } catch (error) {
             console.log(error);
-            // SAVE ERROR
+            this.saveError({});
             return {
                 status: false,
             };
         }
     }
 
-    async queryProjectFunding(project_pks: any) {
+    async queryProjectFunding(project_pks?: number[]) {
         try {
             return await dataSource
                 .getRepository(ProjectFunding)
@@ -443,12 +446,6 @@ export class ProjectsService extends GlobalService {
                 .select('project_fundings')
                 .leftJoinAndSelect('project_fundings.donor', 'donors')
                 .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
-
-                // .leftJoinAndSelect('projects.project_funding', 'project_fundings')
-                // .leftJoinAndSelect('project_fundings.donor', 'donors')
-                // .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
-                // .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
-
                 .leftJoinAndMapMany(
                     'project_fundings.project_funding_report',
                     ProjectFundingReport,
@@ -469,13 +466,15 @@ export class ProjectsService extends GlobalService {
                 )
                 .leftJoinAndSelect('project_funding_liquidations.documents', 'documents as liquidation_documents')
                 .andWhere('project_funding_reports.archived = false')
-                .where('project_fundings.project_pk IN (:...project_pks)', { project_pks: project_pks })
+                .where(project_pks.length > 0 ? `project_fundings.project_pk IN (:...project_pks)` : `1=1`, {
+                    project_pks: project_pks,
+                })
                 .orderBy('project_funding_reports.date_created', 'ASC')
                 .orderBy('project_fundings.date_created', 'ASC')
                 .getMany();
         } catch (error) {
             console.log(error);
-            // SAVE ERROR
+            this.saveError({});
             return {
                 status: false,
             };
@@ -493,7 +492,7 @@ export class ProjectsService extends GlobalService {
                 .getOne();
         } catch (error) {
             console.log(error);
-            // SAVE ERROR
+            this.saveError({});
             return null;
         }
     }
@@ -2336,6 +2335,45 @@ export class ProjectsService extends GlobalService {
         }
     }
 
+    async saveProjectGrantType(
+        project_pk: number,
+        grant_type: {
+            pk: number;
+        },
+        user: any,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const project = await EntityManager.update(
+                    Project,
+                    { pk: project_pk },
+                    {
+                        type_pk: typeof grant_type?.pk !== 'number' ? null : grant_type?.pk,
+                    },
+                );
+
+                // save logs
+                const model = {
+                    pk: project_pk,
+                    name: 'grant_type',
+                    status: 'update',
+                };
+                await this.saveLog({ model, user });
+
+                return { status: project ? true : false };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: err?.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
     async saveProjectClosingStatus(project_pk: number, status: string, user: any) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
@@ -2547,5 +2585,120 @@ export class ProjectsService extends GlobalService {
         }
 
         return projects;
+    }
+
+    async generateProjectCode(
+        project_pk: number,
+        {
+            pk,
+            donor_code,
+            project_funding_pk,
+        }: {
+            pk?: number;
+            donor_code: string;
+            project_funding_pk: number;
+        },
+        user: Partial<User>,
+    ) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const existingProjectCode = await dataSource
+                    .getRepository(ProjectCode)
+                    .createQueryBuilder('project_codes')
+                    .where('project_codes.project_pk = :projectPk', {
+                        projectPk: project_pk,
+                    })
+                    .andWhere('project_codes.code ILIKE :keyword', {
+                        keyword: `${donor_code}%`,
+                    })
+                    .getOne();
+                const userPk = getParsedPk(user?.pk);
+                const dateToBeReset = '1/1';
+                const dt = DateTime.now();
+                const currentDate = `${dt.day}/${dt.month}`;
+                const currentYear = dt.year;
+
+                let code = 0;
+                if (dateToBeReset !== currentDate) {
+                    const existingCode = existingProjectCode?.code;
+                    const splittedCode = existingCode?.split('-');
+                    const parsedCode = parseInt(splittedCode?.at(2));
+                    code = !isNaN(parsedCode) ? parsedCode : code;
+                }
+                const constructedCode = `${donor_code}-${currentYear}-${(code + 1).toString().padStart(2, '0')}`;
+
+                const projectCode = await dataSource.manager
+                    .getRepository(ProjectCode)
+                    .createQueryBuilder('project_codes')
+                    .createQueryBuilder()
+                    .insert()
+                    .into(ProjectCode)
+                    .values({
+                        project_pk,
+                        project_funding_pk,
+                        code: constructedCode,
+                        created_by: userPk,
+                    })
+                    .orUpdate(['code'], ['project_funding_pk'])
+                    .execute();
+                const generatedMaps = projectCode.generatedMaps[0];
+
+                const model = {
+                    name: 'project_codes',
+                    pk: generatedMaps?.pk,
+                    status: pk ? 'update' : 'insert',
+                };
+
+                await this.saveLog({
+                    model,
+                    user: {
+                        pk: userPk,
+                    },
+                });
+
+                return {
+                    status: true,
+                    data: {
+                        pk: generatedMaps.pk,
+                        project_pk,
+                        project_funding_pk,
+                        code: constructedCode,
+                        created_by: userPk,
+                        date_created: generatedMaps.date_created
+                    },
+                };
+            });
+
+        } catch (err) {
+            console.log(err);
+            return { status: false, code: err.code };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async fetchProjectCodes(project_pk: number) {
+        try {
+            const data = await dataSource
+                .getRepository(ProjectCode)
+                .createQueryBuilder('project_codes')
+                .where('project_codes.project_pk = :project_pk', { project_pk })
+                .orderBy('project_codes.date_created', 'DESC')
+                .getManyAndCount();
+
+            return {
+                status: true,
+                data: data[0],
+                total: data[1],
+            };
+        } catch (error) {
+            console.log(error);
+            return {
+                status: false,
+                code: error.code ?? 500,
+            };
+        }
     }
 }

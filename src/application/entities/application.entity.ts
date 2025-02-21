@@ -28,7 +28,7 @@ export class Application extends BaseEntity {
     @Column({ type: 'text', nullable: false })
     uuid: string;
 
-    @Column({ name: 'number', nullable: false })
+    @Column({ name: 'number', nullable: true })
     number: string;
 
     @Column({ name: 'partner_pk', nullable: false })

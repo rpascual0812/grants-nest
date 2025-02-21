@@ -15,6 +15,7 @@ import { Document } from 'src/document/entities/document.entity';
 import { ProjectFundingReport } from './project-funding-report.entity';
 import { ProjectFundingLiquidation } from './project-funding-liquidation.entity';
 import { Donor } from 'src/donor/entities/donor.entity';
+import { ProjectCode } from './project-code.entity';
 
 @Entity({ name: 'project_fundings' })
 export class ProjectFunding extends BaseEntity {
@@ -94,6 +95,19 @@ export class ProjectFunding extends BaseEntity {
     @JoinColumn({ name: 'pk' })
     project_funding_report: ProjectFundingReport;
 
-    @OneToMany((type) => ProjectFundingLiquidation, (project_funding_liquidation) => project_funding_liquidation.project_funding, { cascade: true })
+    @OneToMany(
+        (type) => ProjectFundingLiquidation,
+        (project_funding_liquidation) => project_funding_liquidation.project_funding,
+        { cascade: true },
+    )
     project_funding_liquidation: ProjectFundingLiquidation;
+
+    @OneToOne((type) => ProjectCode, (project_code) => project_code.project_funding_pk, {
+        eager: true,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
+    @JoinColumn({ name: 'project_funding_pk' })
+    @JoinTable()
+    project_code: ProjectCode;
 }
