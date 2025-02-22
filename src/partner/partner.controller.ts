@@ -52,7 +52,7 @@ export class PartnerController {
     }
 
     @Get(':partner_id')
-    async fetchOne(@Param('partner_id') partner_id: string) {
+    async fetchOneByPartnerId(@Param('partner_id') partner_id: string) {
         let partner: any = await this.partnerService.find({ partner_id: +partner_id });
         partner.data.documents.forEach((document: any) => {
             generatePath(document.path, (path: string) => {
