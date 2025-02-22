@@ -233,15 +233,21 @@ export class ProjectsController {
     @UseGuards(JwtAuthGuard)
     @Get(':pk/project_funding')
     async fetchProjectFunding(@Param('pk') project_pk: number, @Request() req: any) {
-        let fundings: any = await this.projectService.getProjectFunding({ project_pk });
+        let fundings: any = await this.projectService.getProjectFunding({ project_pks: [project_pk] });
         fundings.data.project_funding.forEach((funding: any) => {
-            generatePath(funding.bank_receipt_document.path, (path: string) => {
-                funding.bank_receipt_document.path = path;
-            });
-            funding.project_funding_report.forEach((report: any) => {
-                generatePath(report.document.path, (path: string) => {
-                    report.document.path = path;
+            console.log(funding.bank_receipt_document);
+            if (funding.bank_receipt_document) {
+                generatePath(funding.bank_receipt_document.path, (path: string) => {
+                    funding.bank_receipt_document.path = path;
                 });
+            }
+
+            funding.project_funding_report.forEach((report: any) => {
+                if (report.document) {
+                    generatePath(report.document.path, (path: string) => {
+                        report.document.path = path;
+                    });
+                }
             });
         });
         return fundings;
