@@ -60,3 +60,14 @@ npm run typeorm migration:run
 npm run build
 # forever restart dist/src/main.js
 pm2 restart dist/src/main.js
+
+or
+
+scp -r dist ubuntu@47.129.204.197:/home/ubuntu/api
+cd api
+pm2 restart src/main.js
+
+
+# RDS Postgres
+CREATE USER grants PASSWORD 'krXKK9DbD2P7HPFZvkaVXxYaLEuP7pcPj2bHjL5svBNXWV3bY579PpmkcQy9';
+grant rds_superuser to grants;

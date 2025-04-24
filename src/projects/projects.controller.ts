@@ -12,7 +12,7 @@ export class ProjectsController {
     @Get()
     async fetch(@Request() req: any) {
         let projects: any = await this.projectService.findAll(req.query);
-        if (projects.data.length > 0) {
+        if (projects.data && projects.data.length > 0) {
             const pks = projects.data.map((application) => application.pk);
             const partner_pks = projects.data.map((application) => application.partner_pk);
 
