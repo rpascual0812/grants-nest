@@ -124,7 +124,7 @@ export class ApplicationController {
     @Get()
     async fetch(@Request() req: any) {
         let applications: any = await this.applicationService.findAll(req.query);
-        if (applications.data.length > 0) {
+        if (applications.data && applications.data.length > 0) {
             const pks = applications.data.map((application) => application.pk);
             const partner_pks = applications.data.map((application) => application.partner_pk);
 
