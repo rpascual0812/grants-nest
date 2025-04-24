@@ -54,6 +54,7 @@ forever stopall
 
 // SERVER
 cd ~/api
+git restore package-lock.json
 git pull origin master
 npm run typeorm schema:sync
 npm run typeorm migration:run

@@ -14,7 +14,7 @@ export class DonorService extends GlobalService {
                 .createQueryBuilder('donors')
                 .select()
                 .andWhere(
-                    filters.hasOwnProperty('keyword') && filters.keyword != '' ?
+                    filters['keyword'] !== undefined && filters.keyword != '' ?
                         "donors.name ILIKE :keyword" :
                         '1=1', { keyword: `%${filters.keyword}%` }
                 )

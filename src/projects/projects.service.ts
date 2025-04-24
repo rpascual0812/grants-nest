@@ -80,36 +80,36 @@ export class ProjectsService extends GlobalService {
                 // .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
                 .leftJoinAndSelect('projects.application', 'applications')
                 .where('projects.archived = false')
-                .andWhere(filter.hasOwnProperty('donors') ? 'project_fundings.donor_pk IN (:...pk)' : '1=1', {
+                .andWhere(filter['donors'] !== undefined ? 'project_fundings.donor_pk IN (:...pk)' : '1=1', {
                     pk: filter.donors && Array.isArray(filter.donors) ? filter.donors : [filter.donors],
                 })
                 .andWhere(
-                    filter.hasOwnProperty('overall_grant_status') ? 'projects.overall_grant_status = :status' : '1=1',
+                    filter['overall_grant_status'] !== undefined ? 'projects.overall_grant_status = :status' : '1=1',
                     {
                         status: filter.overall_grant_status,
                     },
                 )
-                .andWhere(filter.hasOwnProperty('country_pk') ? 'project_location.country_pk = :country_pk' : '1=1', {
+                .andWhere(filter['country_pk'] !== undefined ? 'project_location.country_pk = :country_pk' : '1=1', {
                     country_pk: filter?.country_pk,
                 })
                 .andWhere(
-                    filter.hasOwnProperty('province_code') ? 'project_location.province_code = :province_code' : '1=1',
+                    filter['province_code'] !== undefined ? 'project_location.province_code = :province_code' : '1=1',
                     {
                         province_code: filter?.province_code,
                     },
                 )
-                .andWhere(filter.hasOwnProperty('type_pk') ? 'types.pk = :type_pk' : '1=1', {
+                .andWhere(filter['type_pk'] !== undefined ? 'types.pk = :type_pk' : '1=1', {
                     type_pk: filter?.type_pk,
                 })
-                .andWhere(filter.hasOwnProperty('title') ? 'projects.title ILIKE :title' : '1=1', {
+                .andWhere(filter['title'] !== undefined ? 'projects.title ILIKE :title' : '1=1', {
                     title: `%${filter?.title}%`,
                 })
                 .andWhere(
-                    filter.hasOwnProperty('date_from') ? "to_char(projects.date_created, 'YYYY-MM') >= :from" : '1=1',
+                    filter['date_from'] !== undefined ? "to_char(projects.date_created, 'YYYY-MM') >= :from" : '1=1',
                     { from: filter?.date_from },
                 )
                 .andWhere(
-                    filter.hasOwnProperty('date_to') ? "to_char(projects.date_created, 'YYYY-MM') <= :to" : '1=1',
+                    filter['date_to'] !== undefined ? "to_char(projects.date_created, 'YYYY-MM') <= :to" : '1=1',
                     { to: filter?.date_to },
                 )
                 .orderBy('projects.date_created', 'DESC')
@@ -146,7 +146,7 @@ export class ProjectsService extends GlobalService {
                 .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
                 .leftJoinAndSelect('project_assessments.donor', 'donors as assessment_donors')
                 .leftJoinAndSelect('project_assessments.user', 'users')
-                .andWhere(filter.hasOwnProperty('pk') ? 'projects.pk = :pk' : '1=1', { pk: filter.pk })
+                .andWhere(filter['pk'] !== undefined ? 'projects.pk = :pk' : '1=1', { pk: filter.pk })
                 .andWhere('projects.archived = :archived', { archived: false })
                 .getOne();
 
@@ -2101,7 +2101,7 @@ export class ProjectsService extends GlobalService {
         const data = await dataSource.manager
             .getRepository(ProjectLink)
             .createQueryBuilder('project_links')
-            .andWhere(filters.hasOwnProperty('archived') && filters.archived != '' ? 'archived = :archived' : '1=1', {
+            .andWhere(filters['archived'] !== undefined && filters.archived != '' ? 'archived = :archived' : '1=1', {
                 archived: `${filters.archived}`,
             })
             .orderBy('pk', 'DESC')
@@ -2211,14 +2211,14 @@ export class ProjectsService extends GlobalService {
                 .leftJoin('projects', 'projects', 'projects.pk = project_locations.project_pk')
                 .groupBy('project_locations.country_pk, countries.name, countries.code')
                 .andWhere(
-                    filter?.hasOwnProperty('closing_status') && filter?.closing_status
+                    filter['closing_status'] !== undefined && filter?.closing_status
                         ? 'projects.closing_status = :closing_status'
                         : '1=1',
                     {
                         closing_status: filter?.closing_status,
                     },
                 )
-                .andWhere(filter?.hasOwnProperty('is_applied') ? 'projects.status is not null' : '1=1')
+                .andWhere(filter['is_applied'] !== undefined ? 'projects.status is not null' : '1=1')
                 .getRawMany();
 
             return {
@@ -2550,11 +2550,11 @@ export class ProjectsService extends GlobalService {
                 .andWhere("to_char(projects.date_created, 'YYYY-MM') >= :from", { from: query.date_from })
                 .andWhere("to_char(projects.date_created, 'YYYY - MM') <= :to", { to: query.date_to })
                 .andWhere(
-                    query.hasOwnProperty('project_pk') && query.project_pk !== 'null' ? 'projects.pk = :pk' : '1=1',
+                    query['project_pk'] !== undefined && query.project_pk !== 'null' ? 'projects.pk = :pk' : '1=1',
                     { pk: query.project_pk },
                 )
                 .andWhere(
-                    query.hasOwnProperty('status') && query.status !== 'null' ? 'projects.status = :status' : '1=1',
+                    query['status'] !== undefined && query.status !== 'null' ? 'projects.status = :status' : '1=1',
                     { status: query.status },
                 )
                 .orderBy('projects.date_created', 'DESC')

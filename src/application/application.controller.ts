@@ -148,13 +148,13 @@ export class ApplicationController {
             const applicationReviews: any = await this.applicationService.getReviews(pks);
 
             applications.data.forEach((application) => {
-                if (!application.hasOwnProperty('partner')) {
+                if (!application['partner'] !== undefined) {
                     application['partner'] = {};
                 }
                 const partner = partners.filter((partner) => partner.pk == application.partner_pk);
                 application['partner'] = partner[0];
 
-                if (!application['partner'].hasOwnProperty('organization')) {
+                if (!application['partner']['organization'] !== undefined) {
                     application['partner']['organization'] = {};
                 }
                 const partner_organization = partner_organizations?.filter(
@@ -162,7 +162,7 @@ export class ApplicationController {
                 );
                 application['partner']['organization'] = partner_organization;
 
-                if (!application['partner'].hasOwnProperty('contacts')) {
+                if (!application['partner']['contacts'] !== undefined) {
                     application['partner']['contacts'] = {};
                 }
                 const partner_contact = partner_contacts.filter(
@@ -170,7 +170,7 @@ export class ApplicationController {
                 );
                 application['partner']['contacts'] = partner_contact;
 
-                if (!application['partner'].hasOwnProperty('partner_fiscal_sponsor')) {
+                if (!application['partner']['partner_fiscal_sponsor'] !== undefined) {
                     application['partner']['partner_fiscal_sponsor'] = {};
                 }
                 const partner_fiscal_sponsor = partner_fiscal_sponsors.filter(
@@ -178,7 +178,7 @@ export class ApplicationController {
                 );
                 application['partner']['partner_fiscal_sponsor'] = partner_fiscal_sponsor[0];
 
-                if (!application['partner'].hasOwnProperty('partner_nonprofit_equivalency_determination')) {
+                if (!application['partner']['partner_nonprofit_equivalency_determination'] !== undefined) {
                     application['partner']['partner_nonprofit_equivalency_determination'] = {};
                 }
                 const partner_nonprofit_equivalency_determination = partner_nonprofit_equivalency_determinations.filter(
@@ -187,7 +187,7 @@ export class ApplicationController {
                 application['partner']['partner_nonprofit_equivalency_determination'] =
                     partner_nonprofit_equivalency_determination[0];
 
-                if (!application.hasOwnProperty('reviews')) {
+                if (!application['reviews'] !== undefined) {
                     application['reviews'] = [];
                 }
                 const applicationReview = applicationReviews.filter((review) => review.pk == application.pk);
@@ -294,7 +294,7 @@ export class ApplicationController {
 
         // Partner
         const partner = await this.applicationService.getPartner([application.data.partner_pk]);
-        if (!application.data.hasOwnProperty('partner')) {
+        if (!application.data['partner'] !== undefined) {
             application.data['partner'] = {};
         }
         application.data['partner'] = partner[0];
@@ -303,14 +303,14 @@ export class ApplicationController {
         const partner_organizations = await this.applicationService.getPartnerOrganization([
             application.data['partner'].pk,
         ]);
-        if (!application.data['partner'].hasOwnProperty('organization')) {
+        if (!application.data['partner']['organization'] !== undefined) {
             application.data['partner']['organization'] = {};
         }
         application.data['partner']['organization'] = partner_organizations[0];
 
         // Partner Contacts
         const partner_contacts = await this.applicationService.getPartnerContacts([application.data['partner'].pk]);
-        if (!application.data['partner'].hasOwnProperty('contacts')) {
+        if (!application.data['partner']['contacts'] !== undefined) {
             application.data['partner']['contacts'] = {};
         }
         application.data['partner']['contacts'] = partner_contacts;
@@ -319,7 +319,7 @@ export class ApplicationController {
         const partner_fiscal_sponsor = await this.applicationService.getPartnerFiscalSponsor([
             application.data['partner'].pk,
         ]);
-        if (!application.data['partner'].hasOwnProperty('partner_fiscal_sponsor')) {
+        if (!application.data['partner']['partner_fiscal_sponsor'] !== undefined) {
             application.data['partner']['partner_fiscal_sponsor'] = {};
         }
         application.data['partner']['partner_fiscal_sponsor'] = partner_fiscal_sponsor[0];
@@ -327,7 +327,7 @@ export class ApplicationController {
         // Partner Non-profit Equivalency Determination
         const partner_nonprofit_equivalency_determination =
             await this.applicationService.getPartnerNonprofitEquivalencyDetermination([application.data['partner'].pk]);
-        if (!application.data['partner'].hasOwnProperty('partner_nonprofit_equivalency_determination')) {
+        if (!application.data['partner']['partner_nonprofit_equivalency_determination'] !== undefined) {
             application.data['partner']['partner_nonprofit_equivalency_determination'] = {};
         }
         application.data['partner']['partner_nonprofit_equivalency_determination'] =
@@ -335,7 +335,7 @@ export class ApplicationController {
 
         // Reviews
         const applicationReviews = await this.applicationService.getReviews([application.data.pk]);
-        if (!application.data.hasOwnProperty('reviews')) {
+        if (!application.data['reviews'] !== undefined) {
             application.data['reviews'] = [];
         }
         application.data['reviews'] = applicationReviews[0]?.['reviews'] ?? [];

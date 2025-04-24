@@ -66,17 +66,17 @@ export class DocumentService extends GlobalService {
             .getRepository(Document)
             .createQueryBuilder()
             .andWhere(
-                filters.hasOwnProperty('archived') && filters.archived != '' ?
+                filters['archived'] !== undefined && filters.archived != '' ?
                     "archived = :archived" :
                     '1=1', { archived: `${filters.archived}` }
             )
             .andWhere(
-                filters.hasOwnProperty('mimetype') && filters.archived != '' ?
+                filters['mimetype'] !== undefined && filters.archived != '' ?
                     "mime_type like :mimetype" :
                     '1=1', { mimetype: `${filters.mimetype}%` }
             )
             .andWhere(
-                filters.hasOwnProperty('type') && filters.archived != '' ?
+                filters['type'] !== undefined && filters.archived != '' ?
                     "type like :type" :
                     '1=1', { type: `${filters.type}%` }
             )

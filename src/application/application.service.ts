@@ -61,19 +61,19 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('projects.type', 'types')
                 .where('applications.archived = false')
                 // .andWhere(
-                //     filters.hasOwnProperty('keyword') && filters.keyword != ''
+                //     filters['keyword'] !== undefined && filters.keyword != ''
                 //         ? '(partners.name ILIKE :keyword or partners.email_address ILIKE :keyword)'
                 //         : '1=1',
                 //     { keyword: `%${filters.keyword}%` },
                 // )
                 .andWhere(
-                    filters.hasOwnProperty('type_pk') && filters?.type_pk && filters?.type_pk?.trim() !== ''
+                    filters['type_pk'] !== undefined && filters?.type_pk && filters?.type_pk?.trim() !== ''
                         ? 'projects.type_pk = :type_pk'
                         : '1=1',
                     { type_pk: +filters.type_pk },
                 )
                 .andWhere(
-                    filters.hasOwnProperty('status') && filters?.status && filters?.status?.trim() !== ''
+                    filters['status'] !== undefined && filters?.status && filters?.status?.trim() !== ''
                         ? 'applications.status = :status'
                         : '1=1',
                     { status: filters?.status },
@@ -113,13 +113,13 @@ export class ApplicationService extends GlobalService {
                 .leftJoinAndSelect('projects.recommendations', 'project_recommendations')
                 .leftJoinAndSelect('project_proposals.project_proposal_activity', 'project_proposal_activity')
                 .leftJoinAndSelect('projects.type', 'types')
-                .andWhere(filter.hasOwnProperty('pk') ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
-                .andWhere(filter.hasOwnProperty('uuid') ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
-                .andWhere(filter.hasOwnProperty('number') ? 'applications.number = :number' : '1=1', {
+                .andWhere(filter['pk'] !== undefined ? 'applications.pk = :pk' : '1=1', { pk: filter.pk })
+                .andWhere(filter['uuid'] !== undefined ? 'applications.uuid = :uuid' : '1=1', { uuid: filter.uuid })
+                .andWhere(filter['number'] !== undefined ? 'applications.number = :number' : '1=1', {
                     number: filter.number,
                 })
                 .andWhere('applications.archived = :archived', { archived: false })
-                // .andWhere(filter.hasOwnProperty('reviews') ? 'reviews.archived = false' : '1=1')
+                // .andWhere(filter['reviews'] !== undefined ? 'reviews.archived = false' : '1=1')
                 // .orderBy('reviews.pk', 'ASC')
                 // .orderBy({
                 //     'partner_organization_references.pk': 'ASC',
@@ -429,10 +429,7 @@ export class ApplicationService extends GlobalService {
 
         try {
             return await queryRunner.manager.transaction(async (EntityManager) => {
-                if (data.hasOwnProperty('application')) {
-                    await EntityManager.update(Application, { pk: data.application_pk }, data.application);
-                }
-                if (data.hasOwnProperty('project')) {
+                if (data['project'] !== undefined) {
                     await EntityManager.update(
                         Project,
                         { application_pk: data.application_pk },
@@ -2242,13 +2239,13 @@ export class ApplicationService extends GlobalService {
                 .andWhere("to_char(applications.date_created, 'YYYY-MM') >= :from", { from: query.date_from })
                 .andWhere("to_char(applications.date_created, 'YYYY - MM') <= :to", { to: query.date_to })
                 .andWhere(
-                    query.hasOwnProperty('application_pk') && query.application_pk !== 'null'
+                    query['application_pk'] !== undefined && query.application_pk !== 'null'
                         ? 'applications.pk = :pk'
                         : '1=1',
                     { pk: query.application_pk },
                 )
                 .andWhere(
-                    query.hasOwnProperty('status') && query.status !== 'null' ? 'applications.status = :status' : '1=1',
+                    query['status'] !== undefined && query.status !== 'null' ? 'applications.status = :status' : '1=1',
                     { status: query.status },
                 )
                 .orderBy('applications.date_created', 'DESC')

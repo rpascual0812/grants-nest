@@ -53,7 +53,7 @@ export class UserService extends GlobalService {
 
             let orderByColumn,
                 orderByDirection;
-            if (filters.hasOwnProperty('orderBy')) {
+            if (filters['orderBy'] !== undefined) {
                 switch (filters.orderBy) {
                     case 'Sort by Name':
                         orderByColumn = 'users.first_name';
@@ -99,12 +99,12 @@ export class UserService extends GlobalService {
                 //     'documentable.document_pk=documents.pk',
                 // )
                 .andWhere(
-                    filters.hasOwnProperty('keyword') && filters.keyword != '' ?
+                    filters['keyword'] !== undefined && filters.keyword != '' ?
                         "(users.first_name ILIKE :keyword or users.last_name ILIKE :keyword or users.middle_name ILIKE :keyword or users.unique_id ILIKE :keyword)" :
                         '1=1', { keyword: `%${filters.keyword}%` }
                 )
                 .andWhere(
-                    filters.hasOwnProperty('archived') && filters.archived != '' ?
+                    filters['archived'] !== undefined && filters.archived != '' ?
                         "users.archived = :archived" :
                         '1=1', { archived: `${filters.archived}` }
                 )

@@ -42,19 +42,19 @@ export class ProjectsController {
             const projectReviews: any = await this.projectService.getReviews(pks);
 
             projects.data.forEach((project) => {
-                if (!project.hasOwnProperty('project_funding')) {
+                if (!project['project_funding'] !== undefined) {
                     project['project_funding'] = [];
                 }
 
                 const project_funding = fundings.filter((funding) => funding.project_pk == project.pk);
                 project['project_funding'] = project_funding;
 
-                if (!project.hasOwnProperty('partner')) {
+                if (!project['partner'] !== undefined) {
                     project['partner'] = {};
                 }
                 const partner = partners.filter((partner) => partner.pk == project.partner_pk);
                 project['partner'] = partner[0] ?? {};
-                if (!project.partner.hasOwnProperty('organization')) {
+                if (!project.partner['organization'] !== undefined) {
                     project['partner']['organization'] = {};
                 }
                 const partner_organization = partner_organizations?.filter(
@@ -62,13 +62,13 @@ export class ProjectsController {
                 );
                 project['partner']['organization'] = partner_organization;
 
-                if (!project['partner'].hasOwnProperty('contacts')) {
+                if (!project['partner']['contacts'] !== undefined) {
                     project['partner']['contacts'] = {};
                 }
                 const partner_contact = partner_contacts.filter((contact) => contact.partner_pk == project.partner_pk);
                 project['partner']['contacts'] = partner_contact;
 
-                if (!project['partner'].hasOwnProperty('assessments')) {
+                if (!project['partner']['assessments'] !== undefined) {
                     project['partner']['contacts'] = {};
                 }
                 const partner_assessment = partner_assessments.filter(
@@ -76,7 +76,7 @@ export class ProjectsController {
                 );
                 project['partner']['assessments'] = partner_assessment;
 
-                if (!project['partner'].hasOwnProperty('partner_fiscal_sponsor')) {
+                if (!project['partner']['partner_fiscal_sponsor'] !== undefined) {
                     project['partner']['partner_fiscal_sponsor'] = {};
                 }
                 const partner_fiscal_sponsor = partner_fiscal_sponsors.filter(
@@ -84,7 +84,7 @@ export class ProjectsController {
                 );
                 project['partner']['partner_fiscal_sponsor'] = partner_fiscal_sponsor[0];
 
-                if (!project['partner'].hasOwnProperty('partner_nonprofit_equivalency_determination')) {
+                if (!project['partner']['partner_nonprofit_equivalency_determination'] !== undefined) {
                     project['partner']['partner_nonprofit_equivalency_determination'] = {};
                 }
                 const partner_nonprofit_equivalency_determination = partner_nonprofit_equivalency_determinations.filter(
@@ -93,7 +93,7 @@ export class ProjectsController {
                 project['partner']['partner_nonprofit_equivalency_determination'] =
                     partner_nonprofit_equivalency_determination[0];
 
-                if (!project.hasOwnProperty('reviews')) {
+                if (!project['reviews'] !== undefined) {
                     project['reviews'] = [];
                 }
                 const projectReview = projectReviews.filter((review) => review.pk == project.pk);
@@ -135,14 +135,14 @@ export class ProjectsController {
 
         // Application
         const application = await this.projectService.getApplication([project.data.application_pk]);
-        if (!project.data.hasOwnProperty('partner')) {
+        if (!project.data['partner'] !== undefined) {
             project.data['application'] = {};
         }
         project.data['application'] = application[0];
 
         // Partner
         const partner = await this.projectService.getPartner([project.data.partner_pk]);
-        if (!project.data.hasOwnProperty('partner')) {
+        if (!project.data['partner'] !== undefined) {
             project.data['partner'] = {};
         }
         project.data['partner'] = partner[0];
@@ -152,21 +152,21 @@ export class ProjectsController {
             project?.data?.['partner']?.pk,
         ]);
 
-        if (!project.data['partner'].hasOwnProperty('organization')) {
+        if (!project.data['partner']['organization'] !== undefined) {
             project.data['partner']['organization'] = {};
         }
         project.data['partner']['organization'] = partner_organizations[0];
 
         // Partner Contacts
         const partner_contacts = await this.projectService.getPartnerContacts([project.data['partner'].pk]);
-        if (!project.data['partner'].hasOwnProperty('contacts')) {
+        if (!project.data['partner']['contacts'] !== undefined) {
             project.data['partner']['contacts'] = [];
         }
         project.data['partner']['contacts'] = partner_contacts;
 
         // Partner Fiscal Sponsor
         const partner_fiscal_sponsor = await this.projectService.getPartnerFiscalSponsor([project.data['partner'].pk]);
-        if (!project.data['partner'].hasOwnProperty('partner_fiscal_sponsor')) {
+        if (!project.data['partner']['partner_fiscal_sponsor'] !== undefined) {
             project.data['partner']['partner_fiscal_sponsor'] = {};
         }
         project.data['partner']['partner_fiscal_sponsor'] = partner_fiscal_sponsor[0];
@@ -174,7 +174,7 @@ export class ProjectsController {
         // Partner Non-profit Equivalency Determination
         const partner_nonprofit_equivalency_determination =
             await this.projectService.getPartnerNonprofitEquivalencyDetermination([project.data['partner'].pk]);
-        if (!project.data['partner'].hasOwnProperty('partner_nonprofit_equivalency_determination')) {
+        if (!project.data['partner']['partner_nonprofit_equivalency_determination'] !== undefined) {
             project.data['partner']['partner_nonprofit_equivalency_determination'] = {};
         }
         project.data['partner']['partner_nonprofit_equivalency_determination'] =
@@ -182,7 +182,7 @@ export class ProjectsController {
 
         // Reviews
         const projectReviews = await this.projectService.getReviews([project.data.pk]);
-        if (!project.data.hasOwnProperty('reviews')) {
+        if (!project.data['reviews'] !== undefined) {
             project.data['reviews'] = [];
         }
         project.data['reviews'] = projectReviews[0]?.['reviews'] ?? [];
@@ -333,7 +333,7 @@ export class ProjectsController {
             attendees = await this.projectService.getAttendees(pks);
         }
         events.forEach((event: any) => {
-            if (!event.hasOwnProperty('attendees')) {
+            if (!event['attendees'] !== undefined) {
                 event['attendees'] = [];
             }
             const attendee = attendees.filter((attendees) => attendees.project_event_pk == event.pk);

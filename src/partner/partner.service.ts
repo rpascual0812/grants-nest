@@ -179,8 +179,8 @@ export class PartnerService extends GlobalService {
                     'documents as partner_organization_other_information_documents',
                 )
                 .where('partners.archived = false')
-                .andWhere(filter.hasOwnProperty('pk') ? 'partners.pk = :pk' : '1=1', { pk: filter.pk })
-                .andWhere(filter.hasOwnProperty('partner_id') ? 'partners.partner_id = :partner_id' : '1=1', {
+                .andWhere(filter['pk'] !== undefined ? 'partners.pk = :pk' : '1=1', { pk: filter.pk })
+                .andWhere(filter['partner_id'] !== undefined ? 'partners.partner_id = :partner_id' : '1=1', {
                     partner_id: filter.partner_id,
                 })
                 .orderBy({

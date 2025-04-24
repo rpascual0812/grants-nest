@@ -14,7 +14,7 @@ export class RoleService extends GlobalService {
                 .createQueryBuilder('roles')
                 .select('roles')
                 .andWhere(
-                    filters.hasOwnProperty('keyword') && filters.keyword != '' ? 'roles.name ILIKE :keyword' : '1=1',
+                    filters['keyword'] !== undefined && filters.keyword != '' ? 'roles.name ILIKE :keyword' : '1=1',
                     { keyword: `%${filters.keyword}%` },
                 )
                 .andWhere('archived = false')
