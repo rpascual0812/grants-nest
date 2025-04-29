@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -9,9 +9,24 @@ import { ConfigService } from '@nestjs/config';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { generatePath } from 'src/utilities/generate-s3-path.utils';
 
+import { editFileName } from '../utilities/upload.utils';
+
 @Injectable()
 export class DocumentService extends GlobalService {
-    AWS_S3_BUCKET = 'grants-management-dev';
+
+    FILE_TYPES = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'image/png',
+        'image/jpg',
+        'image/jpeg',
+        'image/gif',
+        'application/doc',
+        'application/docx',
+    ];
 
     private readonly s3client = new S3Client({
         region: this.configService.getOrThrow('AWS_S3_REGION')
@@ -213,5 +228,30 @@ export class DocumentService extends GlobalService {
         } finally {
             await queryRunner.release();
         }
+    }
+
+    handleFileUpload(file: Express.Multer.File) {
+        if (!file) {
+            throw new BadRequestException('no file uploaded');
+        }
+
+        // validate file type
+        const allowedMimeTypes = this.FILE_TYPES;
+        if (!allowedMimeTypes.includes(file.mimetype)) {
+            throw new BadRequestException('invalid file type');
+        }
+        
+        // validate file size
+        const maxSize = parseInt(process.env.MAX_FILE_SIZE);
+        if (file.size > maxSize) {
+            throw new BadRequestException('file is too large!');
+        }
+
+        let fileName = '';
+        editFileName(file, (name) => {
+            fileName = name;
+        });
+
+        return { fileName };
     }
 }
