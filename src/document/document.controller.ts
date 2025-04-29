@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, Response, UploadedFile, HttpStatus, UseGuards, UseInterceptors, ParseFilePipeBuilder } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, Response, UploadedFile, HttpStatus, UseGuards, UseInterceptors, ParseFilePipeBuilder, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { editFileName } from '../utilities/upload.utils';
@@ -12,24 +12,9 @@ export class DocumentController {
     @Throttle({ default: { limit: 3, ttl: 60000 } })
     @Post('upload')
     @UseInterceptors(FileInterceptor('file'))
-    async uploadedFile(
-        @UploadedFile(
-            new ParseFilePipeBuilder()
-                .addFileTypeValidator({
-                    fileType: /(mp4|jpe?g|gif|png|pdf|doc|docx|xls|xlsx|txt|zip|msword|vnd.openxmlformats-officedocument.wordprocessingml.document|vnd.openxmlformats-officedocument.spreadsheetml.sheet)$/,
-                })
-                .addMaxSizeValidator({ maxSize: 5000000 }) // 5MB
-                .build({
-                    errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-                }),
-        )
-        file: Express.Multer.File
-    ) {
-        let fileName = '';
-        editFileName(file, (name) => {
-            fileName = name;
-        });
-        return await this.documentService.uploadFile(fileName, file);
+    async uploadedFile(@UploadedFile() file: Express.Multer.File) {
+        const uploaded = this.documentService.handleFileUpload(file);
+        return await this.documentService.uploadFile(uploaded.fileName, file);
     }
 
     @UseGuards(JwtAuthGuard)
