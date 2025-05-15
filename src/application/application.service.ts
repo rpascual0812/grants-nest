@@ -1164,12 +1164,12 @@ export class ApplicationService extends GlobalService {
                         ...nonProfitEquivalencyDetermination,
                     },
                 );
-
+                
                 if (data?.documents) {
                     data?.documents.forEach((doc: any) => {
                         EntityManager.query(
                             'insert into document_partner_nonprofit_equivalency_determination_relation (document_pk, partner_nonprofit_equivalency_determination_pk) values ($1 ,$2) ON CONFLICT DO NOTHING;',
-                            [doc.pk, data.pk],
+                            [doc.pk, data.pk ? data.pk : savedNonProfitEquivalencyDetermination.pk],
                         );
                     });
                 }
