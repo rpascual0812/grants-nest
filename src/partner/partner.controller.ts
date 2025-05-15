@@ -60,19 +60,19 @@ export class PartnerController {
             });
         });
 
-        partner.data.partner_nonprofit_equivalency_determination?.documents.forEach((document: any) => {
+        partner.data?.partner_nonprofit_equivalency_determination?.documents.forEach((document: any) => {
             generatePath(document.path, (path: string) => {
                 document.path = path;
             });
         });
 
-        partner.data.organization?.partner_organization_other_information?.documents.forEach((document: any) => {
+        partner.data?.organization?.partner_organization_other_information?.documents.forEach((document: any) => {
             generatePath(document.path, (path: string) => {
                 document.path = path;
             });
         });
 
-        partner.data.partner_fiscal_sponsor?.documents.forEach((document: any) => {
+        partner.data?.partner_fiscal_sponsor?.documents.forEach((document: any) => {
             generatePath(document.path, (path: string) => {
                 document.path = path;
             });
