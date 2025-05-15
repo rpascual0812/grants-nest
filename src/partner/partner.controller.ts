@@ -54,13 +54,13 @@ export class PartnerController {
     @Get(':partner_id')
     async fetchOneByPartnerId(@Param('partner_id') partner_id: string) {
         let partner: any = await this.partnerService.find({ partner_id: +partner_id });
-        partner.data.documents.forEach((document: any) => {
+        partner.data?.documents.forEach((document: any) => {
             generatePath(document.path, (path: string) => {
                 document.path = path;
             });
         });
 
-        partner.data.partner_nonprofit_equivalency_determination.documents.forEach((document: any) => {
+        partner.data.partner_nonprofit_equivalency_determination?.documents.forEach((document: any) => {
             generatePath(document.path, (path: string) => {
                 document.path = path;
             });
