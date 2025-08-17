@@ -75,11 +75,14 @@ export class ProjectsService extends GlobalService {
                 .leftJoinAndSelect('project_assessments.donor', 'donors as assessment_donor')
                 .leftJoinAndSelect('project_assessments.user', 'users')
                 .leftJoinAndSelect('projects.project_funding', 'project_fundings')
+                .leftJoinAndSelect('projects.partner', 'partners')
                 // .leftJoinAndSelect('project_fundings.donor', 'donors')
                 // .leftJoinAndSelect('project_fundings.project_funding_report', 'project_funding_reports')
                 // .leftJoinAndSelect('project_fundings.bank_receipt_document', 'documents')
                 .leftJoinAndSelect('projects.application', 'applications')
                 .where('projects.archived = false')
+                .where('partners.archived = false')
+                .where('applications.archived = false')
                 .andWhere(filter['donors'] !== undefined ? 'project_fundings.donor_pk IN (:...pk)' : '1=1', {
                     pk: filter.donors && Array.isArray(filter.donors) ? filter.donors : [filter.donors],
                 })
