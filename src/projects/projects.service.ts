@@ -2222,6 +2222,7 @@ export class ProjectsService extends GlobalService {
                     },
                 )
                 .andWhere(filter['is_applied'] !== undefined ? 'projects.status is not null' : '1=1')
+                .andWhere('projects.archived = false')
                 .getRawMany();
 
             return {
@@ -2277,6 +2278,7 @@ export class ProjectsService extends GlobalService {
                             NOT_INCLUDED_STATUS,
                         },
                     )
+                    .andWhere('projects.archived = false')
                     .getCount();
             } else {
                 count = await dataSource
@@ -2289,6 +2291,7 @@ export class ProjectsService extends GlobalService {
                         'projects.pk=project_fundings.project_pk',
                     )
                     .where('projects.status=:status', { status: 'Fund Release' })
+                    .andWhere('projects.archived = false')
                     .getCount();
             }
 
