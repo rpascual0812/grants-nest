@@ -2148,6 +2148,7 @@ export class ApplicationService extends GlobalService {
                         status_option,
                     },
                 )
+                .andWhere('applications.archived = false')
                 .getCount();
 
             return {
