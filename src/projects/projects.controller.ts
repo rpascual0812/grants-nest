@@ -589,7 +589,6 @@ export class ProjectsController {
 
     @UseGuards(JwtAuthGuard)
     @Get('status_count')
-    @Get('status_count')
     async fetchProjectCount(
         @Query() query: { status: 'all' | AvailableProjectStatus; include_tranche: boolean },
         @Request() req: any,
