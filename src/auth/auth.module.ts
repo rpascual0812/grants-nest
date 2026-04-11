@@ -20,10 +20,10 @@ import { LocalStrategy } from './local.strategy';
         PassportModule,
         JwtModule.register({
             secret: process.env.SECRET,
-            signOptions: { expiresIn: process.env.EXPIRES + 's' },
+            signOptions: { expiresIn: Number(process.env.EXPIRES) },
         }),
     ],
     providers: [AuthService, LocalStrategy, JwtStrategy],
-    exports: [AuthService]
+    exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

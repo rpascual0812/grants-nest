@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { v4 as uuidv4 } from 'uuid';
-import { DateTime } from "luxon";
+import { DateTime } from 'luxon';
 import { AccountService } from 'src/account/account.service';
 import { UserService } from 'src/user/user.service';
 import { EmailService } from 'src/email/email.service';
@@ -11,19 +11,18 @@ import { TemplateService } from 'src/template/template.service';
 
 @Injectable()
 export class AuthService {
-
     constructor(
         private accountService: AccountService,
         private sessionService: SessionService,
         private emailService: EmailService,
         private userService: UserService,
         private jwtService: JwtService,
-    ) { }
+    ) {}
 
     async validateUser(username: string, password: string): Promise<any> {
         const account = await this.accountService.findByUserName(username);
 
-        if (account && await this.accountService.compareHash(password, account.password)) {
+        if (account && (await this.accountService.compareHash(password, account.password))) {
             return account;
         }
     }
@@ -33,7 +32,7 @@ export class AuthService {
 
         const expiration = account.remember ? Number.parseInt(process.env.EXPIRES) : 28800; // 14 days or 8 hrs
 
-        account.access_token = this.jwtService.sign(payload, { expiresIn: expiration + 's' });
+        account.access_token = this.jwtService.sign(payload, { expiresIn: expiration });
 
         account.expiration = DateTime.now().plus({ seconds: expiration }).toFormat('y-LL-dd HH:mm:ss');
 
@@ -68,6 +67,4 @@ export class AuthService {
     async getResetToken(token: string): Promise<any> {
         return await this.accountService.findToken(token);
     }
-
-
 }
