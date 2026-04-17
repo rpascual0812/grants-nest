@@ -115,6 +115,7 @@ export class ProjectsService extends GlobalService {
                     filter['date_to'] !== undefined ? "to_char(projects.date_created, 'YYYY-MM') <= :to" : '1=1',
                     { to: filter?.date_to },
                 )
+                .andWhere('projects.archived = false')
                 .orderBy('projects.date_created', 'DESC')
                 .getManyAndCount();
 
@@ -168,6 +169,45 @@ export class ProjectsService extends GlobalService {
                 status: false,
                 code: 500,
             };
+        }
+    }
+
+    async delete(pk: number, user: Partial<User>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const project = await EntityManager.update(
+                    Project,
+                    {
+                        pk: pk,
+                    },
+                    { archived: true },
+                );
+
+                // save logs
+                const model = {
+                    pk: pk,
+                    name: 'projects',
+                    status: 'deleted',
+                };
+                await this.saveLog({
+                    model,
+                    user: {
+                        pk: user?.pk,
+                    },
+                });
+
+                return {
+                    status: project ? true : false,
+                };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: (err as any)?.code || 500 };
+        } finally {
+            await queryRunner.release();
         }
     }
 
@@ -266,7 +306,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err?.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -529,7 +569,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -562,7 +602,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -596,7 +636,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -645,7 +685,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -674,7 +714,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -773,7 +813,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -890,7 +930,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -960,7 +1000,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1029,7 +1069,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1068,7 +1108,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             console.log(err);
             this.saveError({});
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1155,7 +1195,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1193,7 +1233,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             console.log(err);
             this.saveError({});
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1225,7 +1265,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1287,7 +1327,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1316,7 +1356,7 @@ export class ProjectsService extends GlobalService {
             this.saveError({});
             console.log(err);
             throw new InternalServerErrorException();
-            // return { status: false, code: err.code };
+            // return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1333,7 +1373,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1351,7 +1391,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1421,7 +1461,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1465,7 +1505,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1575,7 +1615,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1612,7 +1652,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             console.log(err);
             this.saveError({});
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1682,7 +1722,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1723,7 +1763,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             console.log(err);
             this.saveError({});
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1794,7 +1834,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1835,7 +1875,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             console.log(err);
             this.saveError({});
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1903,7 +1943,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -1944,7 +1984,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             console.log(err);
             this.saveError({});
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -2014,7 +2054,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -2055,7 +2095,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             console.log(err);
             this.saveError({});
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -2146,7 +2186,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -2307,7 +2347,7 @@ export class ProjectsService extends GlobalService {
             this.saveError({});
             return {
                 status: false,
-                code: err?.code,
+                code: (err as any)?.code || 500,
             };
         } finally {
             await queryRunner.release();
@@ -2335,7 +2375,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -2374,7 +2414,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err?.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -2401,7 +2441,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -2428,7 +2468,7 @@ export class ProjectsService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -2459,7 +2499,7 @@ export class ProjectsService extends GlobalService {
             this.saveError({});
             return {
                 status: false,
-                code: err?.code,
+                code: (err as any)?.code || 500,
             };
         } finally {
             await queryRunner.release();
@@ -2514,7 +2554,7 @@ export class ProjectsService extends GlobalService {
             });
         } catch (err) {
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -2539,7 +2579,7 @@ export class ProjectsService extends GlobalService {
             });
         } catch (err) {
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -2679,7 +2719,7 @@ export class ProjectsService extends GlobalService {
 
         } catch (err) {
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -2703,7 +2743,7 @@ export class ProjectsService extends GlobalService {
             console.log(error);
             return {
                 status: false,
-                code: error.code ?? 500,
+                code: (error as any)?.code || 500,
             };
         }
     }

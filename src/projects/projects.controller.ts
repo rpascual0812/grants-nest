@@ -108,6 +108,12 @@ export class ProjectsController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @Delete(':pk')
+    delete(@Param('pk') pk: string, @Request() req: any) {
+        return this.projectService.delete(+pk, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Post(':pk/project_details')
     async updateProjectDetails(@Param('pk') pk: number, @Body() body: any, @Request() req: any) {
         return this.projectService.updateProjectDetails(
