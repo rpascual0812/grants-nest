@@ -201,6 +201,45 @@ export class PartnerService extends GlobalService {
         }
     }
 
+    async delete(pk: number, user: Partial<User>) {
+        const queryRunner = dataSource.createQueryRunner();
+        await queryRunner.connect();
+        try {
+            return await queryRunner.manager.transaction(async (EntityManager) => {
+                const partner = await EntityManager.update(
+                    Partner,
+                    {
+                        pk: pk,
+                    },
+                    { archived: true },
+                );
+
+                // save logs
+                const model = {
+                    pk: pk,
+                    name: 'partners',
+                    status: 'deleted',
+                };
+                await this.saveLog({
+                    model,
+                    user: {
+                        pk: user?.pk,
+                    },
+                });
+
+                return {
+                    status: partner ? true : false,
+                };
+            });
+        } catch (err) {
+            this.saveError({});
+            console.log(err);
+            return { status: false, code: (err as any)?.code || 500 };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
     async findAssessments(partner_pk: number, query: any, users: Partial<User>) {
         const queryRunner = dataSource.createQueryRunner();
         await queryRunner.connect();
@@ -223,7 +262,7 @@ export class PartnerService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -275,7 +314,7 @@ export class PartnerService extends GlobalService {
             });
         } catch (err) {
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -314,7 +353,7 @@ export class PartnerService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -330,7 +369,7 @@ export class PartnerService extends GlobalService {
             });
         } catch (err) {
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }
@@ -380,7 +419,7 @@ export class PartnerService extends GlobalService {
         } catch (err) {
             this.saveError({});
             console.log(err);
-            return { status: false, code: err.code };
+            return { status: false, code: (err as any)?.code || 500 };
         } finally {
             await queryRunner.release();
         }

@@ -91,6 +91,12 @@ export class PartnerController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @Delete(':pk')
+    delete(@Param('pk') pk: string, @Request() req: any) {
+        return this.partnerService.delete(+pk, req.user);
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Post('assessment')
     saveAssessment(@Body() body: any, @Request() req: any) {
         return this.partnerService.saveAssessment(body, req.user);
